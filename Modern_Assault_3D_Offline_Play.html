@@ -8,7 +8,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="現代突擊3D">
-  <title>Q版特種部隊：現代突擊 3D v6.2 - 跨平台電競對戰</title>
+  <title>Q版特種部隊：現代突擊 3D v6.3 - 跨平台電競對戰</title>
   <!-- Tailwind CSS (支援 Jetski 官方與外部 CDN) -->
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -274,6 +274,29 @@
   <!-- 雙槍背包 (#17 #18)：右下角、避開最右側按鈕欄 -->
   <div id="weapon-slots" class="absolute bottom-4 right-[88px] z-20 flex flex-col gap-1.5 items-end pointer-events-none"></div>
 
+  <!-- 重生無敵提示 (#2) -->
+  <div id="invuln-tag" class="hidden absolute top-32 left-1/2 -translate-x-1/2 z-30 px-4 py-1.5 rounded-xl bg-sky-600/90 border border-sky-300 text-white text-sm font-black shadow-xl pointer-events-none"></div>
+  <!-- 戰術標籤 (#5) -->
+  <div id="tactic-tag" class="hidden absolute top-44 left-1/2 -translate-x-1/2 z-20 px-3 py-1 rounded-lg bg-violet-700/80 border border-violet-300/60 text-white text-xs font-black pointer-events-none"></div>
+  <!-- 搶旗進度 (#6) -->
+  <div id="ctf-bar-box" class="hidden absolute bottom-28 left-1/2 -translate-x-1/2 z-20 w-80 pointer-events-none">
+    <div id="ctf-bar-text" class="text-center text-xs font-black text-white mb-1 drop-shadow"></div>
+    <div class="w-full h-3 rounded-full bg-slate-900/80 border border-slate-600 overflow-hidden"><div id="ctf-bar-fill" class="h-full bg-gradient-to-r from-amber-400 to-rose-500" style="width:0%"></div></div>
+  </div>
+  <!-- 遊戲結束宣告 (#4) -->
+  <div id="match-end-banner" class="hidden"></div>
+  <!-- 準備階段 + 戰術投票 (#5) -->
+  <div id="prep-panel" class="hidden absolute inset-0 z-40 flex items-center justify-center bg-black/55 backdrop-blur-[2px] pointer-events-none">
+    <div class="bg-slate-900/95 border border-slate-600 rounded-3xl p-5 w-[460px] max-w-[94vw] shadow-2xl pointer-events-auto">
+      <div class="flex items-center justify-between mb-1">
+        <div class="text-lg font-black text-white">🧭 戰術準備階段</div>
+        <div class="text-2xl font-black text-amber-300 font-mono"><span id="prep-timer">10</span>s</div>
+      </div>
+      <div class="text-[11px] text-slate-300 mb-3">雙方 10 秒內不能移動，請與隊友討論並投票戰術（票數最多者成為本隊戰術）</div>
+      <div id="prep-options" class="flex flex-col gap-1.5"></div>
+    </div>
+  </div>
+
   <!-- 擊殺播報 (#23) -->
   <div id="kill-feed" class="absolute top-60 sm:top-64 left-3 z-20 flex flex-col gap-1 pointer-events-none w-80"></div>
 
@@ -333,7 +356,7 @@
         <span>●</span> WebRTC P2P + 本地雙通道零延遲連線架構
       </div>
       <h1 class="text-2xl sm:text-3xl font-black tracking-wider text-white mb-1">
-        Q版特種部隊：現代突擊 3D v6.2
+        Q版特種部隊：現代突擊 3D v6.3
       </h1>
       <p class="text-xs text-slate-400 mb-4 font-medium">支援 iPad 觸控手勢與電腦 PC 鍵鼠同場競技 ｜ 藍天白雲雙層 CQB 戰場</p>
 
@@ -355,6 +378,9 @@
         </button>
         <button id="tab-mode-coop" class="flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition">
           🤖 玩家合作打 AI
+        </button>
+        <button id="tab-mode-ctf" class="flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition">
+          🚩 搶旗模式 (CTF)
         </button>
         <button id="tab-mode-solo" class="flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition">
           🎯 單人靶場訓練
@@ -1153,6 +1179,8 @@
       onPickupEvent: null,
       onDropEvent: null,
       onRoundTick: null,
+      onVoteEvent: null,
+      onMatchEndEvent: null,
       heartbeatTimer: null,
 
       initHost: function(roomCode, onReady, onFail) {
@@ -1196,6 +1224,12 @@
             break;
           case 'round_tick':   // 主機每 5 秒校正回合時間 (#9)
             if (!this.isHost && this.onRoundTick) this.onRoundTick(data);
+            break;
+          case 'vote_event':
+            if (this.onVoteEvent) this.onVoteEvent(data);
+            break;
+          case 'match_end_event':
+            if (this.onMatchEndEvent) this.onMatchEndEvent(data);
             break;
           case 'welcome':      // 主機回覆：你的隊伍 / 漆色 / 回合資訊 / 目前名冊
             if (data.target === this.myId && this.onWelcome) this.onWelcome(data);
@@ -1285,6 +1319,8 @@
       sendHelloQuery: function() { this.sendAll({ type: 'hello_query', sender: this.myId }); },
       sendPickupEvent: function(id, respawnTime) { this.sendAll({ type: 'pickup_event', id, respawnTime }); },
       sendDropEvent: function(data) { this.sendAll({ type: 'drop_event', drop: data }); },
+      sendVote: function(tactic) { this.sendAll({ type: 'vote_event', tactic, team: playerState.team, name: playerState.name }); },
+      sendMatchEnd: function(winnerTeam, message) { this.sendAll({ type: 'match_end_event', winnerTeam, message }); },
       sendRoundTick: function() { this.sendAll({ type: 'round_tick', roundRemaining: roundRemainingTime, roundMode: roundModeSetting, ended: isRoundEnded }); },
 
       setupChannels: function(onReady, onFail) {
@@ -1836,6 +1872,7 @@
       buildPlazaGround();
       buildTeamBasesWithFlags();
       buildHousesWithStairsAndWindows();
+      buildBattlefieldProps();
       createFirstPersonWeapon();
       spawnGroundPickups();
 
@@ -2025,6 +2062,8 @@
     let playerGrounded = true;
     let playerFloorY = 0;          // 相容舊變數
     let currentSurfaceType = 'ground';
+    const teamFlags = [null, null];   // 搶旗模式用
+    const hazards = [];               // 鐵絲網等傷害區
 
     function addFlat(minX, maxX, minZ, maxZ, y, tag) {
       rampSurfaces.push({ type: 'flat', minX, maxX, minZ, maxZ, y, tag: tag || 'floor' });
@@ -2140,6 +2179,7 @@
         flag.userData.wave = true;
         scene.add(flag);
         clouds.push({ group: flag, speed: 0, isFlag: true });
+        teamFlags[isAlly ? 0 : 1] = { mesh: flag, baseY: 5.55, x: 0, z: cz, color: color, pole: pole };
         addBox(-0.1, 0.1, 0, 6.4, cz - 0.1, cz + 0.1);
 
         // 麻布沙包工事：兩層交錯堆疊，留出三個出入閘門 (#6 #8 AI 由閘門出發)
@@ -4039,7 +4079,7 @@
     function updateRuleTag() {
       const el = document.getElementById('rule-tag');
       if (!el) return;
-      el.innerText = respawnModeSetting === 'unlimited' ? '♾️ 無限重生' : `❤️ ${playerState.lives} / ${maxLives} 條命`;
+      el.innerText = (gameModeSetting === 'ctf' ? '🚩 搶旗 15s ｜ ' : '') + (respawnModeSetting === 'unlimited' ? '♾️ 無限重生' : `❤️ ${playerState.lives} / ${maxLives} 條命`);
       el.className = 'text-xs font-black ' + (respawnModeSetting === 'unlimited' ? 'text-emerald-300' : (playerState.lives <= 1 ? 'text-rose-400 animate-pulse' : 'text-rose-300'));
     }
 
@@ -4347,6 +4387,10 @@
       projectiles.forEach(p => { scene.remove(p.mesh); scene.remove(p.trail); }); projectiles.length = 0;
       document.getElementById('kills-count').innerText = '0';
       const paintLayer = document.getElementById('screen-paint-layer'); if (paintLayer) paintLayer.innerHTML = '';
+      prepActive = false; document.getElementById('prep-panel').classList.add('hidden');
+      document.getElementById('match-end-banner').classList.add('hidden'); clearTimeout(endBannerTimer);
+      document.getElementById('tactic-tag').classList.add('hidden');
+      playerState.invulnUntil = 0; ctfState.progress = 0;
       updateHealthUI();
     }
 
@@ -4427,10 +4471,232 @@
       // 連線玩家由各自機器自行結算 (炸彈位置與時間已同步)
     }
     /* =========================================================================
+       16. v6.3：戰場障礙 (戰車/鐵絲網)、重生無敵、準備投票、搶旗模式、結束流程
+       ========================================================================= */
+    // ---- 戰場障礙 (#3) ----
+    function buildBattlefieldProps() {
+      const armor = new THREE.MeshStandardMaterial({ color: 0x4b5320, roughness: 0.75, metalness: 0.45 });
+      const rust = new THREE.MeshStandardMaterial({ color: 0x7c2d12, roughness: 0.95, metalness: 0.2 });
+      const rubber = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.95 });
+      const buildWreckedTank = (x, z, ry) => {
+        const g = new THREE.Group();
+        const hull = box(4.6, 1.1, 2.6, armor, 0, 0.9, 0); g.add(hull);
+        g.add(box(4.8, 0.3, 2.9, rust, 0, 0.4, 0));
+        [-1, 1].forEach(s => { const track = box(4.8, 0.8, 0.5, rubber, 0, 0.45, s * 1.45); g.add(track); for (let i = 0; i < 5; i++) { const wheel = cyl(0.36, 0.36, 0.52, rubber, -1.8 + i * 0.9, 0.42, s * 1.45, 'z'); g.add(wheel); } });
+        const turret = cyl(1.0, 1.15, 0.7, armor, -0.3, 1.8, 0); g.add(turret);
+        const barrel = cyl(0.11, 0.13, 3.2, armor, 1.6, 1.9, 0.0, 'x'); barrel.rotation.z = -0.15; g.add(barrel);
+        const hatch = cyl(0.3, 0.3, 0.1, rust, -0.5, 2.2, 0.3); hatch.rotation.x = 0.6; g.add(hatch);
+        // 破損：缺角、焦黑、散落零件
+        g.add(box(0.8, 0.5, 0.8, rust, 2.0, 1.4, -0.8));
+        for (let i = 0; i < 5; i++) { const sc = box(0.3 + Math.random() * 0.3, 0.12, 0.25, rust, 2.8 + Math.random() * 1.2, 0.06, (Math.random() - 0.5) * 3); sc.rotation.y = Math.random() * 3; g.add(sc); }
+        const smoke = new THREE.Mesh(new THREE.SphereGeometry(0.5, 10, 10), new THREE.MeshBasicMaterial({ color: 0x334155, transparent: true, opacity: 0.35, depthWrite: false }));
+        smoke.position.set(-0.3, 2.9, 0); g.add(smoke); g.userData.smoke = smoke;
+        g.position.set(x, 0, z); g.rotation.y = ry;
+        g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+        scene.add(g);
+        // 碰撞：以世界 AABB 註冊 (車身 + 砲塔)，車身頂可站
+        addMeshBox(hull); addMeshBox(turret, { walkTop: false });
+        coverBoxes.push({ x, z, radius: 3.6, label: '報廢戰車' });
+        return g;
+      };
+      buildWreckedTank(-11, -17, 0.5);
+      buildWreckedTank(11, 17, -2.4);
+
+      const buildBarbedWire = (x1, z1, x2, z2) => {
+        const len = Math.hypot(x2 - x1, z2 - z1), ang = Math.atan2(x2 - x1, z2 - z1);
+        const g = new THREE.Group();
+        const wireMat = new THREE.MeshStandardMaterial({ color: 0x9ca3af, metalness: 0.9, roughness: 0.35 });
+        const n = Math.floor(len / 0.45);
+        for (let i = 0; i < n; i++) {
+          const ring = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.018, 6, 20), wireMat);
+          ring.position.set(0, 0.45, -len / 2 + i * 0.45 + 0.2); ring.rotation.y = Math.PI / 2 + (i % 2) * 0.35; g.add(ring);
+          for (let k = 0; k < 4; k++) { const barb = box(0.05, 0.05, 0.02, wireMat, Math.cos(k * 1.57) * 0.42, 0.45 + Math.sin(k * 1.57) * 0.42, -len / 2 + i * 0.45 + 0.2); barb.rotation.z = 0.8; g.add(barb); }
+        }
+        for (let i = 0; i <= Math.floor(len / 2); i++) { const post = cyl(0.03, 0.03, 0.95, new THREE.MeshStandardMaterial({ color: 0x0f172a }), 0, 0.47, -len / 2 + i * 2); g.add(post); const cross = box(0.06, 0.02, 0.9, wireMat, 0, 0.25, -len / 2 + i * 2); cross.rotation.z = 0.35; g.add(cross); }
+        const sign = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.3), new THREE.MeshBasicMaterial({ map: makeLabelTexture('⚠ 鐵絲網', '#facc15', '#111827', 40), side: THREE.DoubleSide }));
+        sign.position.set(0, 0.95, -len / 2 + 0.3); g.add(sign);
+        g.position.set((x1 + x2) / 2, 0, (z1 + z2) / 2); g.rotation.y = ang;
+        scene.add(g);
+        // 傷害區：寬 1.2m 帶狀 (不阻擋移動，靠近就扣血)
+        const minX = Math.min(x1, x2) - 0.6, maxX = Math.max(x1, x2) + 0.6, minZ = Math.min(z1, z2) - 0.6, maxZ = Math.max(z1, z2) + 0.6;
+        hazards.push({ minX, maxX, minZ, maxZ, dps: 8, label: '鐵絲網' });
+        addBox(minX, maxX, 0, 0.9, minZ, maxZ, { blocksMove: false, blocksBullets: false });
+      };
+      buildBarbedWire(-10, 18, -3, 18);
+      buildBarbedWire(3, -18, 10, -18);
+      buildBarbedWire(-26, -8, -26, -1);
+      buildBarbedWire(26, 1, 26, 8);
+    }
+
+    let hazardTick = 0;
+    function updateHazards(delta) {
+      if (playerState.isSpectating || isInvulnerable()) return;
+      const px = playerGroup.position.x, pz = playerGroup.position.z;
+      let inHazard = null;
+      for (const h of hazards) if (px > h.minX && px < h.maxX && pz > h.minZ && pz < h.maxZ && playerFeetY < 1.0) { inHazard = h; break; }
+      if (!inHazard) { hazardTick = 0; return; }
+      hazardTick += delta;
+      if (hazardTick >= 0.5) {
+        hazardTick = 0;
+        lastDamageSource = { name: inHazard.label, team: playerState.team };
+        receiveDamage(Math.round(inHazard.dps * 0.5));
+        showScreenPaint('#ef4444');
+        const fb = document.getElementById('pickup-feedback'); fb.innerText = `⚠️ 被${inHazard.label}劃傷！快離開`; fb.style.opacity = '1'; setTimeout(() => fb.style.opacity = '0', 600);
+      }
+      // AI 也會被鐵絲網傷害 (權威端)
+      if (isAIAuthority()) aiEnemies.forEach(ai => { if (ai.state === 'DEAD') return; for (const h of hazards) if (ai.mesh.position.x > h.minX && ai.mesh.position.x < h.maxX && ai.mesh.position.z > h.minZ && ai.mesh.position.z < h.maxZ) { ai.hp = Math.max(0, ai.hp - h.dps * delta); ai.hpMesh.scale.x = Math.max(0.001, ai.hp / ai.maxHp); if (ai.hp <= 0) killAI(ai, '鐵絲網', 0, '鐵絲網'); } });
+    }
+
+    // ---- 重生無敵 10 秒 (#2) ----
+    playerState.invulnUntil = 0;
+    function isInvulnerable() { return performance.now() < playerState.invulnUntil; }
+    function grantInvulnerability(seconds) {
+      playerState.invulnUntil = performance.now() + seconds * 1000;
+      playerVelY = 5.2; playerGrounded = false;   // 重生跳一下
+      const el = document.getElementById('invuln-tag'); if (el) el.classList.remove('hidden');
+    }
+    function updateInvulnerability(now) {
+      const el = document.getElementById('invuln-tag');
+      const inv = isInvulnerable();
+      if (el) {
+        el.classList.toggle('hidden', !inv);
+        if (inv) { const left = Math.ceil((playerState.invulnUntil - now) / 1000); el.innerText = `🛡️ 重生無敵 ${left}s（不能開槍也不會受傷，快找掩護）`; el.style.opacity = (Math.floor(now / 150) % 2) ? '1' : '0.35'; }
+      }
+      if (weaponMesh && !isAimingADS) weaponMesh.visible = inv ? (Math.floor(now / 150) % 2 === 0) : true;
+      // 其他玩家 / AI 端：無敵者閃爍
+      for (const uid in remotePlayers) { const rp = remotePlayers[uid]; if (rp.alive !== false) rp.mesh.visible = rp.inv ? (Math.floor(now / 150) % 2 === 0) : true; }
+    }
+
+    // ---- 遊戲結束流程 (#4)：先宣布，再結算 ----
+    let endBannerTimer = null;
+    function announceMatchEnd(isWinner, message, winnerTeam) {
+      if (isRoundEnded) return;
+      isRoundEnded = true;
+      const banner = document.getElementById('match-end-banner');
+      if (banner) {
+        banner.innerHTML = `<div class="text-3xl font-black">${isWinner ? '🏆 遊戲結束 — 我方獲勝！' : '🏁 遊戲結束 — 敵方獲勝'}</div><div class="text-sm mt-1">${message || ''}</div><div class="text-xs text-slate-300 mt-2">3 秒後顯示結算畫面…</div>`;
+        banner.className = `absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 px-10 py-6 rounded-3xl text-center text-white shadow-2xl border-2 ${isWinner ? 'bg-amber-600/90 border-amber-300' : 'bg-slate-800/95 border-slate-500'}`;
+        banner.classList.remove('hidden');
+      }
+      AudioEngine.playCountdownBeep(true);
+      clearTimeout(endBannerTimer);
+      endBannerTimer = setTimeout(() => { if (banner) banner.classList.add('hidden'); isRoundEnded = false; triggerMatchEnd(isWinner, message); }, 3000);
+    }
+    function endRoundByTime() {
+      const teamKills = [0, 0];
+      Object.values(scoreboard).forEach(s => { if (s.team === 0 || s.team === 1) teamKills[s.team] += s.kills; });
+      const my = scoreEntry(playerState.name, playerState.team).kills;
+      const win = teamKills[playerState.team] > teamKills[1 - playerState.team] || (teamKills[0] === teamKills[1] && my > 0);
+      announceMatchEnd(win, `⏰ 回合時間到！藍隊 ${teamKills[0]} 殺 vs 紅隊 ${teamKills[1]} 殺`);
+    }
+
+    // ---- 準備階段 10 秒 + 戰術投票 (#5) ----
+    const TACTICS = [
+      { code: 'left', name: '🡄 搶左邊據點', desc: '全隊由西側房屋推進' },
+      { code: 'right', name: '🡆 搶右邊據點', desc: '全隊由東側房屋推進' },
+      { code: 'rush', name: '⚡ 全軍往前衝', desc: '不管掩體直接壓上去' },
+      { code: 'center', name: '◎ 中央集中', desc: '守住中央掩體群與 C4' },
+      { code: 'solo', name: '🐺 自生自滅', desc: '各自發揮，自由行動' }
+    ];
+    let prepActive = false, prepTimer = 0;
+    const tacticVotes = { 0: {}, 1: {} };   // team -> { name: tacticCode }
+    let myVote = null;
+    function startPrepPhase(seconds) {
+      prepActive = true; prepTimer = seconds || 10;
+      tacticVotes[0] = {}; tacticVotes[1] = {}; myVote = null;
+      const panel = document.getElementById('prep-panel');
+      if (!panel) return;
+      panel.classList.remove('hidden');
+      document.getElementById('prep-options').innerHTML = TACTICS.map(t => `<button class="prep-vote w-full text-left px-3 py-2 rounded-xl border border-slate-600 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white" data-t="${t.code}"><div>${t.name}</div><div class="text-[10px] text-slate-400">${t.desc}</div><div class="text-[10px] text-emerald-300" id="votes-${t.code}"></div></button>`).join('');
+      panel.querySelectorAll('.prep-vote').forEach(b => b.addEventListener('click', () => castVote(b.getAttribute('data-t'))));
+      renderVotes();
+      // AI 隊伍隨機表態
+      if (aiEnabled && isAIAuthority()) { const t = TACTICS[Math.floor(Math.random() * TACTICS.length)]; tacticVotes[1]['🤖 AI 小隊'] = t.code; }
+    }
+    function castVote(code) {
+      myVote = code;
+      tacticVotes[playerState.team][playerState.name] = code;
+      Net.sendVote(code);
+      renderVotes();
+    }
+    function renderVotes() {
+      const my = tacticVotes[playerState.team] || {};
+      TACTICS.forEach(t => {
+        const voters = Object.keys(my).filter(n => my[n] === t.code);
+        const el = document.getElementById(`votes-${t.code}`);
+        if (el) el.innerText = voters.length ? `${voters.length} 票：${voters.join('、')}` : '';
+        const btn = document.querySelector(`.prep-vote[data-t="${t.code}"]`);
+        if (btn) btn.classList.toggle('ring-2', myVote === t.code);
+      });
+    }
+    function winningTactic(team) {
+      const v = tacticVotes[team] || {}; const count = {};
+      Object.values(v).forEach(c => { count[c] = (count[c] || 0) + 1; });
+      let best = null, bestN = 0;
+      Object.keys(count).forEach(c => { if (count[c] > bestN) { bestN = count[c]; best = c; } });
+      return TACTICS.find(t => t.code === best) || null;
+    }
+    function updatePrepPhase(delta) {
+      if (!prepActive) return;
+      prepTimer -= delta;
+      const t = document.getElementById('prep-timer'); if (t) t.innerText = Math.max(0, Math.ceil(prepTimer));
+      if (prepTimer <= 0) {
+        prepActive = false;
+        document.getElementById('prep-panel').classList.add('hidden');
+        const mine = winningTactic(playerState.team);
+        const tag = document.getElementById('tactic-tag');
+        if (tag) { tag.innerText = mine ? `戰術：${mine.name}` : '戰術：自由行動'; tag.classList.remove('hidden'); }
+        addKillFeed(mine ? `📣 本隊戰術決定：${mine.name}` : '📣 本隊無共識，自由行動', '#a78bfa');
+        AudioEngine.playCountdownBeep(true);
+      } else if (Math.ceil(prepTimer) !== Math.ceil(prepTimer + delta)) AudioEngine.playCountdownBeep(false);
+    }
+
+    // ---- 搶旗模式 (#6)：站在敵旗下 15 秒獲勝 ----
+    const CTF_TIME = 15, CTF_RADIUS = 2.6, CTF_RECOVER = 5;
+    const ctfState = { progress: 0, enemyProgressSeen: 0 };
+    function updateCTF(delta) {
+      if (gameModeSetting !== 'ctf' || isRoundEnded) { const bar = document.getElementById('ctf-bar-box'); if (bar) bar.classList.add('hidden'); return; }
+      const enemyFlag = teamFlags[1 - playerState.team];
+      const myFlag = teamFlags[playerState.team];
+      if (!enemyFlag) return;
+      const d = Math.hypot(playerGroup.position.x - enemyFlag.x, playerGroup.position.z - enemyFlag.z);
+      const capturing = d < CTF_RADIUS && !playerState.isSpectating && playerFeetY < 1.0;
+      if (capturing) ctfState.progress = Math.min(CTF_TIME, ctfState.progress + delta);
+      else ctfState.progress = Math.max(0, ctfState.progress - delta * (CTF_TIME / CTF_RECOVER));   // 離開 / 死亡：5 秒內慢慢回復
+      // 我方隊友的進度 (取最大)
+      let teamProgress = ctfState.progress;
+      for (const uid in remotePlayers) { const rp = remotePlayers[uid]; if (rp.team === playerState.team && rp.cap > teamProgress) teamProgress = rp.cap; }
+      // 敵方對我方旗子的進度
+      let enemyProgress = 0;
+      for (const uid in remotePlayers) { const rp = remotePlayers[uid]; if (rp.team !== playerState.team && rp.cap > enemyProgress) enemyProgress = rp.cap; }
+      animateFlag(enemyFlag, teamProgress, playerState.team);
+      animateFlag(myFlag, enemyProgress, 1 - playerState.team);
+      const box = document.getElementById('ctf-bar-box');
+      if (box) {
+        box.classList.toggle('hidden', !(teamProgress > 0 || enemyProgress > 0));
+        document.getElementById('ctf-bar-fill').style.width = `${(teamProgress / CTF_TIME) * 100}%`;
+        document.getElementById('ctf-bar-text').innerText = capturing ? `🚩 佔領敵旗中 ${teamProgress.toFixed(1)} / ${CTF_TIME}s` : (enemyProgress > 0 ? `⚠️ 敵人正在佔領我方旗幟 ${enemyProgress.toFixed(1)}s！` : `🚩 旗幟回復中 ${teamProgress.toFixed(1)}s`);
+      }
+      if (ctfState.progress >= CTF_TIME) {
+        Net.sendMatchEnd(playerState.team, `🚩 ${playerState.name} 佔領了敵方旗幟！`);
+        announceMatchEnd(true, `🚩 你佔領了敵方旗幟！`, playerState.team);
+      }
+    }
+    function animateFlag(flagObj, progress, capturerTeam) {
+      if (!flagObj) return;
+      const t = Math.max(0, Math.min(1, progress / CTF_TIME));
+      flagObj.mesh.position.y = flagObj.baseY - t * 4.2;   // 15 秒內降下
+      const team = TEAM_COLORS[currentTeamColorKey] || TEAM_COLORS.blue_red;
+      const capColor = new THREE.Color(capturerTeam === 0 ? team.allyColor : team.enemyColor);
+      flagObj.mesh.material.color.copy(new THREE.Color(flagObj.color)).lerp(capColor, t);
+    }
+
+    /* =========================================================================
        10. 傷害判定、65% 鋼片減傷數學模型 (#14) 與 換彈動作 (#12)
        ========================================================================= */
     function receiveDamage(amount) {
       if (!isGameRunning || playerState.isSpectating) return;
+      if (isInvulnerable() || prepActive) return;   // 重生無敵 / 準備階段不受傷 (#2 #5)
 
       let dmgToHP = amount;
       let dmgToArmor = 0;
@@ -4651,8 +4917,8 @@
       const myTeamAlive = (!playerState.out) || rps.some(r => r.team === playerState.team && !r.out);
       const enemies = rps.filter(r => r.team !== playerState.team);
       const enemyAlive = enemies.some(r => !r.out) || (aiEnabled && aiEnemies.some(a => a.state !== 'DEAD'));
-      if (!myTeamAlive) triggerMatchEnd(false, "我方全員生命用盡，防線失守！");
-      else if (enemies.length > 0 && !enemyAlive) triggerMatchEnd(true, "敵方全員生命用盡，戰鬥勝利！");
+      if (!myTeamAlive) announceMatchEnd(false, "我方全員生命用盡，防線失守！");
+      else if (enemies.length > 0 && !enemyAlive) announceMatchEnd(true, "敵方全員生命用盡，戰鬥勝利！");
     }
 
     document.getElementById('btn-force-end').addEventListener('click', () => {
@@ -4665,8 +4931,10 @@
       updateHealthUI();
       resetLoadout();
 
-      // 在我方藍方基地旗幟旁重生 (#9)
+      // 在我方基地旗幟旁重生 + 跳一下 + 10 秒無敵 (#2)
       spawnAtOwnBase();
+      grantInvulnerability(10);
+      ctfState.progress = 0;
 
       updateAmmoUI();
 
@@ -4754,9 +5022,12 @@
       pickupItems.slice().forEach(p => { if (p.dynamic) { scene.remove(p.group); pickupItems.splice(pickupItems.indexOf(p), 1); } else { p.isAvailable = true; p.group.visible = true; p.respawnTimer = 0; } });
 
       updateAmmoUI();
+      ctfState.progress = 0;
+      document.getElementById('tactic-tag').classList.add('hidden');
 
       initEnemies();
       isGameRunning = true;
+      startPrepPhase(10);   // 再來一場：10 秒準備 + 戰術投票 (#5)
     }
 
     btnRematch.addEventListener('click', () => {
@@ -5151,6 +5422,15 @@
       tabCoop.className = "flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition";
     });
 
+    const tabCtf = document.getElementById('tab-mode-ctf');
+    const allTabs = [tabPvp, tabCoop, tabSolo, tabCtf];
+    tabCtf.addEventListener('click', () => {
+      gameModeSetting = 'ctf';
+      aiEnabled = false;
+      allTabs.forEach(t => t.className = "flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition");
+      tabCtf.className = "flex-1 py-2 rounded-xl text-xs font-black transition bg-emerald-500 text-slate-950 shadow";
+    });
+    [tabPvp, tabCoop, tabSolo].forEach(t => t.addEventListener('click', () => { tabCtf.className = "flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition"; }));
     document.getElementById('btn-reroll-characters').addEventListener('click', generateChibiRoster);
     document.getElementById('btn-refresh-rooms').addEventListener('click', () => RoomRegistry.scanRooms());
 
@@ -5165,7 +5445,8 @@
       document.getElementById('hud-team-tag').style.color = hex6(playerState.paintColor);
       document.getElementById('btn-close-room').innerText = Net.isHost ? '🚪 關閉房間' : '🚪 離開房間';
       document.getElementById('hud-room-tag').innerText = `房號: ${Net.roomCode}`;
-      document.getElementById('hud-mode-text').innerText = (gameModeSetting === 'pvp') ? '純 PvP 對決' : '打 AI 模式';
+      document.getElementById('hud-mode-text').innerText = (gameModeSetting === 'ctf') ? '🚩 搶旗 (站敵旗下 15s)' : ((gameModeSetting === 'pvp') ? '純 PvP 對決' : '打 AI 模式');
+      ctfState.progress = 0;
       isGameRunning = true;
       initEnemies();
     }
@@ -5249,6 +5530,8 @@
       }
       rp.alive = data.alive !== false;
       rp.out = !!data.out;
+      rp.inv = !!data.inv;
+      rp.cap = data.cap || 0;
       if (rp.out && !rp._outChecked) { rp._outChecked = true; checkRoundVictoryCondition(); }
       rp.mesh.visible = rp.alive;
       rp.mesh.position.set(data.x, data.y, data.z);
@@ -5310,7 +5593,7 @@
       if (it && it.isAvailable) { it.respawnTime = (data.respawnTime !== undefined) ? data.respawnTime : it.respawnTime; consumePickup(it, false); }
     };
     Net.onDropEvent = (data) => { if (data.drop) spawnDroppedItem(data.drop, false); };
-    Net.onRoundTick = (data) => { if (data.roundMode) roundModeSetting = data.roundMode; if (typeof data.roundRemaining === 'number' && Math.abs(roundRemainingTime - data.roundRemaining) > 1.5) roundRemainingTime = data.roundRemaining; };
+    Net.onRoundTick = (data) => { if (data.ended && !isRoundEnded && isGameRunning && roundModeSetting !== 'elimination' && roundRemainingTime < 8) { roundRemainingTime = 0; endRoundByTime(); } if (data.roundMode) roundModeSetting = data.roundMode; if (typeof data.roundRemaining === 'number' && Math.abs(roundRemainingTime - data.roundRemaining) > 1.5) roundRemainingTime = data.roundRemaining; };
     Net.onRoundSync = (data) => { if (data.respawnMode) respawnModeSetting = data.respawnMode; if (data.maxLives) maxLives = data.maxLives; playerState.lives = maxLives; updateRuleTag(); if (data.roundMode) roundModeSetting = data.roundMode; if (typeof data.roundRemaining === 'number') roundRemainingTime = data.roundRemaining; if (data.teamColorKey) currentTeamColorKey = data.teamColorKey; if (data.gameMode) gameModeSetting = data.gameMode; };
     Net.onRoomInfo = (info) => {
       clearTimeout(window.__roomInfoTimeout);
@@ -5321,6 +5604,8 @@
         Net.sendHello(team);
       });
     };
+    Net.onVoteEvent = (data) => { tacticVotes[data.team] = tacticVotes[data.team] || {}; tacticVotes[data.team][data.name] = data.tactic; renderVotes(); };
+    Net.onMatchEndEvent = (data) => { announceMatchEnd(data.winnerTeam === playerState.team, data.message, data.winnerTeam); };
     Net.onRoster = (roster) => { Object.values(roster).forEach(r => scoreEntry(r.name, r.team)); renderScoreboard(); };
     Net.onKillEvent = (data) => { if (data.victimUid !== Net.myId) recordKill(data.killer, data.killerTeam, data.victim, data.victimTeam); };
     Net.onShotEvent = (data) => {
@@ -5532,13 +5817,7 @@
         const secs = Math.floor(Math.max(0, roundRemainingTime) % 60);
         document.getElementById('round-timer').innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         updateRoundCountdown();
-        if (roundRemainingTime <= 0) {
-          const my = scoreEntry(playerState.name, playerState.team).kills;
-          const teamKills = [0, 0];
-          Object.values(scoreboard).forEach(s => { teamKills[s.team] += s.kills; });
-          const win = teamKills[playerState.team] > teamKills[1 - playerState.team] || (teamKills[0] === teamKills[1] && my > 0);
-          triggerMatchEnd(win, `⏰ 回合時間到！藍隊 ${teamKills[0]} 殺 vs 紅隊 ${teamKills[1]} 殺`);
-        }
+        if (roundRemainingTime <= 0) endRoundByTime();
       }
 
       // 2. C4 倒數 (#16)
@@ -5560,9 +5839,15 @@
         }
       }
 
-      // 3. 開火 (滑鼠 / F 鍵 / Enter / 觸控按鈕 #15)
+      // v6.3 階段系統：準備投票 / 無敵 / 鐵絲網 / 搶旗
+      updatePrepPhase(delta);
+      updateInvulnerability(now);
+      updateHazards(delta);
+      updateCTF(delta);
+
+      // 3. 開火 (滑鼠 / F 鍵 / Enter / 觸控按鈕 #15)；準備階段與無敵時間不能開槍
       if (weaponSwitchLock > 0) { weaponSwitchLock -= delta; weaponMesh.position.y += (-0.22 - weaponMesh.position.y) * 0.25; }
-      else if ((isFiring || keysDown['KeyF'] || keysDown['Enter'] || keysDown['ControlLeft']) && !playerState.isSpectating) shootWeapon();
+      else if ((isFiring || keysDown['KeyF'] || keysDown['Enter'] || keysDown['ControlLeft']) && !playerState.isSpectating && !prepActive && !isInvulnerable()) shootWeapon();
 
       // 4. 移動 / 跳躍 / 重力
       let fx = moveInput.forward, rx = moveInput.right;
@@ -5571,6 +5856,7 @@
       if (keysDown['KeyA'] || keysDown['ArrowLeft']) rx -= 1;
       if (keysDown['KeyD'] || keysDown['ArrowRight']) rx += 1;
       fx = Math.max(-1, Math.min(1, fx)); rx = Math.max(-1, Math.min(1, rx));
+      if (prepActive) { fx = 0; rx = 0; }   // 準備階段 10 秒不能移動 (#5)
       const moveSpeed = (isCovered || isCrouched) ? 3.2 : (isAimingADS ? 4.2 : 6.6);
       const isMoving = (fx !== 0 || rx !== 0);
 
@@ -5745,7 +6031,9 @@
           name: playerState.name, team: playerState.team, paint: playerState.paintColor, hp: playerState.hp, alive: !playerState.isSpectating, out: playerState.out,
           style: playerState.style,
           spec: playerState.spec ? { style: playerState.spec.style, animal: playerState.spec.animal, skin: playerState.spec.skin, accent: playerState.spec.accent, eyeColor: playerState.spec.eyeColor, expression: playerState.spec.expression } : null,
-          crouch: isCrouched || isCovered
+          crouch: isCrouched || isCovered,
+          inv: isInvulnerable() ? 1 : 0,
+          cap: ctfState.progress > 0 ? +ctfState.progress.toFixed(2) : 0
         });
       }
 
@@ -5997,6 +6285,7 @@
         isReloading = false; if (reloadTimerHandle) { clearInterval(reloadTimerHandle); reloadTimerHandle = null; }
 
         // T21 二樓跳下扣血
+        aiEnemies.forEach(e => scene.remove(e.mesh)); aiEnemies.length = 0; aiEnabled = false; projectiles.length = 0;
         playerState.hp = 100; playerState.armor = 0; updateHealthUI();
         teleport(-11.0, 0, 0, 3.4); // 屋頂外緣上空 → 自由落體
         frame(90);
@@ -6058,6 +6347,43 @@
         teleport(0, 20, 0, 0); keysDown['KeyW'] = true; frame(30); keysDown['KeyW'] = false;
         log('T29 死亡後離開再加入：不再觀戰、可以移動、血量滿', wasSpectating && !playerState.isSpectating && playerGroup.position.z < 19 && playerState.hp === 100 && !isRoundEnded, `spectating=${playerState.isSpectating} z=${playerGroup.position.z.toFixed(2)} hp=${playerState.hp}`);
         maxLives = 5; playerState.lives = 5; updateRuleTag();
+
+        // T30 鐵絲網傷害
+        playerState.hp = 100; playerState.invulnUntil = 0; updateHealthUI(); isRoundEnded = false; isGameRunning = true;
+        teleport(-6.5, 18, 0, 0); frame(70);
+        log('T30 靠近鐵絲網會受傷 (#3)', playerState.hp < 100 && hazards.length >= 4 && obstacles.length > 134, `hp=${playerState.hp} hazards=${hazards.length}`);
+
+        // T31 重生無敵：不受傷、不能開槍、會跳
+        playerState.hp = 100; updateHealthUI(); teleport(0, 20, 0, 0);
+        grantInvulnerability(10); const jumped = playerVelY > 0;
+        receiveDamage(50); const hpInv = playerState.hp;
+        currentWeapon.ammoInClip = 10; isFiring = true; frame(20); isFiring = false; const ammoInv = currentWeapon.ammoInClip;
+        log('T31 重生 10 秒無敵：跳一下、不受傷、不能開槍 (#2)', jumped && hpInv === 100 && ammoInv === 10 && isInvulnerable(), `hp=${hpInv} ammo=${ammoInv}`);
+        playerState.invulnUntil = 0;
+
+        // T32 準備階段：不能動、投票、結束後可動
+        teleport(0, 20, 0, 0); startPrepPhase(2); castVote('center');
+        keysDown['KeyW'] = true; frame(30); const zFrozen = playerGroup.position.z;
+        frame(100); frame(30); keysDown['KeyW'] = false;
+        log('T32 再來一場：10 秒準備不能動 + 戰術投票，倒數後解除 (#5)', Math.abs(zFrozen - 20) < 0.05 && playerGroup.position.z < 19 && !prepActive && winningTactic(playerState.team) && winningTactic(playerState.team).code === 'center', `frozenZ=${zFrozen.toFixed(2)} after=${playerGroup.position.z.toFixed(2)} tactic=${winningTactic(playerState.team).name}`);
+
+        // T33 搶旗：站敵旗下進度累積、旗幟下降、離開回復
+        gameModeSetting = 'ctf'; isRoundEnded = false; ctfState.progress = 0;
+        const ef = teamFlags[1]; teleport(0.5, -28.5, 0, 0); frame(180);
+        const prog3 = ctfState.progress, flagY = ef.mesh.position.y;
+        teleport(0, 0, 0, 0); frame(60); const progAfter = ctfState.progress;
+        log('T33 搶旗：站敵旗下 3 秒進度≈3、旗幟下降；離開 1 秒回復 (#6)', prog3 > 2.5 && prog3 < 3.5 && flagY < ef.baseY - 0.5 && progAfter < prog3 - 1.5, `progress=${prog3.toFixed(1)} flagY=${flagY.toFixed(2)} after=${progAfter.toFixed(1)}`);
+        let ended = false; const origAnnounce = announceMatchEnd; announceMatchEnd = (w, m) => { ended = true; isRoundEnded = true; };
+        teleport(0.5, -28.5, 0, 0); ctfState.progress = 14.5; frame(60);
+        log('T33b 搶旗 15 秒達成 → 宣布結束', ended, 'ok');
+        announceMatchEnd = origAnnounce; gameModeSetting = 'pvp'; isRoundEnded = false; ctfState.progress = 0; animateFlag(ef, 0, 0);
+
+        // T34 時間到 → 先宣布 3 秒 → 結算
+        roundModeSetting = '180'; roundRemainingTime = 0.5; isRoundEnded = false; isGameRunning = true;
+        frame(40);
+        const bannerShown = !document.getElementById('match-end-banner').classList.contains('hidden');
+        log('T34 倒數歸零會結束：先顯示宣告橫幅，3 秒後進結算 (#1 #4)', isRoundEnded && bannerShown, `ended=${isRoundEnded} banner=${bannerShown}`);
+        clearTimeout(endBannerTimer); document.getElementById('match-end-banner').classList.add('hidden'); isRoundEnded = false; roundRemainingTime = 9999;
 
         const passed = R.filter(Boolean).length;
         console.log(`[AUTOTEST] SUMMARY ${passed}/${R.length} PASSED`);
