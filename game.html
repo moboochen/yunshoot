@@ -8,7 +8,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="現代突擊3D">
-  <title>Q版特種部隊：現代突擊 3D v6.1 - 跨平台電競對戰</title>
+  <title>Q版特種部隊：現代突擊 3D v6.2 - 跨平台電競對戰</title>
   <!-- Tailwind CSS (支援 Jetski 官方與外部 CDN) -->
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -304,7 +304,7 @@
         <span>●</span> WebRTC P2P + 本地雙通道零延遲連線架構
       </div>
       <h1 class="text-2xl sm:text-3xl font-black tracking-wider text-white mb-1">
-        Q版特種部隊：現代突擊 3D v6.1
+        Q版特種部隊：現代突擊 3D v6.2
       </h1>
       <p class="text-xs text-slate-400 mb-4 font-medium">支援 iPad 觸控手勢與電腦 PC 鍵鼠同場競技 ｜ 藍天白雲雙層 CQB 戰場</p>
 
@@ -1127,6 +1127,8 @@
       heartbeatTimer: null,
 
       initHost: function(roomCode, onReady, onFail) {
+        for (const id in this.connections) { try { this.connections[id].close(); } catch (e) {} }
+        this.connections = {};
         this.roomCode = (roomCode || '8888').toUpperCase().trim();
         this.isHost = true;
         this.myId = "QFORCE3D_" + this.roomCode + "_HOST";
@@ -1135,6 +1137,8 @@
       },
 
       initJoin: function(roomCode, onReady, onFail) {
+        for (const id in this.connections) { try { this.connections[id].close(); } catch (e) {} }
+        this.connections = {};
         this.roomCode = (roomCode || '8888').toUpperCase().trim();
         this.isHost = false;
         this.myId = "QFORCE3D_" + this.roomCode + "_" + Math.floor(Math.random() * 89999 + 10000);
@@ -4288,8 +4292,41 @@
       if (teamSel) teamSel.addEventListener('change', () => { playerState.teamPref = teamSel.value; });
     }
 
+    // 進入世界前把上一場留下的狀態全部清乾淨 (觀戰旗標、生命值、掩體/蹲姿、炸彈、子彈、按鍵)
+    function resetPlayerForNewMatch() {
+      playerState.isSpectating = false;
+      playerState.out = false;
+      playerState.hp = playerState.maxHp = 100;
+      playerState.armor = 0;
+      playerState.kills = 0; playerState.totalHits = 0; playerState.armorAbsorbed = 0;
+      playerState.hasBomb = false;
+      isRoundEnded = false;
+      isCrouched = false; isCovered = false; isPeeking = false; peekDirection = 0; activeCoverBox = null;
+      isFiring = false; isReloading = false;
+      for (const k in keysDown) keysDown[k] = false;
+      moveInput.forward = 0; moveInput.right = 0;
+      spectatorViewIndex = 0;
+      camera.rotation.z = 0; camera.position.set(0, 0, 0);
+      if (weaponMesh) { weaponMesh.visible = true; weaponMesh.rotation.z = 0; }
+      document.getElementById('crosshair').classList.remove('hidden');
+      spectatorBanner.classList.add('hidden');
+      document.getElementById('game-over-modal').classList.add('hidden');
+      document.getElementById('bomb-status-bar').classList.add('hidden');
+      btnPlantBomb.classList.add('hidden');
+      bombState.isPlanted = false;
+      if (bombState.mesh) { scene.remove(bombState.mesh); bombState.mesh = null; }
+      projectiles.forEach(p => { scene.remove(p.mesh); scene.remove(p.trail); }); projectiles.length = 0;
+      document.getElementById('kills-count').innerText = '0';
+      const paintLayer = document.getElementById('screen-paint-layer'); if (paintLayer) paintLayer.innerHTML = '';
+      updateHealthUI();
+    }
+
     function returnToLobby(msg) {
       isGameRunning = false;
+      resetPlayerForNewMatch();
+      Net.roster = {};
+      pickupItems.slice().forEach(p => { if (p.dynamic) { scene.remove(p.group); pickupItems.splice(pickupItems.indexOf(p), 1); } else { p.isAvailable = true; p.group.visible = true; p.respawnTimer = 0; } });
+      document.getElementById('friends-count').innerText = '0';
       for (const uid in remotePlayers) { scene.remove(remotePlayers[uid].mesh); delete remotePlayers[uid]; }
       aiEnemies.forEach(a => scene.remove(a.mesh)); aiEnemies.length = 0;
       document.getElementById('game-over-modal').classList.add('hidden');
@@ -4699,9 +4736,8 @@
     });
 
     btnReturnLobby.addEventListener('click', () => {
-      gameOverModal.classList.add('hidden');
-      document.getElementById('lobby-modal').classList.remove('hidden');
-      isGameRunning = false;
+      Net.closeRoom();
+      returnToLobby();
     });
 
     /* =========================================================================
@@ -5091,6 +5127,7 @@
 
     function enterWorld() {
       lobbyModal.classList.add('hidden');
+      resetPlayerForNewMatch();
       resetLoadout();   // 起始只有手槍；確保不是開鏡狀態 (#10 #11)
       playerState.lives = maxLives; playerState.out = false; updateRuleTag();
       scoreEntry(playerState.name, playerState.team);
@@ -5173,6 +5210,7 @@
       // 隊伍或漆色改變時重建模型 (後加入者 / 換隊)
       if (rp && (rp.team !== team || rp.paint !== data.paint)) { scene.remove(rp.mesh); delete remotePlayers[data.sender]; rp = null; }
       if (!rp) {
+        for (const uid in remotePlayers) { if (uid !== data.sender && remotePlayers[uid].name === data.name && remotePlayers[uid].team === team) { scene.remove(remotePlayers[uid].mesh); delete remotePlayers[uid]; } }
         const spec = Object.assign(randomCharacterSpec(data.style), data.spec || {});
         rp = createChibiSoldierMesh(team === playerState.team, data.name, spec.style, spec, { teamIndex: team, paintHex: data.paint !== undefined ? hex6(data.paint) : undefined });
         rp.team = team; rp.paint = data.paint; rp.name = data.name; rp.uid = data.sender;
@@ -5982,6 +6020,15 @@
         respawnModeSetting = 'unlimited'; playerState.hp = 0; handlePlayerDeath();
         log('T28b 無限重生：死亡後直接復活', !playerState.isSpectating && playerState.hp === 100 && document.getElementById('rule-tag').innerText.includes('無限'), document.getElementById('rule-tag').innerText);
         respawnModeSetting = 'lives'; maxLives = 5; playerState.lives = 5; updateRuleTag();
+
+        // T29 死亡 → 離開房間 → 重新加入：可移動、狀態乾淨
+        respawnModeSetting = 'lives'; maxLives = 1; playerState.lives = 1; playerState.hp = 0; handlePlayerDeath();
+        const wasSpectating = playerState.isSpectating;
+        returnToLobby();
+        Net.roomCode = 'AUTOTEST'; aiEnabled = false; enterWorld();
+        teleport(0, 20, 0, 0); keysDown['KeyW'] = true; frame(30); keysDown['KeyW'] = false;
+        log('T29 死亡後離開再加入：不再觀戰、可以移動、血量滿', wasSpectating && !playerState.isSpectating && playerGroup.position.z < 19 && playerState.hp === 100 && !isRoundEnded, `spectating=${playerState.isSpectating} z=${playerGroup.position.z.toFixed(2)} hp=${playerState.hp}`);
+        maxLives = 5; playerState.lives = 5; updateRuleTag();
 
         const passed = R.filter(Boolean).length;
         console.log(`[AUTOTEST] SUMMARY ${passed}/${R.length} PASSED`);
