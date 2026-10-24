@@ -8,7 +8,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="現代突擊3D">
-  <title>Q版特種部隊：現代突擊 3D v6.0 - 跨平台電競對戰</title>
+  <title>Q版特種部隊：現代突擊 3D v6.1 - 跨平台電競對戰</title>
   <!-- Tailwind CSS (支援 Jetski 官方與外部 CDN) -->
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -166,6 +166,8 @@
       <div class="bg-slate-900/90 border border-slate-700 px-4 py-1.5 rounded-2xl backdrop-blur-md shadow-xl flex items-center gap-2.5">
         <span class="text-xs font-bold text-slate-400">⏱️ 回合時間</span>
         <span id="round-timer" class="text-base font-mono font-black text-amber-300">03:00</span>
+        <span class="text-slate-600">|</span>
+        <span id="rule-tag" class="text-xs font-black text-emerald-300">❤️ 5 / 5 條命</span>
       </div>
       <!-- C4 炸彈安裝警報 (紅光閃爍 15 秒) -->
       <div id="bomb-status-bar" class="hidden mt-1.5 px-3.5 py-1.5 rounded-xl bg-rose-600/95 border-2 border-rose-300 text-white text-xs font-black shadow-2xl animate-pulse-fast flex items-center gap-2">
@@ -236,10 +238,12 @@
         <button id="btn-toggle-ai" class="px-3 py-1.5 rounded-xl bg-violet-700/80 hover:bg-violet-600 border border-violet-400/50 text-xs font-black text-white shadow-lg active:scale-95 transition">🤖 AI 對手 [B]</button>
         <button id="btn-close-room" class="px-3 py-1.5 rounded-xl bg-rose-700/80 hover:bg-rose-600 border border-rose-400/50 text-xs font-black text-white shadow-lg active:scale-95 transition">🚪 關閉房間</button>
       </div>
-      <!-- 雙槍背包 (#17 #18) -->
-      <div id="weapon-slots" class="flex flex-col gap-1.5 items-end"></div>
+
     </div>
   </div>
+
+  <!-- 雙槍背包 (#17 #18)：右下角、避開最右側按鈕欄 -->
+  <div id="weapon-slots" class="absolute bottom-4 right-[88px] z-20 flex flex-col gap-1.5 items-end pointer-events-none"></div>
 
   <!-- 擊殺播報 (#23) -->
   <div id="kill-feed" class="absolute top-60 sm:top-64 left-3 z-20 flex flex-col gap-1 pointer-events-none w-80"></div>
@@ -278,7 +282,7 @@
     </div>
 
     <!-- 右側：單排動作按鈕欄 (貼齊最右邊，不遮槍 #19) -->
-    <div class="absolute top-1/2 -translate-y-1/2 right-2 flex flex-col items-center gap-1.5 pointer-events-auto">
+    <div class="absolute bottom-4 right-2 flex flex-col items-center gap-1.5 pointer-events-auto">
       <button id="btn-plant-bomb" class="hidden w-14 h-12 rounded-xl bg-gradient-to-r from-red-600 to-rose-700 text-white font-black text-[11px] shadow-xl active:scale-90 border border-rose-400/60 animate-pulse flex flex-col items-center justify-center"><span>💣 炸彈</span><span class="text-[9px] text-rose-200">[G]</span></button>
       <button id="btn-peek" class="hidden w-14 h-12 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-black text-[11px] shadow-xl active:scale-90 border border-purple-400/50 flex flex-col items-center justify-center"><span>👀 探頭</span><span class="text-[9px] text-purple-200">[Q·E]</span></button>
       <button id="btn-cover" class="hidden w-14 h-12 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 font-black text-[11px] shadow-xl active:scale-90 border border-amber-300 flex flex-col items-center justify-center"><span>🛡️ 掩體</span><span class="text-[9px] text-amber-950">[X]</span></button>
@@ -300,7 +304,7 @@
         <span>●</span> WebRTC P2P + 本地雙通道零延遲連線架構
       </div>
       <h1 class="text-2xl sm:text-3xl font-black tracking-wider text-white mb-1">
-        Q版特種部隊：現代突擊 3D v6.0
+        Q版特種部隊：現代突擊 3D v6.1
       </h1>
       <p class="text-xs text-slate-400 mb-4 font-medium">支援 iPad 觸控手勢與電腦 PC 鍵鼠同場競技 ｜ 藍天白雲雙層 CQB 戰場</p>
 
@@ -370,6 +374,16 @@
               <option value="gold_shadow">黃金基地 (我方) vs 暗影基地 (敵軍)</option>
               <option value="red_blue">紅方基地 (我方) vs 藍方基地 (敵軍)</option>
             </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-300 mb-1">重生規則 (房主設定)</label>
+            <div class="flex gap-2">
+              <select id="respawn-mode-select" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-emerald-300 focus:outline-none focus:border-emerald-500">
+                <option value="unlimited">♾️ 時間內無限重生 (比擊殺數)</option>
+                <option value="lives" selected>❤️ 限制生命數 (用完觀戰)</option>
+              </select>
+              <input type="number" id="lives-input" value="5" min="1" max="20" class="w-16 bg-slate-900 border border-slate-700 rounded-xl px-2 py-2 text-xs font-black text-rose-300 text-center" title="每人生命數">
+            </div>
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-300 mb-1">回合時間規則</label>
@@ -1214,7 +1228,7 @@
         this.roster[uid] = { name: data.name, team, paint, style: data.style, spec: data.spec };
         const payload = {
           type: 'welcome', target: uid, team, paint,
-          roundRemaining: roundRemainingTime, roundMode: roundModeSetting,
+          roundRemaining: roundRemainingTime, roundMode: roundModeSetting, respawnMode: respawnModeSetting, maxLives: maxLives,
           gameMode: gameModeSetting, aiEnabled: aiEnabled, teamColorKey: currentTeamColorKey,
           hostName: playerState.name, hostTeam: playerState.team, hostPaint: playerState.paintColor, hostStyle: playerState.style, hostSpec: playerState.spec,
           roster: this.roster, sender: this.myId,
@@ -1333,7 +1347,7 @@
         const register = () => {
           this.connections[conn.peer] = conn;
           if (this.isHost) {
-            conn.send({ type: 'round_sync', roundRemaining: roundRemainingTime, gameMode: gameModeSetting, teamColorKey: currentTeamColorKey, roundMode: roundModeSetting, sender: this.myId });
+            conn.send({ type: 'round_sync', roundRemaining: roundRemainingTime, gameMode: gameModeSetting, teamColorKey: currentTeamColorKey, roundMode: roundModeSetting, respawnMode: respawnModeSetting, maxLives: maxLives, sender: this.myId });
           }
         };
         if (conn.open) register(); else conn.on('open', register);
@@ -1686,6 +1700,8 @@
 
     // 回合時間規則變數
     let roundModeSetting = '180';
+    let respawnModeSetting = 'lives';   // 'unlimited' | 'lives'
+    let maxLives = 5;
     let roundRemainingTime = 180;
     let isRoundEnded = false;
 
@@ -3985,6 +4001,14 @@
     playerState.paintPref = null;
     playerState.hasLaser = false;
     playerState.deaths = 0;
+    playerState.lives = 5;
+    playerState.out = false;
+    function updateRuleTag() {
+      const el = document.getElementById('rule-tag');
+      if (!el) return;
+      el.innerText = respawnModeSetting === 'unlimited' ? '♾️ 無限重生' : `❤️ ${playerState.lives} / ${maxLives} 條命`;
+      el.className = 'text-xs font-black ' + (respawnModeSetting === 'unlimited' ? 'text-emerald-300' : (playerState.lives <= 1 ? 'text-rose-400 animate-pulse' : 'text-rose-300'));
+    }
 
     const TEAM_SPAWN = [{ x: 0, z: 28, yaw: 0 }, { x: 0, z: -28, yaw: Math.PI }];
     function teamSpawnPoint(team) {
@@ -4513,10 +4537,21 @@
       lastDamageSource = null;
       // 原地掉落手上的槍與破損護甲 (#8)
       dropDeathLoot(playerGroup.position.x, playerFeetY, playerGroup.position.z, currentWeapon, 100, true);
-      if (gameModeSetting === 'pvp' || roundModeSetting === 'elimination') {
-        enterSpectatorMode();
-      } else {
+      if (respawnModeSetting === 'unlimited') {
         respawnPlayer();
+        updateRuleTag();
+        addKillFeed('♻️ 無限重生：已於基地復活', '#34d399');
+        return;
+      }
+      playerState.lives = Math.max(0, playerState.lives - 1);
+      updateRuleTag();
+      if (playerState.lives > 0) {
+        respawnPlayer();
+        addKillFeed(`❤️ 剩餘 ${playerState.lives} / ${maxLives} 條命`, '#fb7185');
+      } else {
+        playerState.out = true;
+        addKillFeed('💀 生命用盡，進入觀戰', '#94a3b8');
+        enterSpectatorMode();
       }
     }
 
@@ -4545,14 +4580,13 @@
 
     function checkRoundVictoryCondition() {
       if (isRoundEnded) return;
-      if (gameModeSetting === 'pvp') {
-        const livingEnemies = Object.keys(remotePlayers).length;
-        if (playerState.hp <= 0) {
-          triggerMatchEnd(false, "特警小隊全員陣亡，防線失守！");
-        } else if (livingEnemies === 0 && !aiEnabled) {
-          triggerMatchEnd(true, "全殲敵方陣營，戰鬥勝利！");
-        }
-      }
+      // 生命制：我方全員生命用盡 → 戰敗；敵方全員用盡 (且無 AI) → 勝利
+      const rps = Object.values(remotePlayers);
+      const myTeamAlive = (!playerState.out) || rps.some(r => r.team === playerState.team && !r.out);
+      const enemies = rps.filter(r => r.team !== playerState.team);
+      const enemyAlive = enemies.some(r => !r.out) || (aiEnabled && aiEnemies.some(a => a.state !== 'DEAD'));
+      if (!myTeamAlive) triggerMatchEnd(false, "我方全員生命用盡，防線失守！");
+      else if (enemies.length > 0 && !enemyAlive) triggerMatchEnd(true, "敵方全員生命用盡，戰鬥勝利！");
     }
 
     document.getElementById('btn-force-end').addEventListener('click', () => {
@@ -4649,6 +4683,7 @@
       // 重生於我方基地內部 (#9)
       spawnAtOwnBase();
       resetLoadout();   // 重新開始：回到自己旗幟、只剩手槍 (#4)
+      playerState.lives = maxLives; playerState.out = false; updateRuleTag();
       Object.keys(scoreboard).forEach(k => { scoreboard[k].kills = 0; scoreboard[k].deaths = 0; });
       pickupItems.slice().forEach(p => { if (p.dynamic) { scene.remove(p.group); pickupItems.splice(pickupItems.indexOf(p), 1); } else { p.isAvailable = true; p.group.visible = true; p.respawnTimer = 0; } });
 
@@ -5057,6 +5092,7 @@
     function enterWorld() {
       lobbyModal.classList.add('hidden');
       resetLoadout();   // 起始只有手槍；確保不是開鏡狀態 (#10 #11)
+      playerState.lives = maxLives; playerState.out = false; updateRuleTag();
       scoreEntry(playerState.name, playerState.team);
       spawnAtOwnBase();
       document.getElementById('hud-team-tag').innerText = teamLabel(playerState.team) + ' ｜ 漆色 ' + (PAINT_NAMES[playerState.paintColor] || '');
@@ -5076,6 +5112,8 @@
       currentTeamColorKey = teamColorSelect.value;
       roundModeSetting = roundModeSelect.value;
       roundRemainingTime = (roundModeSetting === 'elimination') ? 9999 : parseInt(roundModeSetting);
+      respawnModeSetting = document.getElementById('respawn-mode-select').value;
+      maxLives = Math.max(1, Math.min(20, parseInt(document.getElementById('lives-input').value) || 5));
 
       modalStatusText.classList.remove('hidden');
       modalStatusText.innerText = "正在建立並註冊房間...";
@@ -5118,6 +5156,8 @@
       Net.isHost = false;
       roundModeSetting = roundModeSelect.value;
       roundRemainingTime = (roundModeSetting === 'elimination') ? 9999 : parseInt(roundModeSetting);
+      respawnModeSetting = document.getElementById('respawn-mode-select').value;
+      maxLives = Math.max(1, Math.min(20, parseInt(document.getElementById('lives-input').value) || 5));
       playerState.team = 0;
       playerState.paintColor = (playerState.paintPref !== null && playerState.paintPref !== undefined) ? playerState.paintPref : PAINT_PALETTE[Math.floor(Math.random() * PAINT_PALETTE.length)];
       playerState.name = playerNameInput.value.trim() || '特警隊員';
@@ -5141,6 +5181,8 @@
         scoreEntry(data.name, team);
       }
       rp.alive = data.alive !== false;
+      rp.out = !!data.out;
+      if (rp.out && !rp._outChecked) { rp._outChecked = true; checkRoundVictoryCondition(); }
       rp.mesh.visible = rp.alive;
       rp.mesh.position.set(data.x, data.y, data.z);
       rp.mesh.rotation.y = data.yaw + Math.PI;
@@ -5176,6 +5218,9 @@
       gameModeSetting = data.gameMode || gameModeSetting;
       roundModeSetting = data.roundMode || roundModeSetting;
       roundRemainingTime = data.roundRemaining || roundRemainingTime;
+      if (data.respawnMode) respawnModeSetting = data.respawnMode;
+      if (data.maxLives) maxLives = data.maxLives;
+      playerState.lives = maxLives; playerState.out = false; updateRuleTag();
       currentTeamColorKey = data.teamColorKey || currentTeamColorKey;
       Net.roster = data.roster || {};
       // 房主本人也放進名冊，供隊伍判斷
@@ -5199,7 +5244,7 @@
     };
     Net.onDropEvent = (data) => { if (data.drop) spawnDroppedItem(data.drop, false); };
     Net.onRoundTick = (data) => { if (data.roundMode) roundModeSetting = data.roundMode; if (typeof data.roundRemaining === 'number' && Math.abs(roundRemainingTime - data.roundRemaining) > 1.5) roundRemainingTime = data.roundRemaining; };
-    Net.onRoundSync = (data) => { if (data.roundMode) roundModeSetting = data.roundMode; if (typeof data.roundRemaining === 'number') roundRemainingTime = data.roundRemaining; if (data.teamColorKey) currentTeamColorKey = data.teamColorKey; if (data.gameMode) gameModeSetting = data.gameMode; };
+    Net.onRoundSync = (data) => { if (data.respawnMode) respawnModeSetting = data.respawnMode; if (data.maxLives) maxLives = data.maxLives; playerState.lives = maxLives; updateRuleTag(); if (data.roundMode) roundModeSetting = data.roundMode; if (typeof data.roundRemaining === 'number') roundRemainingTime = data.roundRemaining; if (data.teamColorKey) currentTeamColorKey = data.teamColorKey; if (data.gameMode) gameModeSetting = data.gameMode; };
     Net.onRoomInfo = (info) => {
       clearTimeout(window.__roomInfoTimeout);
       modalStatusText.classList.add('hidden');
@@ -5630,7 +5675,7 @@
         netBroadcastTimer = 0;
         Net.broadcastState({
           x: playerGroup.position.x, y: playerFeetY, z: playerGroup.position.z, yaw: cameraYaw,
-          name: playerState.name, team: playerState.team, paint: playerState.paintColor, hp: playerState.hp, alive: !playerState.isSpectating,
+          name: playerState.name, team: playerState.team, paint: playerState.paintColor, hp: playerState.hp, alive: !playerState.isSpectating, out: playerState.out,
           style: playerState.style,
           spec: playerState.spec ? { style: playerState.spec.style, animal: playerState.spec.animal, skin: playerState.spec.skin, accent: playerState.spec.accent, eyeColor: playerState.spec.eyeColor, expression: playerState.spec.expression } : null,
           crouch: isCrouched || isCovered
@@ -5927,6 +5972,16 @@
         const coopBoth = !document.getElementById('btn-pick-team-0').disabled && document.getElementById('btn-pick-team-0').innerText.includes('建議');
         document.getElementById('team-select-modal').classList.add('hidden');
         log('T27 選隊：兩人 PvP 房主隊伍反灰只能對戰；打 AI 預設同隊 (#5)', disabled0 && enabled1 && coopBoth, `pvpDisabled=${disabled0} coopDefaultSame=${coopBoth}`);
+
+        // T28 重生規則
+        respawnModeSetting = 'lives'; maxLives = 2; playerState.lives = 2; playerState.out = false; playerState.isSpectating = false; isRoundEnded = false; isGameRunning = true;
+        playerState.hp = 0; handlePlayerDeath(); const l1 = playerState.lives, spect1 = playerState.isSpectating;
+        playerState.hp = 0; handlePlayerDeath(); const l2 = playerState.lives, spect2 = playerState.isSpectating;
+        log('T28a 生命制：2 條命 → 第一次死重生、第二次死觀戰', l1 === 1 && !spect1 && l2 === 0 && spect2, `lives ${l1}→${l2} spectating=${spect2}`);
+        isRoundEnded = false; isGameRunning = true; playerState.isSpectating = false; spectatorBanner.classList.add('hidden'); weaponMesh.visible = true;
+        respawnModeSetting = 'unlimited'; playerState.hp = 0; handlePlayerDeath();
+        log('T28b 無限重生：死亡後直接復活', !playerState.isSpectating && playerState.hp === 100 && document.getElementById('rule-tag').innerText.includes('無限'), document.getElementById('rule-tag').innerText);
+        respawnModeSetting = 'lives'; maxLives = 5; playerState.lives = 5; updateRuleTag();
 
         const passed = R.filter(Boolean).length;
         console.log(`[AUTOTEST] SUMMARY ${passed}/${R.length} PASSED`);
