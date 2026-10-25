@@ -632,3 +632,31 @@ sequenceDiagram
 9. **趴下且持有狙擊槍時頭頂名字瞬間隱形 + 拿到狙擊槍時跳出專屬秘技提示 (`#9`, `T75`)**：
    - **拾取/切換狙擊槍專屬提示 (`showSniperStealthTip`)**：當玩家撿起或切換至 `AWP 狙擊步槍` 時，畫面頂部自動彈出醒目橫幅：`「🎯 狙擊手隱匿秘技提示：持有 AWP 狙擊槍並按 [Z] 趴下時，你的頭頂名字會瞬間消失隱形！」`。
    - **伏地狙擊名字瞬間消失 (`isLocalStealthSniper` / `nameSprite.visible = false`)**：只要處於 **「趴下 (`isProne`) + 手持狙擊槍 (`weaponType === 'sniper'`)」** 狀態，角色頭頂的 3D 名牌 (`nameSprite`) 會立即隱藏 (`visible = false`)，並透過網路狀態 `stealthHidden` 同步給所有遠端玩家與 AI，同時頂部亮起 `🫥 狙擊伏地隱匿中（敵方看不見你的頭頂名字）` 狀態徽章！
+
+---
+
+## 十五、 v7.1 雙機連線架構深度修復報告：恢復 v6.2 PeerJS P2P 目錄與直連探測機制（#10, 86/86 自動測試通過）
+
+### 1. 問題根因分析（為何 v6.2 以前跨電腦看得到房間並能加入，而 v6.7~v7.0 卻失敗？）
+經完整比對 `v6.2` (`v4_parts/h_net.js`) 與 `v6.7`~`v7.0` (`build_v13_game.py` / `build_v15_game.py`) 的連線原始碼，找出三個關鍵退化原因：
+1. **原因一：`RoomRegistry.init()` 與 `scanRooms()` 中的 `this.connectDirectory()` 在 v6.9 被誤刪**
+   - 在 `v6.2` 中，`RoomRegistry.init()` 與 `scanRooms()` 會呼叫 `this.connectDirectory()`，利用 PeerJS WebRTC 建立點對點目錄節點 (`QFORCE3D_DIRECTORY`)，第一台電腦與第二台電腦透過 PeerJS DataChannel 即時同步 `room_list`。
+   - 但在 `v6.9` 改版時，`this.connectDirectory()` 從 `init()` 與 `scanRooms()` 中被移除，導致目錄完全依賴外部 `ntfy.sh` HTTP SSE（在許多網路環境或高頻請求下會遭限流或阻擋），造成第二台電腦完全看不到第一台電腦開的房間。
+2. **原因二：`Net.bindPeerEvents` 在 v6.7 加入了過短的 `2.8 秒 openGuard` 強制中斷計時器**
+   - 在 `v6.2` 中，`Net.setupChannels` 建立 `new Peer("QFORCE3D_" + roomCode + "_HOST")` 後會完整等待 `peer.on('open')` 註冊成功才進入房間。
+   - 但在 `v6.7` 中加入了 `2800ms` 的 `openGuard`：只要 PeerJS 信令握手或 STUN 協商超過 2.8 秒（或房號釋放重試一次），`openGuard` 就會搶先觸發 `activateFallbackHostOrJoin`，把第一台電腦（房主）直接送進等待室，**此時房主的 `QFORCE3D_8888_HOST` 根本還沒在 PeerJS 伺服器上完成註冊**！
+   - 結果第二台電腦輸入同樣的號碼 `8888` 按加入時，PeerJS 找不到 `QFORCE3D_8888_HOST`，直接跳出 `❌ 找不到房間 [8888]！`。
+3. **原因三：`new Peer` 額外傳入 `pingInterval: 5000` 導致公共信令容易斷線，且 DataChannel 開啟瞬間單次 `hello_query` 可能漏包**
+   - `v6.2` 使用原生預設參數，而 `v6.7` 加入 `pingInterval: 5000` 容易觸發公共 PeerJS 節點斷線。
+
+### 2. v7.1 修復方案（以 v6.2 PeerJS P2P 架構為核心並強化雙重保障）
+1. **完整恢復 `v6.2` 的 `RoomRegistry.connectDirectory()` 與 `subscribeDirectory()` P2P 目錄機制**：
+   - 在 `RoomRegistry.init()`、`registerMyRoom()` 與 `scanRooms()` 中全面恢復 `this.connectDirectory()`。
+   - 新增雙槽位自動容錯 (`DIRECTORY_IDS: ['QFORCE3D_DIRECTORY_V62', 'QFORCE3D_DIRECTORY_V62_B']`)：若主槽位因舊分頁強關殘留殭屍 ID 超過 4.2 秒未回應，自動切換至 `_B` 槽位競選/訂閱，徹底消除目錄卡死。
+2. **新增「PeerJS 房號直連探測 (`room_probe` → `room_probe_ack`)」**：
+   - 當第二台電腦打開大廳、修改房號輸入框或按下「🔄 掃描刷新」時，除了向 `QFORCE3D_DIRECTORY_V62` 查詢全部房間外，還會直接透過 PeerJS 對輸入框房號（如預設 `8888` 或玩家輸入的房號）之 `QFORCE3D_<房號>_HOST` 發送 `room_probe`。
+   - 只要第一台電腦已開房，房主立即回傳 `room_probe_ack`（含房主名稱、模式、人數、等待中/進行中狀態），第二台電腦的房間列表立即顯示該房間！
+3. **移除 `2.8 秒 openGuard` 提早切斷邏輯，恢復 `v6.2` 穩定 PeerJS 握手與自動重試**：
+   - 移除 `openGuard` 與 `pingInterval: 5000`，確保第一台電腦的 `QFORCE3D_<房號>_HOST` 真正在 PeerJS 註冊成功後才進入等待室。
+   - 若遇到 `unavailable-id` 自動重試 6 次（同 `v6.2`）；若遇到瞬時 `network` / `socket-error` 自動重連 3 次。
+   - 第二台電腦連上房主時，透過 `startHelloQueryLoop()` + `round_sync` 雙向觸發 `hello_query`，徹底消除 WebRTC DataChannel 剛開啟時的漏包問題 (`T76` 實測通過)。

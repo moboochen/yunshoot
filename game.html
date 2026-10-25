@@ -8,7 +8,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="現代突擊3D">
-  <title>Q版特種部隊：現代突擊 3D v7.0 - 跨平台電競對戰</title>
+  <title>Q版特種部隊：現代突擊 3D v7.1 - 跨平台電競對戰</title>
   <!-- Tailwind CSS (支援 Jetski 官方與外部 CDN) -->
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -239,7 +239,7 @@
           <span id="hud-fps" class="px-1.5 py-0.5 rounded text-[11px] font-mono text-slate-400 bg-slate-900/80 border border-slate-800">
             60 FPS
           </span>
-          <span id="hud-build" class="px-1.5 py-0.5 rounded text-[10px] font-mono text-amber-300/90 bg-slate-900/80 border border-slate-800">v7.0 · 建置 2026-10-25 14:51 (台北)</span>
+          <span id="hud-build" class="px-1.5 py-0.5 rounded text-[10px] font-mono text-amber-300/90 bg-slate-900/80 border border-slate-800">v7.1 · 建置 2026-10-25 15:14 (台北)</span>
         </div>
         <div class="text-xs text-slate-300 font-semibold bg-slate-900/80 border border-slate-800 px-2.5 py-1 rounded-lg backdrop-blur-sm flex items-center gap-2">
           <span>擊倒: <b id="kills-count" class="text-amber-400">0</b></span>
@@ -432,10 +432,10 @@
         <span>●</span> WebRTC P2P + 本地雙通道零延遲連線架構
       </div>
       <h1 class="text-2xl sm:text-3xl font-black tracking-wider text-white mb-1">
-        Q版特種部隊：現代突擊 3D v7.0
+        Q版特種部隊：現代突擊 3D v7.1
       </h1>
       <p class="text-xs text-slate-400 mb-1 font-medium">支援 iPad 觸控手勢與電腦 PC 鍵鼠同場競技 ｜ 藍天白雲雙層 CQB 戰場</p>
-      <div id="build-stamp" class="inline-block text-[11px] font-mono font-bold text-amber-300 bg-slate-950 border border-amber-400/40 rounded-lg px-2.5 py-1 mb-4">🏷️ 版本 v7.0 · 建置 2026-10-25 14:51 (台北)</div>
+      <div id="build-stamp" class="inline-block text-[11px] font-mono font-bold text-amber-300 bg-slate-950 border border-amber-400/40 rounded-lg px-2.5 py-1 mb-4">🏷️ 版本 v7.1 · 建置 2026-10-25 15:14 (台北)</div>
 
       <details class="text-left text-[11px] text-slate-400 bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2 mb-3">
         <summary class="cursor-pointer font-bold text-slate-300">❓ 房間怎麼運作？(開房 / 看到別人 / 關閉 / 多久消失)</summary>
@@ -1284,6 +1284,15 @@
     /* =========================================================================
        2. WebRTC P2P + 本地雙通道連線與房間驗證系統 (#18, #19 嚴格房間機制)
        ========================================================================= */
+    const ICE_SERVERS_CONFIG = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:global.stun.twilio.com:3478' }
+      ]
+    };
+
     const Net = {
       peer: null,
       localChannel: null,
@@ -1313,43 +1322,92 @@
       onMatchStart: null,
       heartbeatTimer: null,
       pingTimer: null,
+      helloRetryTimer: null,
       roomStatus: 'waiting',   // 'waiting' (等待中) | 'starting' (遊戲開始) | 'playing' (遊戲進行中)
       transportMode: 'p2p',    // 'p2p' | 'relay'
       pingMs: 0,
       peerPings: {},           // uid -> ms
       relaySource: null,
+      _receivedRoomInfo: false,
       FORCE_NETWORK_ERROR: false,
 
       initHost: function(roomCode, onReady, onFail) {
         for (const id in this.connections) { try { this.connections[id].close(); } catch (e) {} }
         this.connections = {};
+        clearInterval(this.helloRetryTimer);
         this.roomCode = (roomCode || '8888').toUpperCase().trim();
         this.isHost = true;
         this.myId = "QFORCE3D_" + this.roomCode + "_HOST";
         this.roster = {};
+        this._receivedRoomInfo = false;
         this.setupChannels(onReady, onFail || null);
       },
 
       initJoin: function(roomCode, onReady, onFail) {
         for (const id in this.connections) { try { this.connections[id].close(); } catch (e) {} }
         this.connections = {};
+        clearInterval(this.helloRetryTimer);
         this.roomCode = (roomCode || '8888').toUpperCase().trim();
         this.isHost = false;
         this.myId = "QFORCE3D_" + this.roomCode + "_" + Math.floor(Math.random() * 89999 + 10000);
         this.roster = {};
+        this._receivedRoomInfo = false;
         this.setupChannels(onReady, onFail);
       },
 
-      // 統一的訊息分派 (本機 BroadcastChannel 與 PeerJS 共用)
+      // 統一的訊息分派 (PeerJS WebRTC 與本機 BroadcastChannel 共用)
       dispatch: function(data, fromConn) {
         if (!data || data.sender === this.myId) return;
         switch (data.type) {
-          case 'hello_query':  // 新玩家詢問房間資訊 (選隊前) (#5)
-            if (this.isHost) this.sendAll({ type: 'room_info', target: data.sender, hostName: playerState.name, hostTeam: playerState.team, aiEnabled: aiEnabled, gameMode: gameModeSetting, combatMode: combatModeSetting, roomStatus: this.roomStatus, roster: this.roster, sender: this.myId });
+          case 'room_probe': { // 遠端大廳掃描探測此房號是否開啟 (v6.2+ 直連探測機制)
+            if (this.isHost && fromConn && typeof fromConn.send === 'function') {
+              const modeLabel = gameModeSetting === 'pvp' ? 'PvP' : (gameModeSetting === 'coop' ? 'Co-op AI' : (gameModeSetting === 'ctf' ? '🚩 搶旗' : gameModeSetting));
+              try {
+                fromConn.send({
+                  type: 'room_probe_ack',
+                  roomCode: this.roomCode,
+                  hostName: playerState.name,
+                  mode: modeLabel,
+                  players: Object.keys(this.roster).length + 1,
+                  status: this.roomStatus,
+                  sender: this.myId
+                });
+              } catch (e) {}
+            }
             break;
-          case 'ping_req':     // 客戶端量測與第一台電腦 (房主) 的連線速度
-            if (this.isHost) this.sendAll({ type: 'ping_ack', target: data.sender, t: data.t, roomStatus: this.roomStatus, sender: this.myId });
+          }
+          case 'hello_query': { // 新玩家詢問房間資訊 (選隊前) (#5)
+            if (this.isHost) {
+              const infoPayload = {
+                type: 'room_info',
+                target: data.sender,
+                hostName: playerState.name,
+                hostTeam: playerState.team,
+                aiEnabled: aiEnabled,
+                gameMode: gameModeSetting,
+                combatMode: combatModeSetting,
+                roomStatus: this.roomStatus,
+                roster: this.roster,
+                sender: this.myId
+              };
+              if (fromConn && typeof fromConn.send === 'function') {
+                try { fromConn.send(infoPayload); } catch (e) {}
+              }
+              this.sendAll(infoPayload);
+            }
             break;
+          }
+          case 'ping_req': {    // 客戶端量測與第一台電腦 (房主) 的連線速度
+            if (this.isHost) {
+              const ack = { type: 'ping_ack', target: data.sender, t: data.t, roomStatus: this.roomStatus, sender: this.myId };
+              if (fromConn && typeof fromConn.send === 'function') {
+                try { fromConn.send(ack); } catch (e) {}
+              } else {
+                this.sendAll(ack);
+              }
+            }
+            break;
+          }
           case 'ping_ack':
             if (data.target === this.myId) {
               this.pingMs = Math.max(1, Math.round(performance.now() - (data.t || performance.now())));
@@ -1369,7 +1427,11 @@
             if (this.onMatchStart) this.onMatchStart(data);
             break;
           case 'room_info':
-            if (data.target === this.myId && this.onRoomInfo) this.onRoomInfo(data);
+            if (data.target === this.myId && this.onRoomInfo) {
+              this._receivedRoomInfo = true;
+              clearInterval(this.helloRetryTimer);
+              this.onRoomInfo(data);
+            }
             break;
           case 'hello':        // 新玩家報到 → 主機分配隊伍與漆彈顏色
             if (this.isHost) this.handleHello(data, fromConn);
@@ -1390,7 +1452,11 @@
             if (this.onMatchEndEvent) this.onMatchEndEvent(data);
             break;
           case 'welcome':      // 主機回覆：你的隊伍 / 漆色 / 回合資訊 / 目前名冊
-            if (data.target === this.myId && this.onWelcome) this.onWelcome(data);
+            if (data.target === this.myId && this.onWelcome) {
+              this._receivedRoomInfo = true;
+              clearInterval(this.helloRetryTimer);
+              this.onWelcome(data);
+            }
             break;
           case 'roster':
             this.roster = data.roster || {};
@@ -1412,6 +1478,10 @@
             resetMatchRound();
             break;
           case 'round_sync':
+            if (!this.isHost && !this._receivedRoomInfo) {
+              // 主機 DataChannel 已開啟並送來 round_sync，立即補發一次 hello_query 確保零漏包
+              this.sendHelloQuery();
+            }
             if (this.onRoundSync) this.onRoundSync(data);
             break;
           case 'ai_sync':
@@ -1435,6 +1505,7 @@
       // 主機：分配隊伍 (#28) 與不重複漆彈顏色 (#4)
       handleHello: function(data, fromConn) {
         const uid = data.sender;
+        if (fromConn && fromConn.peer) this.connections[fromConn.peer] = fromConn;
         const usedPaints = Object.values(this.roster).map(r => r.paint);
         usedPaints.push(playerState.paintColor);
         const paint = (data.paintPref !== undefined && data.paintPref !== null && !usedPaints.includes(data.paintPref))
@@ -1462,6 +1533,9 @@
           drops: pickupItems.filter(p => p.dynamic && p.isAvailable).map(p => ({ id: p.id, kind: p.type, weaponKey: p.weaponKey, clip: p.dropClip, armorValue: p.armorValue, x: p.x, y: p.y, z: p.z })),
           bomb: bombState.isPlanted ? { x: bombState.pos.x, y: bombState.pos.y, z: bombState.pos.z, timer: bombState.timer, planterTeam: bombState.planterTeam } : null
         };
+        if (fromConn && typeof fromConn.send === 'function') {
+          try { fromConn.send(payload); } catch (e) {}
+        }
         this.sendAll(payload);
         this.sendAll({ type: 'roster', roster: this.roster, sender: this.myId });
         if (typeof addKillFeed === 'function') addKillFeed(`🟢 ${data.name} 加入了 ${team === 0 ? '藍隊' : '紅隊'}`, '#a3e635');
@@ -1483,10 +1557,26 @@
       sendMatchEnd: function(winnerTeam, message) { this.sendAll({ type: 'match_end_event', winnerTeam, message }); },
       sendRoundTick: function() { this.sendAll({ type: 'round_tick', roundRemaining: roundRemainingTime, roundMode: roundModeSetting, ended: isRoundEnded }); },
 
+      startHelloQueryLoop: function() {
+        clearInterval(this.helloRetryTimer);
+        this._receivedRoomInfo = false;
+        this.sendHelloQuery();
+        let tries = 0;
+        this.helloRetryTimer = setInterval(() => {
+          tries++;
+          if (this._receivedRoomInfo || tries > 6) {
+            clearInterval(this.helloRetryTimer);
+            return;
+          }
+          this.sendHelloQuery();
+        }, 450);
+      },
+
+      // 恢復 v6.2 核心 PeerJS P2P 建立與連線流程 (不提前切斷 PeerJS，確保雙電腦直連穩定)
       setupChannels: function(onReady, onFail) {
         let hasResolved = false;
 
-        // 本機/同一瀏覽器分頁 BroadcastChannel (離線也能測)
+        // 1. 本機/同一瀏覽器分頁 BroadcastChannel (離線與雙分頁秒連)
         if (typeof BroadcastChannel !== 'undefined') {
           try {
             if (this.localChannel) this.localChannel.close();
@@ -1503,18 +1593,21 @@
                   hasResolved = true;
                   this.startHeartbeat();
                   if (onReady) onReady();
-                  this.sendHelloQuery();
+                  this.startHelloQueryLoop();
                 }
               } else {
                 this.dispatch(data, null);
               }
             };
+            if (!this.isHost) {
+              this.localChannel.postMessage({ type: 'room_ping', t: performance.now(), sender: this.myId });
+            }
           } catch (e) {}
         }
 
         const targetHostId = "QFORCE3D_" + this.roomCode + "_HOST";
 
-        // 啟動雲端中繼備援通道 (當 PeerJS 出現 network 錯誤或跨網段受阻時自動接手)
+        // 2. 啟動背景雲端備援通道 (僅作為輔助，絕不搶先切斷 PeerJS)
         this.setupCloudRelay(onReady, () => hasResolved, (v) => { hasResolved = v; });
 
         if (typeof Peer === 'undefined' || this.FORCE_NETWORK_ERROR) {
@@ -1522,29 +1615,45 @@
           return;
         }
 
+        // 3. v6.2 標準 PeerJS 連線建立 (含 unavailable-id 與網路瞬斷自動重試)
         let hostAttempt = 0;
+        let netAttempt = 0;
         const createPeer = () => {
+          if (hasResolved) return;
           if (this.peer) { try { this.peer.destroy(); } catch (e) {} }
-          this.peer = new Peer(this.myId, {
-            pingInterval: 5000,
-            config: {
-              iceServers: [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' },
-                { urls: 'stun:global.stun.twilio.com:3478' }
-              ]
+          this.peer = new Peer(this.myId, { config: ICE_SERVERS_CONFIG });
+          this.bindPeerEvents(
+            onReady,
+            onFail,
+            targetHostId,
+            () => hasResolved,
+            (v) => { hasResolved = v; },
+            () => {
+              // unavailable-id 重試 (房號剛關閉正在釋放，最多重試 6 次，同 v6.2)
+              hostAttempt++;
+              if (hostAttempt <= 6) {
+                const st = document.getElementById('modal-status-text');
+                if (st) st.innerText = `房號 [${this.roomCode}] 正在釋放中，重試 (${hostAttempt}/6)…`;
+                setTimeout(createPeer, 1100);
+                return true;
+              }
+              return false;
+            },
+            (errType) => {
+              // 信令瞬斷 (network / server-error / socket-error) 自動重試 3 次
+              netAttempt++;
+              if (netAttempt <= 3) {
+                const st = document.getElementById('modal-status-text');
+                if (st) st.innerText = `正在重連 PeerJS 連線伺服器 (${netAttempt}/3)…`;
+                if (!this.isHost) {
+                  this.myId = "QFORCE3D_" + this.roomCode + "_" + Math.floor(Math.random() * 89999 + 10000);
+                }
+                setTimeout(createPeer, 900);
+                return true;
+              }
+              return false;
             }
-          });
-          this.bindPeerEvents(onReady, onFail, targetHostId, () => hasResolved, (v) => { hasResolved = v; }, () => {
-            hostAttempt++;
-            if (hostAttempt <= 4) {
-              const st = document.getElementById('modal-status-text');
-              if (st) st.innerText = `房號 [${this.roomCode}] 正在釋放中，重試 ${hostAttempt}/4…`;
-              setTimeout(createPeer, 900);
-              return true;
-            }
-            return false;
-          });
+          );
         };
         try {
           createPeer();
@@ -1553,27 +1662,25 @@
         }
       },
 
-      // 當 PeerJS 雲端信令發生 network / socket-error / timeout 時：不中斷開房，自動切換至「區域廣播 + 雲端中繼雙通道」
+      // 僅在 PeerJS 多次重試仍無法連線或離線環境時才啟動備援通道
       activateFallbackHostOrJoin: function(onReady, onFail, getResolved, setResolved, reason) {
         if (getResolved()) return;
         this.transportMode = 'relay';
         const connTag = document.getElementById('hud-connection-status');
-        if (connTag) connTag.innerHTML = '<span class="w-2 h-2 rounded-full bg-cyan-400 mr-1.5 animate-ping"></span>中繼/區網雙通道';
-        RoomRegistry.setDirStatus('🌐 房間目錄：雲端中繼 + 區網廣播雙通道線上 (已自動繞過 PeerJS ' + (reason || 'network') + ' 限制)');
+        if (connTag) connTag.innerHTML = '<span class="w-2 h-2 rounded-full bg-cyan-400 mr-1.5 animate-ping"></span>備援中繼/區網通道';
         if (this.isHost) {
           setResolved(true);
           RoomRegistry.registerMyRoom(this.roomCode, playerState.name, gameModeSetting, 1, this.roomStatus);
           this.startHeartbeat();
           if (onReady) onReady();
         } else {
-          // 客戶端：同時透過 BroadcastChannel、雲端中繼與目錄拉取探測房主
           this.sendAll({ type: 'room_ping', t: performance.now(), sender: this.myId });
           RoomRegistry.pollCloudRooms();
           if (RoomRegistry.rooms[this.roomCode]) {
             setResolved(true);
             this.startHeartbeat();
             if (onReady) onReady();
-            this.sendHelloQuery();
+            this.startHelloQueryLoop();
             return;
           }
           setTimeout(() => {
@@ -1583,23 +1690,23 @@
                 setResolved(true);
                 this.startHeartbeat();
                 if (onReady) onReady();
-                this.sendHelloQuery();
+                this.startHelloQueryLoop();
               }
             }
-          }, 1600);
+          }, 1500);
           setTimeout(() => {
             if (!getResolved()) {
               if (RoomRegistry.rooms[this.roomCode]) {
                 setResolved(true);
                 this.startHeartbeat();
                 if (onReady) onReady();
-                this.sendHelloQuery();
+                this.startHelloQueryLoop();
               } else {
                 setResolved(true);
                 if (onFail) onFail(`❌ 找不到房間 [${this.roomCode}]！請確認第一台電腦已建立房間並按「掃描刷新」。`);
               }
             }
-          }, 4800);
+          }, 3800);
         }
       },
 
@@ -1607,7 +1714,7 @@
         if (window.__manualLoop || location.search.includes('autotest') || location.search.includes('preview')) return;
         try {
           if (this.relaySource) { try { this.relaySource.close(); } catch (e) {} }
-          const topic = 'qforce3d_room_v69_' + this.roomCode;
+          const topic = 'qforce3d_room_v71_' + this.roomCode;
           const es = new EventSource('https://ntfy.sh/' + topic + '/sse?since=60s');
           this.relaySource = es;
           es.onopen = () => {
@@ -1630,14 +1737,13 @@
                   setResolved(true);
                   this.startHeartbeat();
                   if (onReady) onReady();
-                  this.sendHelloQuery();
+                  this.startHelloQueryLoop();
                 }
               } else {
                 this.dispatch(data, null);
               }
             } catch (e) {}
           };
-          // 保持 EventSource 自動重連，不在 onerror 中強制 close()
           es.onerror = () => {};
         } catch (e) {}
       },
@@ -1645,73 +1751,99 @@
       sendRelay: function(payload) {
         if (window.__manualLoop || location.search.includes('autotest') || location.search.includes('preview')) return;
         try {
-          // 避免高頻 ping_req / ping_ack 造成 ntfy.sh HTTP 429 限流
           if (payload.type === 'ping_req' || payload.type === 'ping_ack' || payload.type === 'ping_report') return;
           const now = performance.now();
           if (payload.type === 'state_update') {
-            if (this.transportMode !== 'relay') return;   // P2P 正常時不需走 HTTP 中繼傳座標
+            if (this.transportMode !== 'relay') return;
             if (now - (this._lastRelayState || 0) < 750) return;
             this._lastRelayState = now;
           }
-          const topic = 'qforce3d_room_v69_' + this.roomCode;
+          const topic = 'qforce3d_room_v71_' + this.roomCode;
           fetch('https://ntfy.sh/' + topic, { method: 'POST', body: JSON.stringify(payload), keepalive: payload.type === 'room_closed' }).catch(() => {});
         } catch (e) {}
       },
 
-      bindPeerEvents: function(onReady, onFail, targetHostId, getResolved, setResolved, retryHost) {
-        {
-          const hasResolvedRef = { get v() { return getResolved(); }, set v(x) { setResolved(x); } };
-          // 若 PeerJS 伺服器在 2.8 秒內無回應，自動切換備援通道，絕不卡死
-          const openGuard = setTimeout(() => {
-            if (!hasResolvedRef.v) this.activateFallbackHostOrJoin(onReady, onFail, getResolved, setResolved, 'timeout');
-          }, 2800);
+      bindPeerEvents: function(onReady, onFail, targetHostId, getResolved, setResolved, retryHost, retryNet) {
+        const hasResolvedRef = { get v() { return getResolved(); }, set v(x) { setResolved(x); } };
 
-          this.peer.on('open', () => {
-            clearTimeout(openGuard);
-            this.transportMode = 'p2p';
-            const connTag = document.getElementById('hud-connection-status');
-            if (connTag) connTag.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 mr-1.5 animate-ping"></span>P2P 點對點直連';
-            if (this.isHost) {
-              RoomRegistry.registerMyRoom(this.roomCode, playerState.name, gameModeSetting, 1, this.roomStatus);
-              this.startHeartbeat();
-              if (onReady && !hasResolvedRef.v) { hasResolvedRef.v = true; onReady(); }
-            } else {
+        this.peer.on('open', () => {
+          this.transportMode = 'p2p';
+          const connTag = document.getElementById('hud-connection-status');
+          if (connTag) connTag.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 mr-1.5 animate-ping"></span>P2P 點對點直連';
+          if (this.isHost) {
+            RoomRegistry.registerMyRoom(this.roomCode, playerState.name, gameModeSetting, 1, this.roomStatus);
+            this.startHeartbeat();
+            if (onReady && !hasResolvedRef.v) { hasResolvedRef.v = true; onReady(); }
+          } else {
+            // 客戶端連向 QFORCE3D_<房號>_HOST (同 v6.2，並加入第二次並聯握手防漏包)
+            let connOpened = false;
+            const connectOnce = () => {
+              if (connOpened || hasResolvedRef.v || !this.peer || this.peer.destroyed) return;
               const conn = this.peer.connect(targetHostId, { reliable: true });
-              const connectTimeout = setTimeout(() => {
-                if (!hasResolvedRef.v) this.activateFallbackHostOrJoin(onReady, onFail, getResolved, setResolved, 'conn-timeout');
-              }, 3200);
-              conn.on('open', () => {
+              const onOpen = () => {
+                if (connOpened) return;
+                connOpened = true;
                 clearTimeout(connectTimeout);
+                clearTimeout(retryConnectTimer);
                 this.setupConnection(conn);
                 this.startHeartbeat();
                 if (onReady && !hasResolvedRef.v) { hasResolvedRef.v = true; onReady(); }
-                this.sendHelloQuery();
-              });
-              conn.on('error', () => {
-                clearTimeout(connectTimeout);
-                if (!hasResolvedRef.v) this.activateFallbackHostOrJoin(onReady, onFail, getResolved, setResolved, 'conn-error');
-              });
-            }
-          });
+                this.startHelloQueryLoop();
+              };
+              if (conn.open) onOpen();
+              else conn.on('open', onOpen);
+              conn.on('error', () => {});
+            };
 
-          this.peer.on('connection', (conn) => this.setupConnection(conn));
+            const retryConnectTimer = setTimeout(() => {
+              if (!connOpened && !hasResolvedRef.v) connectOnce();
+            }, 2600);
 
-          this.peer.on('error', (err) => {
-            clearTimeout(openGuard);
-            console.warn("P2P Notice:", err.type);
-            if (this.isHost && err.type === 'unavailable-id' && !hasResolvedRef.v) {
-              if (retryHost && retryHost()) return;
+            const connectTimeout = setTimeout(() => {
+              clearTimeout(retryConnectTimer);
+              if (!connOpened && !hasResolvedRef.v) {
+                if (RoomRegistry.rooms[this.roomCode]) {
+                  this.activateFallbackHostOrJoin(onReady, onFail, getResolved, setResolved, 'conn-timeout');
+                } else {
+                  hasResolvedRef.v = true;
+                  if (onFail) onFail(`❌ 找不到房間 [${this.roomCode}] 或房主未回應！請確認第一台電腦已建立房間。`);
+                }
+              }
+            }, 7500);
+
+            connectOnce();
+          }
+        });
+
+        this.peer.on('connection', (conn) => this.setupConnection(conn));
+
+        this.peer.on('error', (err) => {
+          console.warn("P2P Notice:", err.type);
+          if (this.isHost && err.type === 'unavailable-id' && !hasResolvedRef.v) {
+            if (retryHost && retryHost()) return;
+            hasResolvedRef.v = true;
+            if (onFail) onFail(`❌ 房號 [${this.roomCode}] 已經有人開啟！請直接點「搜尋並加入房間」或換一個房號。`);
+            return;
+          }
+          if (!this.isHost && err.type === 'peer-unavailable' && !hasResolvedRef.v) {
+            if (RoomRegistry.rooms[this.roomCode]) {
+              this.activateFallbackHostOrJoin(onReady, onFail, getResolved, setResolved, 'peer-unavailable');
+            } else {
               hasResolvedRef.v = true;
-              if (onFail) onFail(`❌ 房號 [${this.roomCode}] 已有人使用，請換一個房號或稍候再試。`);
-              return;
+              if (onFail) onFail(`❌ 找不到房間 [${this.roomCode}]！請確認第一台電腦已建立此房間。`);
             }
-            // 關鍵修正：遇到 network / server-error / socket-error / peer-unavailable 時自動走備援通道，不讓開房失敗！
-            if (!hasResolvedRef.v) {
-              this.activateFallbackHostOrJoin(onReady, onFail, getResolved, setResolved, err.type || 'network');
-            }
-          });
-          this.peer.on('disconnected', () => { try { if (this.peer && !this.peer.destroyed) this.peer.reconnect(); } catch (e) {} });
-        }
+            return;
+          }
+          if (!hasResolvedRef.v && (err.type === 'network' || err.type === 'server-error' || err.type === 'socket-error' || err.type === 'socket-closed')) {
+            if (retryNet && retryNet(err.type)) return;
+            this.activateFallbackHostOrJoin(onReady, onFail, getResolved, setResolved, err.type || 'network');
+            return;
+          }
+          if (!hasResolvedRef.v) {
+            this.activateFallbackHostOrJoin(onReady, onFail, getResolved, setResolved, err.type || 'error');
+          }
+        });
+        this.peer.on('disconnected', () => { try { if (this.peer && !this.peer.destroyed) this.peer.reconnect(); } catch (e) {} });
       },
 
       // 修正 (#2)：連線可能在註冊監聽前就已 open，統一以 register() 處理
@@ -1719,16 +1851,28 @@
         const register = () => {
           this.connections[conn.peer] = conn;
           if (this.isHost) {
-            conn.send({ type: 'round_sync', roundRemaining: roundRemainingTime, gameMode: gameModeSetting, combatMode: combatModeSetting, teamColorKey: currentTeamColorKey, roundMode: roundModeSetting, respawnMode: respawnModeSetting, maxLives: maxLives, sender: this.myId });
+            try {
+              conn.send({ type: 'round_sync', roundRemaining: roundRemainingTime, gameMode: gameModeSetting, combatMode: combatModeSetting, teamColorKey: currentTeamColorKey, roundMode: roundModeSetting, respawnMode: respawnModeSetting, maxLives: maxLives, sender: this.myId });
+            } catch (e) {}
           }
         };
         if (conn.open) register(); else conn.on('open', register);
 
         conn.on('data', (data) => {
+          if (!data) return;
+          if (data.type === 'room_probe') {
+            this.dispatch(data, conn);
+            return;
+          }
+          if (conn.peer && !this.connections[conn.peer]) {
+            this.connections[conn.peer] = conn;
+          }
           // 主機中繼：轉發給其他所有客戶端，讓後加入者對所有人可見 (#2)
-          if (this.isHost && data && data.type !== 'hello') {
+          if (this.isHost && data.type !== 'hello' && data.type !== 'hello_query' && data.type !== 'ping_req') {
             for (const otherId in this.connections) {
-              if (otherId !== conn.peer && this.connections[otherId].open) this.connections[otherId].send(data);
+              if (otherId !== conn.peer && this.connections[otherId].open) {
+                try { this.connections[otherId].send(data); } catch (e) {}
+              }
             }
           }
           this.dispatch(data, conn);
@@ -1739,17 +1883,20 @@
           delete this.connections[uid];
           if (this.isHost) {
             const r = this.roster[uid];
-            delete this.roster[uid];
-            this.sendAll({ type: 'player_leave', uid, sender: this.myId });
-            this.sendAll({ type: 'roster', roster: this.roster, sender: this.myId });
-            if (r && typeof addKillFeed === 'function') addKillFeed(`⚪ ${r.name} 離開了房間`, '#94a3b8');
-            delete this.peerPings[uid];
-            RoomRegistry.registerMyRoom(this.roomCode, playerState.name, gameModeSetting, Object.keys(this.roster).length + 1, this.roomStatus);
-            renderWaitingRoomUI();
+            if (r) {
+              delete this.roster[uid];
+              this.sendAll({ type: 'player_leave', uid, sender: this.myId });
+              this.sendAll({ type: 'roster', roster: this.roster, sender: this.myId });
+              if (typeof addKillFeed === 'function') addKillFeed(`⚪ ${r.name} 離開了房間`, '#94a3b8');
+              delete this.peerPings[uid];
+              RoomRegistry.registerMyRoom(this.roomCode, playerState.name, gameModeSetting, Object.keys(this.roster).length + 1, this.roomStatus);
+              renderWaitingRoomUI();
+              if (this.onPlayerLeave) this.onPlayerLeave(uid);
+            }
           } else if (uid === "QFORCE3D_" + this.roomCode + "_HOST") {
             if (this.onRoomClosed) this.onRoomClosed({ reason: '房主已離線，房間關閉' });
+            if (this.onPlayerLeave) this.onPlayerLeave(uid);
           }
-          if (this.onPlayerLeave) this.onPlayerLeave(uid);
         });
       },
 
@@ -1797,6 +1944,7 @@
 
       // 房主關閉房間 (#1)：通知所有人 → 結束房間狀態廣播 → 斷線
       closeRoom: function() {
+        clearInterval(this.helloRetryTimer);
         if (this.isHost && this.roomCode) {
           this.sendAll({ type: 'room_closed', reason: '房主已關閉房間（停止廣播）' });
           RoomRegistry.unregisterMyRoom(this.roomCode);
@@ -1818,18 +1966,23 @@
     window.addEventListener('beforeunload', () => { try { Net.closeRoom(); } catch (e) {} });
 
     /* =========================================================================
-       3. 房間目錄 (Room Directory #1)
-          機制：第一位進入大廳的玩家會嘗試佔用固定 PeerJS ID「QFORCE3D_DIRECTORY」成為
-          目錄伺服器；其他人連到它查詢/訂閱房間清單。房主每 5 秒送心跳，15 秒沒心跳
-          或房主關閉/關網頁即移除。目錄伺服器離線時，其餘人會隨機延遲後重新競選。
-          同一台電腦的分頁另以 BroadcastChannel + localStorage 同步 (離線可用)。
+       3. 房間目錄 (Room Directory - 恢復 v6.2 PeerJS P2P 目錄 + 直連房號探測)
+          機制：
+          1. 第一位進入大廳的玩家佔用固定 PeerJS ID「QFORCE3D_DIRECTORY_V62」成為目錄節點；
+             其他人以訂閱者連到它即時接收/查詢 `room_list`。若主槽位僵死則自動切換備援槽位 `_B`。
+          2. 按下「掃描刷新」或開啟大廳時，除了向目錄查詢外，亦直接透過 PeerJS 探測目前輸入框房號
+             (`QFORCE3D_<房號>_HOST` 的 `room_probe`)，確保第一台電腦開房後第二台電腦 100% 看得到並可加入！
+          3. 同一台電腦分頁同時以 BroadcastChannel + localStorage 即時同步。
        ========================================================================= */
     const RoomRegistry = {
-      DIRECTORY_ID: 'QFORCE3D_HUB_V69',
-      ROOM_TTL: 45000,
+      DIRECTORY_IDS: ['QFORCE3D_DIRECTORY_V62', 'QFORCE3D_DIRECTORY_V62_B'],
+      dirSlot: 0,
+      DIRECTORY_ID: 'QFORCE3D_DIRECTORY_V62',
+      ROOM_TTL: 25000,
       channel: null,
       rooms: {},
       dirPeer: null,         // 我是目錄伺服器時的 Peer
+      subPeer: null,         // 我是訂閱者或執行房號直連探測時的共用 Peer
       dirClients: {},        // 目錄伺服器：連入的訂閱者
       dirConn: null,         // 我是訂閱者時連到目錄伺服器的連線
       isDirectory: false,
@@ -1837,9 +1990,8 @@
       myRoomInfo: null,
       _lastCloudAnnounceAt: 0,
       _lastCloudAnnounceSig: '',
-
       cloudSource: null,
-      CLOUD_DIR_TOPIC: 'qforce3d_dir_v69',
+      CLOUD_DIR_TOPIC: 'qforce3d_dir_v71',
 
       init: function() {
         try {
@@ -1854,7 +2006,7 @@
             }
           };
         } catch (e) {}
-        this.setDirStatus('🌐 房間目錄：跨電腦雲端即時廣播 + 區網雙通道就緒');
+        this.connectDirectory();
         this.initCloudDirectory();
         this.scanRooms();
         setInterval(() => this.pruneRooms(), 4000);
@@ -1864,11 +2016,8 @@
         if (window.__manualLoop || location.search.includes('autotest') || location.search.includes('preview')) return;
         try {
           if (this.cloudSource) { try { this.cloudSource.close(); } catch (e) {} }
-          const es = new EventSource('https://ntfy.sh/' + this.CLOUD_DIR_TOPIC + '/sse?since=180s');
+          const es = new EventSource('https://ntfy.sh/' + this.CLOUD_DIR_TOPIC + '/sse?since=120s');
           this.cloudSource = es;
-          es.onopen = () => {
-            this.setDirStatus('🌐 房間目錄：雲端即時頻道已連線 (可隨時掃描跨電腦房間)');
-          };
           es.onmessage = (ev) => {
             try {
               const outer = JSON.parse(ev.data);
@@ -1879,7 +2028,6 @@
               else if (d.type === 'query_rooms' && this.myRoomInfo) this.publishCloud(this.myRoomInfo, true);
             } catch (e) {}
           };
-          // 保持自動重連，不呼叫 es.close()
           es.onerror = () => {};
         } catch (e) {}
       },
@@ -1890,7 +2038,7 @@
           if (msg.type === 'announce_room') {
             const sig = `${msg.roomCode}|${msg.status}|${msg.players}|${msg.mode}`;
             const now = Date.now();
-            if (!force && sig === this._lastCloudAnnounceSig && (now - this._lastCloudAnnounceAt) < 11000) return;
+            if (!force && sig === this._lastCloudAnnounceSig && (now - this._lastCloudAnnounceAt) < 10000) return;
             this._lastCloudAnnounceSig = sig;
             this._lastCloudAnnounceAt = now;
           }
@@ -1901,7 +2049,7 @@
       pollCloudRooms: function() {
         if (window.__manualLoop || location.search.includes('autotest') || location.search.includes('preview')) return;
         try {
-          fetch('https://ntfy.sh/' + this.CLOUD_DIR_TOPIC + '/json?poll=1&since=180s')
+          fetch('https://ntfy.sh/' + this.CLOUD_DIR_TOPIC + '/json?poll=1&since=120s')
             .then(r => r.text())
             .then(txt => {
               txt.split('\n').filter(Boolean).forEach(line => {
@@ -1922,8 +2070,8 @@
         if (!info || !info.roomCode) return;
         this.rooms[info.roomCode] = {
           roomCode: info.roomCode,
-          hostName: info.hostName,
-          mode: info.mode,
+          hostName: info.hostName || '房主',
+          mode: info.mode || 'PvP',
           players: info.players || 1,
           status: info.status || 'waiting',
           time: Date.now()
@@ -1935,84 +2083,200 @@
         const now = Date.now();
         let changed = false;
         Object.keys(this.rooms).forEach(code => {
+          if (this.myRoomInfo && this.myRoomInfo.roomCode === code) {
+            this.rooms[code].time = now;
+            return;
+          }
           if (now - this.rooms[code].time > this.ROOM_TTL) { delete this.rooms[code]; changed = true; }
         });
         if (changed) this.renderRoomList();
-        if (this.isDirectory) {
-          Object.keys(this.dirRooms || {}).forEach(code => { if (now - this.dirRooms[code].time > this.ROOM_TTL) delete this.dirRooms[code]; });
+        if (this.isDirectory && this.dirRooms) {
+          Object.keys(this.dirRooms).forEach(code => {
+            if (this.myRoomInfo && this.myRoomInfo.roomCode === code) {
+              this.dirRooms[code].time = now;
+              return;
+            }
+            if (now - this.dirRooms[code].time > this.ROOM_TTL) delete this.dirRooms[code];
+          });
         }
       },
 
-      // ---- 目錄伺服器競選 / 連線 ----
+      // ---- v6.2 PeerJS 目錄伺服器競選 / 訂閱 ----
       connectDirectory: function() {
         if (typeof Peer === 'undefined') { this.setDirStatus('離線模式：僅顯示本機分頁房間'); return; }
+        if (this.isDirectory && this.dirPeer && !this.dirPeer.destroyed) return;
+        if (this.dirConn && this.dirConn.open) return;
+        const targetDirId = this.DIRECTORY_IDS[this.dirSlot % this.DIRECTORY_IDS.length];
+        this.DIRECTORY_ID = targetDirId;
         try {
-          const p = new Peer(this.DIRECTORY_ID);
+          if (this.dirPeer) { try { this.dirPeer.destroy(); } catch (e) {} this.dirPeer = null; }
+          const p = new Peer(targetDirId, { config: ICE_SERVERS_CONFIG });
           p.on('open', () => {
-            // 我就是目錄伺服器
             this.isDirectory = true;
             this.dirPeer = p;
-            this.dirRooms = {};
-            this.setDirStatus('🌐 房間目錄：線上 (本機擔任目錄節點)');
+            this.dirRooms = this.dirRooms || {};
+            this.setDirStatus('🌐 房間目錄：線上 (本機擔任 P2P 目錄節點)');
             p.on('connection', (c) => {
-              c.on('open', () => { this.dirClients[c.peer] = c; c.send({ type: 'room_list', rooms: this.dirRooms }); });
+              const sendList = () => {
+                this.dirClients[c.peer] = c;
+                try { c.send({ type: 'room_list', rooms: this.dirRooms }); } catch (e) {}
+              };
+              if (c.open) sendList(); else c.on('open', sendList);
               c.on('data', (d) => {
-                if (d.type === 'announce_room') { this.dirRooms[d.roomCode] = { ...d, time: Date.now() }; this.broadcastDir(); this.upsert(d); }
-                else if (d.type === 'remove_room') { delete this.dirRooms[d.roomCode]; this.broadcastDir(); delete this.rooms[d.roomCode]; this.renderRoomList(); }
-                else if (d.type === 'query') { c.send({ type: 'room_list', rooms: this.dirRooms }); }
+                if (!d) return;
+                if (d.type === 'announce_room') {
+                  this.dirRooms[d.roomCode] = { ...d, time: Date.now() };
+                  this.broadcastDir();
+                  this.upsert(d);
+                } else if (d.type === 'remove_room') {
+                  delete this.dirRooms[d.roomCode];
+                  this.broadcastDir();
+                  delete this.rooms[d.roomCode];
+                  this.renderRoomList();
+                } else if (d.type === 'query') {
+                  try { c.send({ type: 'room_list', rooms: this.dirRooms }); } catch (e) {}
+                }
               });
               c.on('close', () => { delete this.dirClients[c.peer]; });
             });
-            if (this.myRoomInfo) this.dirRooms[this.myRoomInfo.roomCode] = { ...this.myRoomInfo, time: Date.now() };
+            if (this.myRoomInfo) {
+              this.dirRooms[this.myRoomInfo.roomCode] = { ...this.myRoomInfo, time: Date.now() };
+              this.broadcastDir();
+            }
+            this.probeCandidateRooms();
           });
           p.on('error', (err) => {
             if (err.type === 'unavailable-id') {
-              // 已有目錄伺服器 → 以訂閱者身分連入
+              // 已有目錄伺服器 → 以訂閱者身分連入 (同 v6.2)
               try { p.destroy(); } catch (e) {}
-              this.subscribeDirectory();
+              this.subscribeDirectory(targetDirId);
             } else {
-              // PeerJS 公共節點受阻時，已由雲端 SSE 中繼與區網廣播自動接手，直接顯示備援啟用狀態
-              this.setDirStatus('🌐 房間目錄：雲端中繼 + 區網廣播線上 (已自動繞過 ' + err.type + ' 限制)');
+              this.setDirStatus('🌐 房間目錄：連線重試中 (' + (err.type || 'network') + ')，可直接輸入房號或按掃描刷新');
               this.scheduleRetry();
             }
           });
         } catch (e) { this.scheduleRetry(); }
       },
 
-      subscribeDirectory: function() {
+      ensureSubPeer: function(cb) {
+        if (typeof Peer === 'undefined') return;
+        if (this.subPeer && !this.subPeer.destroyed && this.subPeer.open) {
+          cb(this.subPeer);
+          return;
+        }
+        if (this.isDirectory && this.dirPeer && !this.dirPeer.destroyed && this.dirPeer.open) {
+          cb(this.dirPeer);
+          return;
+        }
         try {
-          const sub = new Peer();
-          sub.on('open', () => {
-            const c = sub.connect(this.DIRECTORY_ID, { reliable: true });
-            const to = setTimeout(() => { if (!c.open) { try { sub.destroy(); } catch (e) {} this.scheduleRetry(); } }, 5000);
-            c.on('open', () => {
+          if (this.subPeer && !this.subPeer.destroyed) {
+            this.subPeer.once('open', () => cb(this.subPeer));
+            return;
+          }
+          const sub = new Peer({ config: ICE_SERVERS_CONFIG });
+          this.subPeer = sub;
+          sub.on('open', () => cb(sub));
+          sub.on('error', () => {});
+        } catch (e) {}
+      },
+
+      subscribeDirectory: function(targetDirId) {
+        const dirId = targetDirId || this.DIRECTORY_ID;
+        this.ensureSubPeer((sub) => {
+          try {
+            const c = sub.connect(dirId, { reliable: true });
+            const to = setTimeout(() => {
+              if (!c.open) {
+                try { c.close(); } catch (e) {}
+                // 若主目錄槽位為殘留殭屍連線，自動切換至第二槽位競選/訂閱
+                this.dirSlot = (this.dirSlot + 1) % this.DIRECTORY_IDS.length;
+                this.scheduleRetry(600);
+              }
+            }, 4200);
+            const onOpen = () => {
               clearTimeout(to);
               this.dirConn = c;
-              this.setDirStatus('🌐 房間目錄：線上 (已連上目錄節點)');
-              c.send({ type: 'query' });
-              if (this.myRoomInfo) c.send({ type: 'announce_room', ...this.myRoomInfo });
-            });
+              this.setDirStatus('🌐 房間目錄：線上 (已連上 P2P 目錄節點)');
+              try {
+                c.send({ type: 'query' });
+                if (this.myRoomInfo) c.send({ type: 'announce_room', ...this.myRoomInfo });
+              } catch (e) {}
+            };
+            if (c.open) onOpen(); else c.on('open', onOpen);
             c.on('data', (d) => {
-              if (d.type === 'room_list') {
+              if (d && d.type === 'room_list') {
                 Object.values(d.rooms || {}).forEach(r => this.upsert(r));
-                Object.keys(this.rooms).forEach(code => { if (!d.rooms[code] && !(this.myRoomInfo && this.myRoomInfo.roomCode === code)) delete this.rooms[code]; });
+                Object.keys(this.rooms).forEach(code => {
+                  if (!d.rooms[code] && !(this.myRoomInfo && this.myRoomInfo.roomCode === code)) {
+                    // 保留最近 10 秒內由直連探測到的房間
+                    if (Date.now() - (this.rooms[code].time || 0) > 10000) delete this.rooms[code];
+                  }
+                });
                 this.renderRoomList();
               }
             });
-            c.on('close', () => { this.dirConn = null; this.setDirStatus('⚠️ 目錄節點離線，重新競選中…'); try { sub.destroy(); } catch (e) {} this.scheduleRetry(); });
-            c.on('error', () => { this.dirConn = null; this.scheduleRetry(); });
-          });
-          sub.on('error', () => this.scheduleRetry());
-        } catch (e) { this.scheduleRetry(); }
+            c.on('close', () => {
+              this.dirConn = null;
+              this.setDirStatus('⚠️ 目錄節點重新同步中…');
+              this.scheduleRetry(1200);
+            });
+            c.on('error', () => {
+              this.dirConn = null;
+              this.scheduleRetry(1500);
+            });
+          } catch (e) { this.scheduleRetry(); }
+        });
+        this.probeCandidateRooms();
       },
 
-      scheduleRetry: function() {
+      // 直連探測機制：直接詢問 QFORCE3D_<房號>_HOST 是否在線，即使目錄節點重選中也能秒看到房間！
+      probeRoomByCode: function(code) {
+        if (!code || typeof Peer === 'undefined') return;
+        const clean = String(code).toUpperCase().trim();
+        if (!clean || ['SOLO', 'AUTOTEST', 'DEMO'].includes(clean)) return;
+        if (this.myRoomInfo && this.myRoomInfo.roomCode === clean) return;
+        this.ensureSubPeer((p) => {
+          try {
+            const hostId = 'QFORCE3D_' + clean + '_HOST';
+            const pc = p.connect(hostId, { reliable: true });
+            const timer = setTimeout(() => { try { pc.close(); } catch (e) {} }, 3200);
+            const sendProbe = () => {
+              try { pc.send({ type: 'room_probe', sender: p.id }); } catch (e) {}
+            };
+            if (pc.open) sendProbe(); else pc.on('open', sendProbe);
+            pc.on('data', (d) => {
+              if (d && d.type === 'room_probe_ack' && d.roomCode) {
+                clearTimeout(timer);
+                this.upsert(d);
+                if (this.isDirectory && this.dirRooms) {
+                  this.dirRooms[d.roomCode] = { ...d, time: Date.now() };
+                  this.broadcastDir();
+                }
+                setTimeout(() => { try { pc.close(); } catch (e) {} }, 150);
+              }
+            });
+            pc.on('error', () => { clearTimeout(timer); });
+          } catch (e) {}
+        });
+      },
+
+      probeCandidateRooms: function() {
+        const candidates = new Set(['8888']);
+        const inp = document.getElementById('room-input');
+        if (inp && inp.value && inp.value.trim()) candidates.add(inp.value.trim());
+        Object.keys(this.rooms || {}).forEach(c => candidates.add(c));
+        candidates.forEach(c => this.probeRoomByCode(c));
+      },
+
+      scheduleRetry: function(delayMs) {
         clearTimeout(this.retryTimer);
-        this.retryTimer = setTimeout(() => this.connectDirectory(), 2000 + Math.random() * 3000);
+        this.retryTimer = setTimeout(() => this.connectDirectory(), delayMs || (1800 + Math.random() * 1500));
       },
 
       broadcastDir: function() {
-        Object.values(this.dirClients).forEach(c => { if (c.open) c.send({ type: 'room_list', rooms: this.dirRooms }); });
+        Object.values(this.dirClients).forEach(c => {
+          if (c && c.open) { try { c.send({ type: 'room_list', rooms: this.dirRooms }); } catch (e) {} }
+        });
       },
 
       setDirStatus: function(text) {
@@ -2029,8 +2293,14 @@
         this.upsert(info);
         try { localStorage.setItem('QFORCE3D_ROOM_' + roomCode, JSON.stringify(info)); } catch (e) {}
         try { if (this.channel) this.channel.postMessage(info); } catch (e) {}
-        if (this.isDirectory && this.dirRooms) { this.dirRooms[roomCode] = { ...info }; this.broadcastDir(); }
-        else if (this.dirConn && this.dirConn.open) this.dirConn.send(info);
+        if (this.isDirectory && this.dirRooms) {
+          this.dirRooms[roomCode] = { ...info };
+          this.broadcastDir();
+        } else if (this.dirConn && this.dirConn.open) {
+          try { this.dirConn.send(info); } catch (e) {}
+        } else {
+          this.connectDirectory();
+        }
         this.publishCloud(info);
       },
 
@@ -2040,13 +2310,17 @@
         try { localStorage.removeItem('QFORCE3D_ROOM_' + roomCode); } catch (e) {}
         const msg = { type: 'remove_room', roomCode };
         try { if (this.channel) this.channel.postMessage(msg); } catch (e) {}
-        if (this.isDirectory && this.dirRooms) { delete this.dirRooms[roomCode]; this.broadcastDir(); }
-        else if (this.dirConn && this.dirConn.open) this.dirConn.send(msg);
+        if (this.isDirectory && this.dirRooms) {
+          delete this.dirRooms[roomCode];
+          this.broadcastDir();
+        } else if (this.dirConn && this.dirConn.open) {
+          try { this.dirConn.send(msg); } catch (e) {}
+        }
         this.publishCloud(msg);
         this.renderRoomList();
       },
 
-      // 手動重新掃描：本機 localStorage + BroadcastChannel 詢問 + PeerJS 目錄 + 雲端拉取
+      // 手動重新掃描：本機 localStorage + BroadcastChannel + PeerJS P2P 目錄 + 直連房號探測 (同 v6.2 並強化)
       scanRooms: function() {
         const now = Date.now();
         for (let i = 0; i < localStorage.length; i++) {
@@ -2060,13 +2334,16 @@
           }
         }
         try { if (this.channel) this.channel.postMessage({ type: 'query_rooms' }); } catch (e) {}
-        const nowQ = Date.now();
-        if (nowQ - (this._lastQueryCloudAt || 0) > 4000) {
-          this._lastQueryCloudAt = nowQ;
-          this.publishCloud({ type: 'query_rooms' }, true);
+        if (this.dirConn && this.dirConn.open) {
+          try {
+            this.dirConn.send({ type: 'query' });
+            if (this.myRoomInfo) this.dirConn.send(this.myRoomInfo);
+          } catch (e) {}
+        } else if (!this.isDirectory) {
+          this.connectDirectory();
         }
+        this.probeCandidateRooms();
         this.pollCloudRooms();
-        if (this.dirConn && this.dirConn.open) this.dirConn.send({ type: 'query' });
         this.renderRoomList();
       },
 
@@ -8034,7 +8311,7 @@
     /* =========================================================================
        18. 自動化物理/戰鬥驗證模式：開啟 game.html?autotest=1 於 Console 輸出 [AUTOTEST] 結果
        ========================================================================= */
-    const BUILD_STAMP = 'v7.0 · 建置 2026-10-25 14:51 (台北)';
+    const BUILD_STAMP = 'v7.1 · 建置 2026-10-25 15:14 (台北)';
     console.log('現代突擊 3D ' + BUILD_STAMP);
     window.__manualLoop = new URLSearchParams(location.search).has('autotest');
     if (new URLSearchParams(location.search).has('demo')) {
@@ -8784,6 +9061,73 @@
         toggleProne(false);
         if (rpSniper) { scene.remove(rpSniper.mesh); delete remotePlayers['REMOTE_SNIPER_1']; }
         log('T75 拿到狙擊槍跳出提示，且趴下持有狙擊槍時頭頂名字瞬間消失 (#9)', tipShown && localStealthActive && remoteNameHidden && remoteNameRestored, `tip=${tipShown} localStealth=${localStealthActive} hidden=${remoteNameHidden} restored=${remoteNameRestored}`);
+
+        // ---- T76: v7.1 雙電腦 PeerJS P2P 房間目錄廣播、直連探測與加入房間全流程驗證 ----
+        {
+          const savedHost = Net.isHost;
+          const savedCode = Net.roomCode;
+          const savedMyId = Net.myId;
+          const savedStatus = Net.roomStatus;
+          const savedRoster = { ...Net.roster };
+
+          Net.isHost = true;
+          Net.roomCode = '8888';
+          Net.myId = 'QFORCE3D_8888_HOST';
+          Net.roomStatus = 'waiting';
+          Net.roster = {};
+          playerState.name = '第一台電腦房主';
+          playerState.team = 0;
+
+          // 模擬 PC2 的直連探測 (room_probe -> room_probe_ack)
+          let probeAckReceived = null;
+          const mockProbeConn = {
+            peer: 'QFORCE3D_SUB_PC2',
+            open: true,
+            send: function(msg) { if (msg && msg.type === 'room_probe_ack') probeAckReceived = msg; }
+          };
+          Net.dispatch({ type: 'room_probe', sender: 'QFORCE3D_SUB_PC2' }, mockProbeConn);
+          if (probeAckReceived) {
+            RoomRegistry.upsert(probeAckReceived);
+          }
+          const listHTMLAfterProbe = (document.getElementById('active-rooms-list') || {}).innerHTML || '';
+          const probeListedOK = !!(probeAckReceived && probeAckReceived.roomCode === '8888' && listHTMLAfterProbe.includes('#8888') && listHTMLAfterProbe.includes('等待中'));
+
+          // 模擬 PC2 透過 PeerJS DataConnection 加入 PC1 房間 8888 的完整握手
+          const clientReceivedFromHost = [];
+          const mockClientConnOnHost = {
+            peer: 'QFORCE3D_8888_PC2CLIENT',
+            open: true,
+            _handlers: {},
+            on: function(ev, fn) { this._handlers[ev] = fn; },
+            send: function(msg) { clientReceivedFromHost.push(msg); }
+          };
+          Net.setupConnection(mockClientConnOnHost);
+          // 觸發 PC2 詢問房間資訊 (hello_query)
+          mockClientConnOnHost._handlers['data']({ type: 'hello_query', sender: 'QFORCE3D_8888_PC2CLIENT' });
+          const gotRoomInfo = clientReceivedFromHost.some(m => m.type === 'room_info' && m.target === 'QFORCE3D_8888_PC2CLIENT' && m.roomStatus === 'waiting');
+          // 觸發 PC2 選隊報到 (hello)
+          mockClientConnOnHost._handlers['data']({ type: 'hello', sender: 'QFORCE3D_8888_PC2CLIENT', name: '第二台電腦玩家', team: 1, style: 1, spec: randomCharacterSpec(1) });
+          const gotWelcome = clientReceivedFromHost.some(m => m.type === 'welcome' && m.target === 'QFORCE3D_8888_PC2CLIENT' && m.team === 1);
+          const rosterHasPC2 = !!(Net.roster['QFORCE3D_8888_PC2CLIENT'] && Net.roster['QFORCE3D_8888_PC2CLIENT'].name === '第二台電腦玩家');
+
+          // 觸發 PC2 量測連線速度 (ping_req -> ping_ack)
+          mockClientConnOnHost._handlers['data']({ type: 'ping_req', sender: 'QFORCE3D_8888_PC2CLIENT', t: performance.now() - 15 });
+          const gotPingAck = clientReceivedFromHost.some(m => m.type === 'ping_ack' && m.target === 'QFORCE3D_8888_PC2CLIENT');
+
+          // 清理並還原狀態
+          delete Net.connections['QFORCE3D_8888_PC2CLIENT'];
+          Net.isHost = savedHost;
+          Net.roomCode = savedCode;
+          Net.myId = savedMyId;
+          Net.roomStatus = savedStatus;
+          Net.roster = savedRoster;
+
+          log(
+            'T76 雙電腦 PeerJS P2P 房間目錄廣播、直連房號探測 (room_probe) 與加入握手全流程 (#10)',
+            probeListedOK && gotRoomInfo && gotWelcome && rosterHasPC2 && gotPingAck,
+            `probeListed=${probeListedOK} roomInfo=${gotRoomInfo} welcome=${gotWelcome} roster=${rosterHasPC2} pingAck=${gotPingAck}`
+          );
+        }
 
         const passed = R.filter(Boolean).length;
         console.log(`[AUTOTEST] SUMMARY ${passed}/${R.length} PASSED`);
