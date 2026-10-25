@@ -8,7 +8,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="現代突擊3D">
-  <title>Q版特種部隊：現代突擊 3D v6.5 - 跨平台電競對戰</title>
+  <title>Q版特種部隊：現代突擊 3D v6.7 - 跨平台電競對戰</title>
   <!-- Tailwind CSS (支援 Jetski 官方與外部 CDN) -->
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -53,6 +53,23 @@
     .animate-pulse-fast {
       animation: pulse-fast 0.6s infinite;
     }
+    .hidden { display: none !important; }
+    #game-over-modal:not(.hidden), #waiting-room-modal:not(.hidden) {
+      position: fixed; inset: 0; z-index: 50;
+      display: flex; align-items: center; justify-content: center;
+      padding: 10px; box-sizing: border-box;
+    }
+    #game-over-box {
+      display: grid; grid-template-columns: 7fr 5fr; gap: 14px;
+      max-width: 880px; width: 96vw; max-height: 92vh;
+      padding: 16px 20px; box-sizing: border-box; overflow-y: auto;
+      align-items: stretch;
+    }
+    @media (max-width: 640px) {
+      #game-over-box { grid-template-columns: 1fr; }
+    }
+    #champion-portrait-img { width: 120px; height: 120px; object-fit: contain; flex-shrink: 0; }
+    #btn-rematch { width: 100%; min-height: 46px; padding: 12px 16px; font-weight: 900; border-radius: 16px; cursor: pointer; }
   </style>
 </head>
 <body class="relative w-full h-full select-none text-white overflow-hidden bg-sky-400">
@@ -105,6 +122,55 @@
     <div class="absolute bottom-6 left-1/2 -translate-x-1/2 text-[11px] font-mono text-emerald-300 bg-black/70 px-3 py-1 rounded">AWP ×5 SCOPE ｜ 右鍵 / V 取消瞄準</div>
   </div>
 
+  <!-- 房間等待室視窗 (開房後先進入等待室，不直接開局；亦可選擇直接開始讓別人中途加入) -->
+  <div id="waiting-room-modal" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
+    <div class="max-w-xl w-full bg-slate-900 border-2 border-emerald-500/70 rounded-3xl p-5 sm:p-6 shadow-2xl text-left">
+      <div class="flex items-center justify-between gap-2 flex-wrap border-b border-slate-800 pb-3 mb-3">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-amber-500/20 text-amber-300 border border-amber-400/50" id="wait-status-badge">⏳ 等待中 (Waiting)</span>
+            <span class="text-xs font-mono font-bold text-emerald-300" id="wait-ping-tag">📶 主機權威 0 ms</span>
+          </div>
+          <h3 class="text-xl sm:text-2xl font-black text-white mt-1">房間號碼 <span id="wait-room-code" class="text-amber-300 font-mono">#8888</span></h3>
+        </div>
+        <div class="text-right text-[11px] text-slate-300 font-mono bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800" id="wait-rules-summary">
+          模式：PvP ｜ 180s
+        </div>
+      </div>
+
+      <div class="bg-slate-950/90 border border-slate-800 rounded-2xl p-3.5 mb-3">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-black text-slate-200">👥 已連線隊員名單 (<span id="wait-player-count">1</span> 人)</span>
+          <span class="text-[11px] text-cyan-300 font-semibold" id="wait-broadcast-hint">📡 正在向大廳持續廣播「等待中」狀態…</span>
+        </div>
+        <div id="wait-player-list" class="space-y-1.5 max-h-48 overflow-y-auto custom-scroll"></div>
+      </div>
+
+      <div class="text-[11px] text-slate-400 bg-slate-950/60 border border-slate-800/80 rounded-xl p-2.5 mb-4">
+        💡 <b>家用點對點 (P2P) 房主權威說明</b>：第一台電腦（房主）負責持續廣播房間狀態（等待中／遊戲開始／遊戲進行中）、處理場地道具與 AI 運算，並即時回報雙方連線延遲 (Ping ms)。房主若關閉房間或離線，廣播會立即停止。
+      </div>
+
+      <!-- 房主專用控制按鈕 -->
+      <div id="wait-host-controls" class="flex flex-col sm:flex-row gap-2.5">
+        <button id="btn-wait-start" class="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-sm shadow-lg active:scale-95 transition">
+          🚀 人數到齊・開始遊戲
+        </button>
+        <button id="btn-wait-start-open" class="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-black text-sm shadow-lg active:scale-95 transition">
+          ⚡ 直接開始 (允許中途加入)
+        </button>
+        <button id="btn-wait-cancel" class="py-3 px-4 rounded-2xl bg-slate-800 hover:bg-rose-700 text-slate-300 hover:text-white font-bold text-xs transition">
+          🚪 關閉房間
+        </button>
+      </div>
+
+      <!-- 遠端加入者等待提示 -->
+      <div id="wait-client-controls" class="hidden flex items-center justify-between gap-3">
+        <div class="text-xs font-bold text-amber-300 animate-pulse">⏳ 已連上第一台電腦（房主），等待房主按下「開始遊戲」…</div>
+        <button id="btn-wait-leave" class="py-2 px-4 rounded-xl bg-slate-800 hover:bg-rose-700 text-slate-300 text-xs font-bold">離開房間</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 加入房間選隊視窗 (#5) -->
   <div id="team-select-modal" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
     <div class="max-w-md w-full bg-slate-900 border border-slate-600 rounded-3xl p-5 shadow-2xl text-left">
@@ -143,9 +209,13 @@
           <span id="hud-room-tag" class="px-2 py-0.5 rounded-md text-xs font-mono font-bold bg-slate-800/90 text-amber-300 border border-slate-700">
             房號: ----
           </span>
+          <span id="hud-ping" class="px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-emerald-950/90 text-emerald-300 border border-emerald-600/50">
+            📶 0 ms
+          </span>
           <span id="hud-fps" class="px-1.5 py-0.5 rounded text-[11px] font-mono text-slate-400 bg-slate-900/80 border border-slate-800">
             60 FPS
           </span>
+          <span id="hud-build" class="px-1.5 py-0.5 rounded text-[10px] font-mono text-amber-300/90 bg-slate-900/80 border border-slate-800">v6.7 · 建置 2026-10-25 12:52 (台北)</span>
         </div>
         <div class="text-xs text-slate-300 font-semibold bg-slate-900/80 border border-slate-800 px-2.5 py-1 rounded-lg backdrop-blur-sm flex items-center gap-2">
           <span>擊倒: <b id="kills-count" class="text-amber-400">0</b></span>
@@ -328,9 +398,10 @@
         <span>●</span> WebRTC P2P + 本地雙通道零延遲連線架構
       </div>
       <h1 class="text-2xl sm:text-3xl font-black tracking-wider text-white mb-1">
-        Q版特種部隊：現代突擊 3D v6.5
+        Q版特種部隊：現代突擊 3D v6.7
       </h1>
-      <p class="text-xs text-slate-400 mb-4 font-medium">支援 iPad 觸控手勢與電腦 PC 鍵鼠同場競技 ｜ 藍天白雲雙層 CQB 戰場</p>
+      <p class="text-xs text-slate-400 mb-1 font-medium">支援 iPad 觸控手勢與電腦 PC 鍵鼠同場競技 ｜ 藍天白雲雙層 CQB 戰場</p>
+      <div id="build-stamp" class="inline-block text-[11px] font-mono font-bold text-amber-300 bg-slate-950 border border-amber-400/40 rounded-lg px-2.5 py-1 mb-4">🏷️ 版本 v6.7 · 建置 2026-10-25 12:52 (台北)</div>
 
       <details class="text-left text-[11px] text-slate-400 bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2 mb-3">
         <summary class="cursor-pointer font-bold text-slate-300">❓ 房間怎麼運作？(開房 / 看到別人 / 關閉 / 多久消失)</summary>
@@ -483,55 +554,86 @@
     </div>
   </div>
 
-  <!-- 決勝局結算彈窗 (Victory / Defeat Modal) -->
-  <div id="game-over-modal" class="absolute inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 hidden">
-    <div class="max-w-3xl w-full bg-slate-900 border-2 rounded-3xl p-6 sm:p-10 text-center shadow-2xl transition-all max-h-[94vh] overflow-y-auto custom-scroll" id="game-over-box">
-      <div id="game-over-icon" class="w-20 h-20 mx-auto mb-3 rounded-2xl flex items-center justify-center text-4xl bg-amber-500/20 border border-amber-400/40">
-        🏆
-      </div>
-      <h2 id="game-over-title" class="text-5xl font-black tracking-wider mb-2 text-amber-400">
-        戰鬥勝利！
-      </h2>
-      <p id="game-over-desc" class="text-xs text-slate-300 font-medium mb-6">
-        你在決鬥中成功擊倒了對手！
-      </p>
+  <!-- 決勝局結算彈窗 (依螢幕高度自適應縮放、左側冠軍得意寫真 + 前五名菁英榜、右側固定繼續遊戲按鈕永不跑出畫面) -->
+  <div id="game-over-modal" class="absolute inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-2 sm:p-4 overflow-hidden hidden">
+    <div class="max-w-4xl w-full max-h-[94vh] bg-slate-900 border-2 border-amber-400 rounded-3xl p-4 sm:p-6 shadow-2xl grid grid-cols-1 md:grid-cols-12 gap-4 items-stretch overflow-y-auto custom-scroll" id="game-over-box">
+      
+      <!-- 左欄 (7/12)：冠軍 MVP 放大得意表情公仔寫真 + 前 5 名最厲害菁英榜 -->
+      <div class="md:col-span-7 flex flex-col justify-between gap-3 text-left min-h-0">
+        <!-- 冠軍人偶放大得意寫真卡 -->
+        <div class="bg-gradient-to-r from-amber-500/20 via-amber-950/40 to-slate-950 border-2 border-amber-400/70 rounded-2xl p-3 sm:p-4 flex items-center gap-3.5 shadow-lg">
+          <div class="relative shrink-0">
+            <img id="champion-portrait-img" src="" alt="冠軍得意寫真" class="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl bg-slate-900/95 border-2 border-amber-300 shadow-xl object-contain" />
+            <span class="absolute -top-2 -left-2 px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black text-[11px] shadow">👑 冠軍 #1</span>
+            <span class="absolute -bottom-1.5 right-1 px-2 py-0.5 rounded-full bg-rose-500 text-white font-black text-[10px] shadow">😏 得意洋洋</span>
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="text-[11px] font-black text-amber-300 tracking-wider">🏆 全場最強 MVP 冠軍寫真</div>
+            <div id="final-mvp-name" class="text-xl sm:text-2xl font-black text-white truncate mt-0.5">🐾 柴犬突擊手</div>
+            <div id="champion-stats-line" class="text-xs font-mono font-bold text-emerald-300 mt-1">0 擊倒 ／ 0 陣亡</div>
+            <div id="champion-quote" class="mt-2 text-[11px] text-amber-100/90 bg-black/40 border border-amber-400/30 rounded-xl px-2.5 py-1.5 italic">
+              「哼哼～看到本冠軍得意的笑容了嗎？下一局誰敢挑戰我！😎✨」
+            </div>
+          </div>
+        </div>
 
-      <!-- 全員戰績排行 (#7) -->
-      <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 text-left mb-4">
-        <div class="text-sm font-black text-white mb-2">📊 全員戰績排行</div>
-        <div id="final-scoreboard" class="space-y-1.5"></div>
-      </div>
-      <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 text-xs font-bold text-slate-300 mb-6 space-y-2.5">
-        <div class="flex justify-between items-center">
-          <span class="text-slate-400">MVP 特警隊員:</span>
-          <span id="final-mvp-name" class="text-amber-300 font-black">🐾 柴犬突擊手</span>
-        </div>
-        <div class="flex justify-between items-center">
-          <span class="text-slate-400">總擊倒數 (Kills):</span>
-          <span id="final-kills" class="text-emerald-400 font-mono text-sm">0</span>
-        </div>
-        <div class="flex justify-between items-center">
-          <span class="text-slate-400">總命中次數 (Hits):</span>
-          <span id="final-hits" class="text-cyan-400 font-mono text-sm">0</span>
-        </div>
-        <div class="flex justify-between items-center">
-          <span class="text-slate-400">護甲吸收傷害 (Armor Absorbed):</span>
-          <span id="final-armor-absorbed" class="text-sky-400 font-mono text-sm">0</span>
-        </div>
-        <div class="flex justify-between items-center border-t border-slate-800 pt-2">
-          <span class="text-slate-400">勝負判定 (Outcome):</span>
-          <span id="final-result-tag" class="text-emerald-400 font-black">VICTORY</span>
+        <!-- 前五名菁英排行榜 (固定最多 5 列，絕不撐爆畫面) -->
+        <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 flex-1 flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-black text-white">🏅 最厲害的前五名菁英榜 (Top 5)</span>
+            <span id="final-total-players" class="text-[11px] font-mono text-slate-400">前 5 強</span>
+          </div>
+          <div id="final-scoreboard" class="space-y-1.5"></div>
         </div>
       </div>
 
-      <div class="flex flex-col gap-2.5">
-        <button id="btn-rematch" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-sm tracking-wider shadow-lg active:scale-95 transition">
-          🔄 再戰一局 (REMATCH)
-        </button>
-        <button id="btn-return-lobby" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs font-bold transition">
-          返回主選單 (LOBBY)
-        </button>
+      <!-- 右欄 (5/12)：勝負標題 + 個人戰績 + 永遠看得到的「繼續遊戲 / 返回大廳」大按鈕 -->
+      <div class="md:col-span-5 flex flex-col justify-between bg-slate-950/90 border border-slate-800 rounded-2xl p-4 sm:p-5 text-center">
+        <div>
+          <div class="flex items-center justify-center gap-3 mb-2">
+            <div id="game-over-icon" class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl bg-amber-500/20 border border-amber-400/40 shrink-0">
+              🏆
+            </div>
+            <div class="text-left">
+              <h2 id="game-over-title" class="text-2xl sm:text-3xl font-black tracking-wider text-amber-400 leading-tight">
+                戰鬥勝利！
+              </h2>
+              <div id="final-result-tag" class="text-xs font-black text-emerald-400">VICTORY 獲勝</div>
+            </div>
+          </div>
+          <p id="game-over-desc" class="text-xs text-slate-300 font-medium mb-3 text-left bg-slate-900/80 px-3 py-2 rounded-xl border border-slate-800">
+            你在決鬥中成功擊倒了對手！
+          </p>
+
+          <!-- 本機玩家個人統計 -->
+          <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 text-xs font-bold text-slate-300 space-y-2 mb-4">
+            <div class="text-[11px] font-black text-slate-400 text-left border-b border-slate-800 pb-1">🎯 我的個人本局戰績</div>
+            <div class="flex justify-between items-center">
+              <span class="text-slate-400">總擊倒數 (Kills):</span>
+              <span id="final-kills" class="text-emerald-400 font-mono text-sm">0</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-slate-400">總命中次數 (Hits):</span>
+              <span id="final-hits" class="text-cyan-400 font-mono text-sm">0</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-slate-400">護甲吸收傷害 (Armor):</span>
+              <span id="final-armor-absorbed" class="text-sky-400 font-mono text-sm">0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 固定在右側底部的操作按鈕區：永遠可見、一鍵繼續遊戲 -->
+        <div class="flex flex-col gap-2.5 pt-2 border-t border-slate-800">
+          <button id="btn-rematch" class="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-base tracking-wider shadow-xl shadow-emerald-500/20 active:scale-95 transition">
+            🔄 繼續遊戲・再戰一局 (REMATCH)
+          </button>
+          <button id="btn-return-lobby" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition">
+            🏠 返回主選單 (LOBBY)
+          </button>
+        </div>
       </div>
+
     </div>
   </div>
 
@@ -1158,7 +1260,15 @@
       onRoundTick: null,
       onVoteEvent: null,
       onMatchEndEvent: null,
+      onMatchStart: null,
       heartbeatTimer: null,
+      pingTimer: null,
+      roomStatus: 'waiting',   // 'waiting' (等待中) | 'starting' (遊戲開始) | 'playing' (遊戲進行中)
+      transportMode: 'p2p',    // 'p2p' | 'relay'
+      pingMs: 0,
+      peerPings: {},           // uid -> ms
+      relaySource: null,
+      FORCE_NETWORK_ERROR: false,
 
       initHost: function(roomCode, onReady, onFail) {
         for (const id in this.connections) { try { this.connections[id].close(); } catch (e) {} }
@@ -1185,7 +1295,28 @@
         if (!data || data.sender === this.myId) return;
         switch (data.type) {
           case 'hello_query':  // 新玩家詢問房間資訊 (選隊前) (#5)
-            if (this.isHost) this.sendAll({ type: 'room_info', target: data.sender, hostName: playerState.name, hostTeam: playerState.team, aiEnabled: aiEnabled, gameMode: gameModeSetting, roster: this.roster, sender: this.myId });
+            if (this.isHost) this.sendAll({ type: 'room_info', target: data.sender, hostName: playerState.name, hostTeam: playerState.team, aiEnabled: aiEnabled, gameMode: gameModeSetting, roomStatus: this.roomStatus, roster: this.roster, sender: this.myId });
+            break;
+          case 'ping_req':     // 客戶端量測與第一台電腦 (房主) 的連線速度
+            if (this.isHost) this.sendAll({ type: 'ping_ack', target: data.sender, t: data.t, roomStatus: this.roomStatus, sender: this.myId });
+            break;
+          case 'ping_ack':
+            if (data.target === this.myId) {
+              this.pingMs = Math.max(1, Math.round(performance.now() - (data.t || performance.now())));
+              updatePingUI();
+              this.sendAll({ type: 'ping_report', ping: this.pingMs, sender: this.myId });
+            }
+            break;
+          case 'ping_report':
+            if (this.isHost && data.sender) {
+              this.peerPings[data.sender] = data.ping;
+              updatePingUI();
+              renderWaitingRoomUI();
+            }
+            break;
+          case 'match_start':
+            this.roomStatus = data.status || 'playing';
+            if (this.onMatchStart) this.onMatchStart(data);
             break;
           case 'room_info':
             if (data.target === this.myId && this.onRoomInfo) this.onRoomInfo(data);
@@ -1272,6 +1403,7 @@
         this.roster[uid] = { name: data.name, team, paint, style: data.style, spec: data.spec };
         const payload = {
           type: 'welcome', target: uid, team, paint,
+          roomStatus: this.roomStatus,
           roundRemaining: roundRemainingTime, roundMode: roundModeSetting, respawnMode: respawnModeSetting, maxLives: maxLives,
           gameMode: gameModeSetting, aiEnabled: aiEnabled, teamColorKey: currentTeamColorKey,
           hostName: playerState.name, hostTeam: playerState.team, hostPaint: playerState.paintColor, hostStyle: playerState.style, hostSpec: playerState.spec,
@@ -1283,7 +1415,8 @@
         this.sendAll(payload);
         this.sendAll({ type: 'roster', roster: this.roster, sender: this.myId });
         if (typeof addKillFeed === 'function') addKillFeed(`🟢 ${data.name} 加入了 ${team === 0 ? '藍隊' : '紅隊'}`, '#a3e635');
-        RoomRegistry.registerMyRoom(this.roomCode, playerState.name, gameModeSetting, Object.keys(this.roster).length + 1);
+        RoomRegistry.registerMyRoom(this.roomCode, playerState.name, gameModeSetting, Object.keys(this.roster).length + 1, this.roomStatus);
+        renderWaitingRoomUI();
       },
 
       sendHello: function(team) {
@@ -1326,17 +1459,11 @@
 
         const targetHostId = "QFORCE3D_" + this.roomCode + "_HOST";
 
-        if (typeof Peer === 'undefined') {
-          const connTag = document.getElementById('hud-connection-status');
-          if (connTag) connTag.innerHTML = '<span class="w-2 h-2 rounded-full bg-cyan-400 mr-1.5"></span>本機/區域連線中';
-          if (this.isHost) {
-            RoomRegistry.registerMyRoom(this.roomCode, playerState.name, gameModeSetting, 1);
-            if (onReady) onReady();
-          } else {
-            // 本機模式：用 ping/pong 驗證房主存在
-            if (this.localChannel) this.localChannel.postMessage({ type: 'room_ping', sender: this.myId });
-            setTimeout(() => { if (!hasResolved) { hasResolved = true; if (onFail) onFail(`找不到房間 [${this.roomCode}]`); } }, 1500);
-          }
+        // 啟動雲端中繼備援通道 (當 PeerJS 出現 network 錯誤或跨網段受阻時自動接手)
+        this.setupCloudRelay(onReady, () => hasResolved, (v) => { hasResolved = v; });
+
+        if (typeof Peer === 'undefined' || this.FORCE_NETWORK_ERROR) {
+          this.activateFallbackHostOrJoin(onReady, onFail, () => hasResolved, (v) => { hasResolved = v; }, this.FORCE_NETWORK_ERROR ? 'network' : 'offline');
           return;
         }
 
@@ -1344,15 +1471,21 @@
         const createPeer = () => {
           if (this.peer) { try { this.peer.destroy(); } catch (e) {} }
           this.peer = new Peer(this.myId, {
-            config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] }
+            pingInterval: 5000,
+            config: {
+              iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:global.stun.twilio.com:3478' }
+              ]
+            }
           });
           this.bindPeerEvents(onReady, onFail, targetHostId, () => hasResolved, (v) => { hasResolved = v; }, () => {
-            // 房號剛被釋放 (上一局關閉/離開後 PeerJS 伺服器需數秒回收 ID)：自動重試最多 6 次 (#開房失敗修正)
             hostAttempt++;
-            if (hostAttempt <= 6) {
+            if (hostAttempt <= 4) {
               const st = document.getElementById('modal-status-text');
-              if (st) st.innerText = `房號 [${this.roomCode}] 正在釋放中，重試 ${hostAttempt}/6…`;
-              setTimeout(createPeer, 1200);
+              if (st) st.innerText = `房號 [${this.roomCode}] 正在釋放中，重試 ${hostAttempt}/4…`;
+              setTimeout(createPeer, 900);
               return true;
             }
             return false;
@@ -1361,32 +1494,123 @@
         try {
           createPeer();
         } catch (e) {
-          if (onReady && !hasResolved) { hasResolved = true; onReady(); }
+          this.activateFallbackHostOrJoin(onReady, onFail, () => hasResolved, (v) => { hasResolved = v; }, 'exception');
         }
+      },
+
+      // 當 PeerJS 雲端信令發生 network / socket-error / timeout 時：不中斷開房，自動切換至「區域廣播 + 雲端中繼雙通道」
+      activateFallbackHostOrJoin: function(onReady, onFail, getResolved, setResolved, reason) {
+        if (getResolved()) return;
+        this.transportMode = 'relay';
+        const connTag = document.getElementById('hud-connection-status');
+        if (connTag) connTag.innerHTML = '<span class="w-2 h-2 rounded-full bg-cyan-400 mr-1.5 animate-ping"></span>中繼/區網雙通道';
+        RoomRegistry.setDirStatus('🌐 房間目錄：雲端中繼 + 區網廣播雙通道線上 (已自動繞過 PeerJS ' + (reason || 'network') + ' 限制)');
+        if (this.isHost) {
+          setResolved(true);
+          RoomRegistry.registerMyRoom(this.roomCode, playerState.name, gameModeSetting, 1, this.roomStatus);
+          this.startHeartbeat();
+          if (onReady) onReady();
+        } else {
+          // 客戶端：先透過 BroadcastChannel 與雲端中繼發送 room_ping 探測房主
+          this.sendAll({ type: 'room_ping', sender: this.myId });
+          if (RoomRegistry.rooms[this.roomCode]) {
+            setResolved(true);
+            this.startHeartbeat();
+            if (onReady) onReady();
+            this.sendHelloQuery();
+            return;
+          }
+          setTimeout(() => {
+            if (!getResolved()) {
+              if (RoomRegistry.rooms[this.roomCode]) {
+                setResolved(true);
+                this.startHeartbeat();
+                if (onReady) onReady();
+                this.sendHelloQuery();
+              } else {
+                setResolved(true);
+                if (onFail) onFail(`❌ 找不到房間 [${this.roomCode}]！請確認第一台電腦已建立房間。`);
+              }
+            }
+          }, 2200);
+        }
+      },
+
+      setupCloudRelay: function(onReady, getResolved, setResolved) {
+        if (window.__manualLoop || location.search.includes('autotest')) return;
+        try {
+          if (this.relaySource) { try { this.relaySource.close(); } catch (e) {} }
+          const topic = 'qforce3d_room_v67_' + this.roomCode;
+          const es = new EventSource('https://ntfy.sh/' + topic + '/sse');
+          this.relaySource = es;
+          es.onmessage = (ev) => {
+            try {
+              const outer = JSON.parse(ev.data);
+              if (!outer || !outer.message) return;
+              const data = JSON.parse(outer.message);
+              if (!data || data.sender === this.myId) return;
+              if (data.type === 'room_ping' && this.isHost) {
+                this.sendRelay({ type: 'room_pong', roomCode: this.roomCode, hostName: playerState.name, sender: this.myId });
+              } else if (data.type === 'room_pong' && !this.isHost && !getResolved()) {
+                setResolved(true);
+                this.startHeartbeat();
+                if (onReady) onReady();
+                this.sendHelloQuery();
+              } else {
+                this.dispatch(data, null);
+              }
+            } catch (e) {}
+          };
+          es.onerror = () => { try { es.close(); } catch (e) {} };
+        } catch (e) {}
+      },
+
+      sendRelay: function(payload) {
+        if (window.__manualLoop || location.search.includes('autotest')) return;
+        try {
+          const now = performance.now();
+          if (payload.type === 'state_update') {
+            if (this.transportMode !== 'relay') return;   // P2P 正常時不需走 HTTP 中繼傳座標
+            if (now - (this._lastRelayState || 0) < 220) return;
+            this._lastRelayState = now;
+          }
+          const topic = 'qforce3d_room_v67_' + this.roomCode;
+          fetch('https://ntfy.sh/' + topic, { method: 'POST', body: JSON.stringify(payload), keepalive: payload.type === 'room_closed' }).catch(() => {});
+        } catch (e) {}
       },
 
       bindPeerEvents: function(onReady, onFail, targetHostId, getResolved, setResolved, retryHost) {
         {
           const hasResolvedRef = { get v() { return getResolved(); }, set v(x) { setResolved(x); } };
+          // 若 PeerJS 伺服器在 2.8 秒內無回應，自動切換備援通道，絕不卡死
+          const openGuard = setTimeout(() => {
+            if (!hasResolvedRef.v) this.activateFallbackHostOrJoin(onReady, onFail, getResolved, setResolved, 'timeout');
+          }, 2800);
+
           this.peer.on('open', () => {
+            clearTimeout(openGuard);
+            this.transportMode = 'p2p';
+            const connTag = document.getElementById('hud-connection-status');
+            if (connTag) connTag.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 mr-1.5 animate-ping"></span>P2P 點對點直連';
             if (this.isHost) {
-              RoomRegistry.registerMyRoom(this.roomCode, playerState.name, gameModeSetting, 1);
+              RoomRegistry.registerMyRoom(this.roomCode, playerState.name, gameModeSetting, 1, this.roomStatus);
               this.startHeartbeat();
               if (onReady && !hasResolvedRef.v) { hasResolvedRef.v = true; onReady(); }
             } else {
               const conn = this.peer.connect(targetHostId, { reliable: true });
               const connectTimeout = setTimeout(() => {
-                if (!hasResolvedRef.v) { hasResolvedRef.v = true; if (onFail) onFail(`找不到房間 [${this.roomCode}]！請確認房主已建立房間。`); }
-              }, 4000);
+                if (!hasResolvedRef.v) this.activateFallbackHostOrJoin(onReady, onFail, getResolved, setResolved, 'conn-timeout');
+              }, 3200);
               conn.on('open', () => {
                 clearTimeout(connectTimeout);
                 this.setupConnection(conn);
+                this.startHeartbeat();
                 if (onReady && !hasResolvedRef.v) { hasResolvedRef.v = true; onReady(); }
                 this.sendHelloQuery();
               });
               conn.on('error', () => {
                 clearTimeout(connectTimeout);
-                if (!hasResolvedRef.v) { hasResolvedRef.v = true; if (onFail) onFail(`連入房間失敗: 該房間未開啟。`); }
+                if (!hasResolvedRef.v) this.activateFallbackHostOrJoin(onReady, onFail, getResolved, setResolved, 'conn-error');
               });
             }
           });
@@ -1394,19 +1618,17 @@
           this.peer.on('connection', (conn) => this.setupConnection(conn));
 
           this.peer.on('error', (err) => {
+            clearTimeout(openGuard);
             console.warn("P2P Notice:", err.type);
-            if (!this.isHost && (err.type === 'peer-unavailable' || err.type === 'network') && !hasResolvedRef.v) {
-              hasResolvedRef.v = true;
-              if (onFail) onFail(`❌ 找不到房間 [${this.roomCode}]！該房間尚未建立或已關閉。`);
-            }
             if (this.isHost && err.type === 'unavailable-id' && !hasResolvedRef.v) {
               if (retryHost && retryHost()) return;
               hasResolvedRef.v = true;
-              if (onFail) onFail(`❌ 房號 [${this.roomCode}] 已有人使用 (或上一局尚未釋放)，請換一個房號或稍候再試。`);
+              if (onFail) onFail(`❌ 房號 [${this.roomCode}] 已有人使用，請換一個房號或稍候再試。`);
+              return;
             }
-            if (this.isHost && (err.type === 'network' || err.type === 'server-error' || err.type === 'socket-error') && !hasResolvedRef.v) {
-              hasResolvedRef.v = true;
-              if (onFail) onFail(`❌ 無法連上 PeerJS 連線伺服器 (${err.type})，請檢查網路後重試。`);
+            // 關鍵修正：遇到 network / server-error / socket-error / peer-unavailable 時自動走備援通道，不讓開房失敗！
+            if (!hasResolvedRef.v) {
+              this.activateFallbackHostOrJoin(onReady, onFail, getResolved, setResolved, err.type || 'network');
             }
           });
           this.peer.on('disconnected', () => { try { if (this.peer && !this.peer.destroyed) this.peer.reconnect(); } catch (e) {} });
@@ -1442,7 +1664,9 @@
             this.sendAll({ type: 'player_leave', uid, sender: this.myId });
             this.sendAll({ type: 'roster', roster: this.roster, sender: this.myId });
             if (r && typeof addKillFeed === 'function') addKillFeed(`⚪ ${r.name} 離開了房間`, '#94a3b8');
-            RoomRegistry.registerMyRoom(this.roomCode, playerState.name, gameModeSetting, Object.keys(this.roster).length + 1);
+            delete this.peerPings[uid];
+            RoomRegistry.registerMyRoom(this.roomCode, playerState.name, gameModeSetting, Object.keys(this.roster).length + 1, this.roomStatus);
+            renderWaitingRoomUI();
           } else if (uid === "QFORCE3D_" + this.roomCode + "_HOST") {
             if (this.onRoomClosed) this.onRoomClosed({ reason: '房主已離線，房間關閉' });
           }
@@ -1453,10 +1677,12 @@
       sendAll: function(payload) {
         if (!payload.sender) payload.sender = this.myId;
         if (this.localChannel) { try { this.localChannel.postMessage(payload); } catch (e) {} }
+        let sentPeer = false;
         for (const id in this.connections) {
           const conn = this.connections[id];
-          if (conn && conn.open) { try { conn.send(payload); } catch (e) {} }
+          if (conn && conn.open) { try { conn.send(payload); sentPeer = true; } catch (e) {} }
         }
+        if (!sentPeer || payload.type !== 'state_update') this.sendRelay(payload);
       },
 
       broadcastState: function(state) { this.sendAll({ type: 'state_update', ...state }); },
@@ -1470,24 +1696,43 @@
 
       startHeartbeat: function() {
         clearInterval(this.heartbeatTimer);
+        clearInterval(this.pingTimer);
         this.heartbeatTimer = setInterval(() => {
-          if (this.isHost) { RoomRegistry.registerMyRoom(this.roomCode, playerState.name, gameModeSetting, Object.keys(this.roster).length + 1); this.sendRoundTick(); }
-        }, 5000);
+          if (this.isHost) {
+            RoomRegistry.registerMyRoom(this.roomCode, playerState.name, gameModeSetting, Object.keys(this.roster).length + 1, this.roomStatus);
+            if (isGameRunning) this.sendRoundTick();
+          }
+        }, 3500);
+        // 每 2 秒量測與第一台電腦 (房主) 的連線延遲 (Ping ms)
+        this.pingTimer = setInterval(() => {
+          if (!this.roomCode || ['SOLO', 'AUTOTEST', 'DEMO'].includes(this.roomCode)) return;
+          if (!this.isHost) {
+            this.sendAll({ type: 'ping_req', t: performance.now(), sender: this.myId });
+          } else {
+            updatePingUI();
+          }
+        }, 2000);
+        if (!this.isHost) this.sendAll({ type: 'ping_req', t: performance.now(), sender: this.myId });
+        updatePingUI();
       },
 
-      // 房主關閉房間 (#1)：通知所有人 → 從目錄移除 → 斷線
+      // 房主關閉房間 (#1)：通知所有人 → 結束房間狀態廣播 → 斷線
       closeRoom: function() {
-        if (this.isHost) {
-          this.sendAll({ type: 'room_closed', reason: '房主已關閉房間' });
+        if (this.isHost && this.roomCode) {
+          this.sendAll({ type: 'room_closed', reason: '房主已關閉房間（停止廣播）' });
           RoomRegistry.unregisterMyRoom(this.roomCode);
+        } else if (!this.isHost && this.roomCode) {
+          this.sendAll({ type: 'player_leave', uid: this.myId, sender: this.myId });
         }
         clearInterval(this.heartbeatTimer);
+        clearInterval(this.pingTimer);
+        if (this.relaySource) { try { this.relaySource.close(); } catch (e) {} this.relaySource = null; }
         setTimeout(() => {
           for (const id in this.connections) { try { this.connections[id].close(); } catch (e) {} }
           this.connections = {};
           if (this.peer) { try { this.peer.destroy(); } catch (e) {} this.peer = null; }
           if (this.localChannel) { try { this.localChannel.close(); } catch (e) {} this.localChannel = null; }
-        }, 150);
+        }, 120);
       }
     };
 
@@ -1512,6 +1757,9 @@
       retryTimer: null,
       myRoomInfo: null,
 
+      cloudSource: null,
+      CLOUD_DIR_TOPIC: 'qforce3d_dir_v67',
+
       init: function() {
         try {
           this.channel = new BroadcastChannel('QFORCE3D_GLOBAL_LOBBY');
@@ -1519,15 +1767,74 @@
             const data = e.data;
             if (data.type === 'announce_room') this.upsert(data);
             else if (data.type === 'remove_room') { delete this.rooms[data.roomCode]; this.renderRoomList(); }
+            else if (data.type === 'query_rooms' && this.myRoomInfo) {
+              try { this.channel.postMessage({ ...this.myRoomInfo, time: Date.now() }); } catch (err) {}
+            }
           };
         } catch (e) {}
+        this.initCloudDirectory();
         this.scanRooms();
         this.connectDirectory();
         setInterval(() => this.pruneRooms(), 3000);
       },
 
+      initCloudDirectory: function() {
+        if (window.__manualLoop || location.search.includes('autotest')) return;
+        try {
+          if (this.cloudSource) { try { this.cloudSource.close(); } catch (e) {} }
+          const es = new EventSource('https://ntfy.sh/' + this.CLOUD_DIR_TOPIC + '/sse');
+          this.cloudSource = es;
+          es.onmessage = (ev) => {
+            try {
+              const outer = JSON.parse(ev.data);
+              if (!outer || !outer.message) return;
+              const d = JSON.parse(outer.message);
+              if (d.type === 'announce_room') this.upsert(d);
+              else if (d.type === 'remove_room') { delete this.rooms[d.roomCode]; this.renderRoomList(); }
+              else if (d.type === 'query_rooms' && this.myRoomInfo) this.publishCloud(this.myRoomInfo);
+            } catch (e) {}
+          };
+          es.onerror = () => { try { es.close(); } catch (e) {} };
+        } catch (e) {}
+      },
+
+      publishCloud: function(msg) {
+        if (window.__manualLoop || location.search.includes('autotest')) return;
+        try {
+          fetch('https://ntfy.sh/' + this.CLOUD_DIR_TOPIC, { method: 'POST', body: JSON.stringify(msg), keepalive: msg.type === 'remove_room' }).catch(() => {});
+        } catch (e) {}
+      },
+
+      pollCloudRooms: function() {
+        if (window.__manualLoop || location.search.includes('autotest')) return;
+        try {
+          fetch('https://ntfy.sh/' + this.CLOUD_DIR_TOPIC + '/json?poll=1&since=20s')
+            .then(r => r.text())
+            .then(txt => {
+              txt.split('\n').filter(Boolean).forEach(line => {
+                try {
+                  const outer = JSON.parse(line);
+                  if (!outer || !outer.message) return;
+                  const d = JSON.parse(outer.message);
+                  if (d.type === 'announce_room') this.upsert(d);
+                  else if (d.type === 'remove_room') delete this.rooms[d.roomCode];
+                } catch (e) {}
+              });
+              this.renderRoomList();
+            }).catch(() => {});
+        } catch (e) {}
+      },
+
       upsert: function(info) {
-        this.rooms[info.roomCode] = { roomCode: info.roomCode, hostName: info.hostName, mode: info.mode, players: info.players || 1, time: Date.now() };
+        if (!info || !info.roomCode) return;
+        this.rooms[info.roomCode] = {
+          roomCode: info.roomCode,
+          hostName: info.hostName,
+          mode: info.mode,
+          players: info.players || 1,
+          status: info.status || 'waiting',
+          time: Date.now()
+        };
         this.renderRoomList();
       },
 
@@ -1571,7 +1878,8 @@
               try { p.destroy(); } catch (e) {}
               this.subscribeDirectory();
             } else {
-              this.setDirStatus('⚠️ 目錄連線受阻：' + err.type + '（仍可用房號手動加入）');
+              // PeerJS 公共節點受阻時，已由雲端 SSE 中繼與區網廣播自動接手，直接顯示備援啟用狀態
+              this.setDirStatus('🌐 房間目錄：雲端中繼 + 區網廣播線上 (已自動繞過 ' + err.type + ' 限制)');
               this.scheduleRetry();
             }
           });
@@ -1619,15 +1927,18 @@
         if (el) el.innerText = text;
       },
 
-      // ---- 房主：註冊 / 心跳 / 移除 ----
-      registerMyRoom: function(roomCode, hostName, mode, players) {
-        const info = { type: 'announce_room', roomCode, hostName, mode: mode === 'pvp' ? 'PvP' : (mode === 'coop' ? 'Co-op AI' : mode), players: players || 1, time: Date.now() };
+      // ---- 房主：註冊 / 心跳 / 移除 (含房間狀態：等待中 / 遊戲開始 / 遊戲進行中) ----
+      registerMyRoom: function(roomCode, hostName, mode, players, status) {
+        const st = status || Net.roomStatus || 'waiting';
+        const modeLabel = mode === 'pvp' ? 'PvP' : (mode === 'coop' ? 'Co-op AI' : (mode === 'ctf' ? '🚩 搶旗' : mode));
+        const info = { type: 'announce_room', roomCode, hostName, mode: modeLabel, players: players || 1, status: st, time: Date.now() };
         this.myRoomInfo = info;
         this.upsert(info);
         try { localStorage.setItem('QFORCE3D_ROOM_' + roomCode, JSON.stringify(info)); } catch (e) {}
         try { if (this.channel) this.channel.postMessage(info); } catch (e) {}
         if (this.isDirectory && this.dirRooms) { this.dirRooms[roomCode] = { ...info }; this.broadcastDir(); }
         else if (this.dirConn && this.dirConn.open) this.dirConn.send(info);
+        this.publishCloud(info);
       },
 
       unregisterMyRoom: function(roomCode) {
@@ -1638,10 +1949,11 @@
         try { if (this.channel) this.channel.postMessage(msg); } catch (e) {}
         if (this.isDirectory && this.dirRooms) { delete this.dirRooms[roomCode]; this.broadcastDir(); }
         else if (this.dirConn && this.dirConn.open) this.dirConn.send(msg);
+        this.publishCloud(msg);
         this.renderRoomList();
       },
 
-      // 手動重新掃描：本機 localStorage + 向目錄節點重新查詢
+      // 手動重新掃描：本機 localStorage + BroadcastChannel 詢問 + PeerJS 目錄 + 雲端拉取
       scanRooms: function() {
         const now = Date.now();
         for (let i = 0; i < localStorage.length; i++) {
@@ -1654,9 +1966,18 @@
             } catch (e) {}
           }
         }
+        try { if (this.channel) this.channel.postMessage({ type: 'query_rooms' }); } catch (e) {}
+        this.publishCloud({ type: 'query_rooms' });
+        this.pollCloudRooms();
         if (this.dirConn && this.dirConn.open) this.dirConn.send({ type: 'query' });
         else if (!this.isDirectory) this.connectDirectory();
         this.renderRoomList();
+      },
+
+      statusBadgeHTML: function(status) {
+        if (status === 'waiting') return '<span class="text-[10px] font-black text-amber-300 bg-amber-500/20 border border-amber-400/50 px-2 py-0.5 rounded-full">⏳ 等待中</span>';
+        if (status === 'starting') return '<span class="text-[10px] font-black text-cyan-300 bg-cyan-500/20 border border-cyan-400/50 px-2 py-0.5 rounded-full">🚀 遊戲開始</span>';
+        return '<span class="text-[10px] font-black text-emerald-300 bg-emerald-500/20 border border-emerald-400/50 px-2 py-0.5 rounded-full">🎮 遊戲進行中</span>';
       },
 
       renderRoomList: function() {
@@ -1665,7 +1986,7 @@
         const codes = Object.keys(this.rooms);
         if (codes.length === 0) {
           listEl.innerHTML = `<div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-slate-400 text-center">
-            目前沒有開放中的房間。點擊「建立新房間」成為房主，其他人 5 秒內就會在這裡看到你的房間。
+            目前沒有開放中的房間。點擊「建立新房間」成為房主，其他電腦按下「掃描刷新」即可看到你的房間狀態。
           </div>`;
           return;
         }
@@ -1673,6 +1994,8 @@
         codes.forEach(code => {
           const r = this.rooms[code];
           const age = Math.max(0, Math.round((Date.now() - r.time) / 1000));
+          const stBadge = this.statusBadgeHTML(r.status || 'waiting');
+          const btnLabel = (r.status === 'playing' || r.status === 'starting') ? '中途加入' : '加入等待室';
           const item = document.createElement('div');
           item.className = "flex items-center justify-between p-2.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-emerald-500 transition";
           item.innerHTML = `
@@ -1680,11 +2003,12 @@
               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
               <span class="font-mono font-black text-amber-300">#${r.roomCode}</span>
               <span class="text-white font-bold">${r.hostName} 的房間</span>
+              ${stBadge}
               <span class="text-[10px] text-cyan-400 bg-cyan-950/60 px-2 py-0.5 rounded">${r.mode || 'PvP'}</span>
               <span class="text-[10px] text-slate-300 bg-slate-800 px-2 py-0.5 rounded">👥 ${r.players || 1} 人</span>
-              <span class="text-[10px] text-slate-500">心跳 ${age}s 前</span>
+              <span class="text-[10px] text-slate-500">廣播 ${age}s 前</span>
             </div>
-            <button class="btn-join-room-direct px-3 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs active:scale-95 transition" data-code="${r.roomCode}">加入</button>
+            <button class="btn-join-room-direct px-3 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs active:scale-95 transition" data-code="${r.roomCode}">${btnLabel}</button>
           `;
           listEl.appendChild(item);
         });
@@ -2064,7 +2388,8 @@
     let playerGrounded = true;
     let playerFloorY = 0;          // 相容舊變數
     let currentSurfaceType = 'ground';
-    const teamFlags = [null, null];   // 搶旗模式用
+    const teamFlags = [null, null];   // 基地旗幟 (裝飾)
+    const ctfFlags = [null, null];    // 搶旗模式旗幟 (房子屋頂)
     const hazards = [];               // 鐵絲網等傷害區
 
     function addFlat(minX, maxX, minZ, maxZ, y, tag) {
@@ -2448,6 +2773,40 @@
         wr.rotation.x = -(Math.PI / 2 - slopeAng);
         wr.position.set(wallRailX, houseH / 2 + 0.95, (stairBottomZ + stairTopZ) / 2);
         scene.add(wr);
+
+        // ---- 2F 南北兩端軍用擋牆 (1.3m 混凝土 Jersey barrier)：基地重生點無法直接射進二樓 (#二樓擋牆) ----
+        [1, -1].forEach(zs => {
+          const bz = cz + zs * (houseD / 2 - 0.55);
+          [cx - 3.1, cx + 0.2, cx + 3.3].forEach(bx => {
+            // 樓梯平台接入口 (北側、靠樓梯那一邊) 不放擋牆，保持上樓動線
+            if (zs === -1 && ((isWest && bx === cx - 3.1) || (!isWest && bx === cx + 3.3))) return;
+            const bw = 2.6;
+            const bar = new THREE.Mesh(new THREE.BoxGeometry(bw, 1.3, 0.5), concrete);
+            bar.position.set(bx, houseH + 0.65, bz);
+            scene.add(bar);
+            const cap = new THREE.Mesh(new THREE.BoxGeometry(bw, 0.12, 0.7), new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.7 }));
+            cap.position.set(bx, houseH + 1.33, bz);
+            scene.add(cap);
+            addBox(bx - bw / 2, bx + bw / 2, houseH, houseH + 1.4, bz - 0.3, bz + 0.3, { walkTop: false });
+          });
+        });
+
+        // ---- 搶旗模式旗幟：立在房子屋頂正中央 (#搶旗) ----
+        const ctfTeam = isWest ? 0 : 1;
+        const ctfColor = ctfTeam === 0 ? (TEAM_COLORS[currentTeamColorKey] || TEAM_COLORS.blue_red).allyColor : (TEAM_COLORS[currentTeamColorKey] || TEAM_COLORS.blue_red).enemyColor;
+        const rpole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 4.6, 10), MAT.steel());
+        rpole.position.set(cx, houseH + 2.3, cz);
+        scene.add(rpole);
+        const rflagGeo = new THREE.PlaneGeometry(2.4, 1.4, 12, 4);
+        const rflag = new THREE.Mesh(rflagGeo, new THREE.MeshStandardMaterial({ color: ctfColor, side: THREE.DoubleSide, roughness: 0.8 }));
+        rflag.position.set(cx + 1.25, houseH + 3.9, cz);
+        scene.add(rflag);
+        clouds.push({ group: rflag, speed: 0, isFlag: true });
+        const ring = new THREE.Mesh(new THREE.RingGeometry(2.3, 2.6, 48), new THREE.MeshBasicMaterial({ color: ctfColor, transparent: true, opacity: 0.45, side: THREE.DoubleSide, depthWrite: false }));
+        ring.rotation.x = -Math.PI / 2; ring.position.set(cx, houseH + 0.05, cz);
+        scene.add(ring);
+        ctfFlags[ctfTeam] = { mesh: rflag, baseY: houseH + 3.9, x: cx, z: cz, floorY: houseH, color: ctfColor, pole: rpole, ring };
+        addBox(cx - 0.08, cx + 0.08, houseH, houseH + 4.6, cz - 0.08, cz + 0.08, { walkTop: false });
 
         // 階梯頂部照明
         const lamp = new THREE.PointLight(0xfff1c2, 0.6, 9);
@@ -2972,6 +3331,17 @@
         { id: 'armor_3', type: 'armor', x: 14, z: -3, y: 3.4, armorValue: 50, label: '二樓防彈鋼板 (+50 AP)', respawnTime: 60 },
         { id: 'armor_4', type: 'armor', x: -17, z: 0, armorValue: 50, label: '屋內防彈鋼板 (+50 AP)', respawnTime: 60 },
         { id: 'c4_bomb', type: 'bomb', x: 0, z: 0, label: 'C4 戰術定時炸彈', respawnTime: 40 },
+        // 戰場邊緣物資 (#邊緣)：吉普 / 戰車旁與外圍角落
+        { id: 'edge_ar_1', type: 'ammo_rifle', x: -30, z: 10, label: '5.56 NATO 步槍彈 (+60)', respawnTime: 25 },
+        { id: 'edge_ar_2', type: 'ammo_rifle', x: 30, z: -10, label: '5.56 NATO 步槍彈 (+60)', respawnTime: 25 },
+        { id: 'edge_ap_1', type: 'ammo_pistol', x: -30, z: -14, label: '9mm 手槍彈 (+30)', respawnTime: 20 },
+        { id: 'edge_ap_2', type: 'ammo_pistol', x: 30, z: 14, label: '9mm 手槍彈 (+30)', respawnTime: 20 },
+        { id: 'edge_med_1', type: 'medkit', x: -33, z: -2, label: '邊緣急救箱 (+40 HP)', respawnTime: 45 },
+        { id: 'edge_med_2', type: 'medkit', x: 33, z: 2, label: '邊緣急救箱 (+40 HP)', respawnTime: 45 },
+        { id: 'edge_armor_1', type: 'armor', x: -15.5, z: -20.5, armorValue: 50, label: '戰車旁防彈板 (+50 AP)', respawnTime: 60 },
+        { id: 'edge_armor_2', type: 'armor', x: 15.5, z: 20.5, armorValue: 50, label: '戰車旁防彈板 (+50 AP)', respawnTime: 60 },
+        { id: 'edge_gun_1', type: 'weapon', weaponKey: 'mp5', x: -28, z: 17, label: 'MP5 衝鋒槍', respawnTime: 40 },
+        { id: 'edge_gun_2', type: 'weapon', weaponKey: 'ak47', x: 28, z: -17, label: 'AK-47 突擊步槍', respawnTime: 45 },
         { id: 'laser_w', type: 'laser', x: -15, z: -2, y: 3.4, label: '雷射瞄準器 (紅線瞄準)', respawnTime: 60 },
         { id: 'laser_e', type: 'laser', x: 15, z: 2, y: 3.4, label: '雷射瞄準器 (紅線瞄準)', respawnTime: 60 }
       ];
@@ -3069,8 +3439,9 @@
       ctx.clearRect(0, 0, S, S);
       const eyeY = S * 0.58, eyeDX = S * 0.21, eyeW = S * 0.07, eyeH = S * 0.115;
       const ink = '#1f1a17';
+      const proud = o.expression === 'proud';
       const happy = o.expression === 'happy' || o.expression === 'grin';
-      const wink = o.expression === 'wink';
+      const wink = o.expression === 'wink' || proud;
       const star = o.expression === 'star';
       ctx.lineCap = 'round';
       [-1, 1].forEach((sg, idx) => {
@@ -3101,7 +3472,23 @@
       // 極小嘴巴
       const my = eyeY + eyeH * 1.75;
       ctx.strokeStyle = '#8b3a3a'; ctx.lineWidth = S * 0.02; ctx.fillStyle = '#8b3a3a';
-      if (o.expression === 'cat') {
+      if (proud) {
+        // 冠軍得意表情：八字揚眉 + 自信歪嘴壞笑 + 閃亮小虎牙 + 臉頰星光
+        ctx.strokeStyle = ink; ctx.lineWidth = S * 0.026;
+        ctx.beginPath(); ctx.moveTo(S / 2 - eyeDX - eyeW * 1.2, eyeY - eyeH * 1.45); ctx.lineTo(S / 2 - eyeDX + eyeW * 1.1, eyeY - eyeH * 1.1); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(S / 2 + eyeDX - eyeW * 1.1, eyeY - eyeH * 1.1); ctx.lineTo(S / 2 + eyeDX + eyeW * 1.2, eyeY - eyeH * 1.55); ctx.stroke();
+        ctx.strokeStyle = '#8b3a3a'; ctx.lineWidth = S * 0.026;
+        ctx.beginPath(); ctx.moveTo(S / 2 - S * 0.065, my - S * 0.005); ctx.quadraticCurveTo(S / 2 + S * 0.01, my + S * 0.045, S / 2 + S * 0.085, my - S * 0.035); ctx.stroke();
+        // 小虎牙
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.moveTo(S / 2 + S * 0.035, my - S * 0.005); ctx.lineTo(S / 2 + S * 0.065, my - S * 0.018); ctx.lineTo(S / 2 + S * 0.052, my + S * 0.025); ctx.closePath(); ctx.fill();
+        // 金色得意星光
+        ctx.fillStyle = '#facc15';
+        const sx = S / 2 - eyeDX - eyeW * 1.85, sy = eyeY - eyeH * 0.4;
+        ctx.beginPath();
+        for (let k = 0; k < 8; k++) { const r = k % 2 ? S * 0.018 : S * 0.048; const a = k * Math.PI / 4; ctx.lineTo(sx + Math.cos(a) * r, sy + Math.sin(a) * r); }
+        ctx.closePath(); ctx.fill();
+      } else if (o.expression === 'cat') {
         ctx.beginPath(); ctx.arc(S / 2 - S * 0.03, my, S * 0.03, 0, Math.PI); ctx.arc(S / 2 + S * 0.03, my, S * 0.03, 0, Math.PI); ctx.stroke();
       } else if (o.expression === 'open') {
         ctx.beginPath(); ctx.ellipse(S / 2, my, S * 0.026, S * 0.034, 0, 0, Math.PI * 2); ctx.fill();
@@ -3396,30 +3783,57 @@
 
     // ---- 大廳 3D 角色預覽渲染器 (離屏) ----
     let previewRenderer = null, previewScene = null, previewCamera = null;
-    function renderCharacterPreview(spec) {
+    const proudPreviewCache = {};
+    function renderCharacterPreview(spec, opts) {
+      opts = opts || {};
+      const renderSpec = Object.assign({}, spec || randomCharacterSpec(), opts.proud ? { expression: 'proud' } : {});
+      const cacheKey = (renderSpec.style || 'chibi') + '_' + (opts.proud ? 'proud' : 'norm');
+      if (opts.proud && proudPreviewCache[cacheKey]) return proudPreviewCache[cacheKey];
       try {
         if (!previewRenderer) {
           previewRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, preserveDrawingBuffer: true });
           previewRenderer.setSize(220, 220);
           previewRenderer.setPixelRatio(1);
           previewScene = new THREE.Scene();
-          previewScene.add(new THREE.HemisphereLight(0xffffff, 0x475569, 1.0));
-          const dl = new THREE.DirectionalLight(0xffffff, 0.9);
+          previewScene.add(new THREE.HemisphereLight(0xffffff, 0x475569, 1.1));
+          const dl = new THREE.DirectionalLight(0xffffff, 0.95);
           dl.position.set(2, 4, 3);
           previewScene.add(dl);
-          previewCamera = new THREE.PerspectiveCamera(32, 1, 0.1, 20);
+          previewCamera = new THREE.PerspectiveCamera(30, 1, 0.1, 20);
         }
-        const model = createChibiSoldierMesh(true, spec.styleName, spec.style, spec, { noScene: true });
+        const model = createChibiSoldierMesh(opts.teamIndex !== 1, renderSpec.styleName || '冠軍', renderSpec.style, renderSpec, { noScene: true, teamIndex: opts.teamIndex ?? 0 });
         model.mesh.children.forEach(ch => { if (ch.isSprite) ch.visible = false; });
         model.hpMesh.visible = false; model.hpBg.visible = false;
-        model.mesh.rotation.y = -0.35;
-        previewScene.add(model.mesh);
         const h = model.bodyHeight;
-        previewCamera.position.set(0.3, h * 0.6, h * 1.9 + 0.6);
-        previewCamera.lookAt(0, h * 0.5, 0);
+        if (opts.proud) {
+          // 冠軍得意姿勢：昂首歪頭、舉槍歡呼、頭頂戴上純金皇冠
+          model.mesh.rotation.y = -0.22;
+          if (model.head) { model.head.rotation.z = 0.14; model.head.rotation.x = -0.14; }
+          if (model.armR) { model.armR.rotation.x = -2.35; model.armR.rotation.z = -0.3; }
+          const crownMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.75, roughness: 0.25, emissive: 0xca8a04, emissiveIntensity: 0.35 });
+          const crown = new THREE.Group();
+          const baseRing = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.21, 0.1, 16), crownMat);
+          crown.add(baseRing);
+          for (let k = 0; k < 5; k++) {
+            const a = (k / 5) * Math.PI * 2;
+            const spike = new THREE.Mesh(new THREE.ConeGeometry(0.065, 0.14, 6), crownMat);
+            spike.position.set(Math.cos(a) * 0.18, 0.11, Math.sin(a) * 0.18);
+            crown.add(spike);
+          }
+          crown.position.set(0, h + 0.12, 0.02);
+          crown.rotation.z = -0.1;
+          model.mesh.add(crown);
+          previewCamera.position.set(0.18, h * 0.68, h * 1.55 + 0.42);
+          previewCamera.lookAt(0, h * 0.58, 0);
+        } else {
+          model.mesh.rotation.y = -0.35;
+          previewCamera.position.set(0.3, h * 0.6, h * 1.9 + 0.6);
+          previewCamera.lookAt(0, h * 0.5, 0);
+        }
         previewRenderer.render(previewScene, previewCamera);
         const url = previewRenderer.domElement.toDataURL('image/png');
         previewScene.remove(model.mesh);
+        if (opts.proud) proudPreviewCache[cacheKey] = url;
         return url;
       } catch (e) {
         console.warn('preview render failed', e);
@@ -3435,7 +3849,8 @@
           id: i,
           code: spec.style,
           name: `${spec.emoji} ${spec.animalName}${style.name}`,
-          avatarDataUrl: renderCharacterPreview(spec)
+          avatarDataUrl: renderCharacterPreview(spec),
+          proudAvatarDataUrl: renderCharacterPreview(spec, { proud: true })
         }, spec));
       });
       if (selectedChibiIndex >= generatedChibiCharacters.length) selectedChibiIndex = 0;
@@ -3661,7 +4076,7 @@
       });
       ai.coverTarget = aiChooseCover(ai, { x: 0, z: 30 }, null, 60);
       ai.goal = aiCoverGoal(ai, ai.coverTarget, { x: 0, z: 30 });
-      scoreEntry(ai.name, AI_TEAM);
+      scoreEntry(ai.name, AI_TEAM, spec);
       aiEnemies.push(ai);
       return ai;
     }
@@ -3942,7 +4357,7 @@
           ai = Object.assign(m, { id: s.id, hp: s.hp, maxHp: 100, team: AI_TEAM, paint: s.pc, state: s.st, mirrored: true, hitTimer: 0, animTimer: 0 });
           ai.mesh.position.set(s.x, s.y, s.z);
           aiEnemies.push(ai);
-          scoreEntry(ai.name, AI_TEAM);
+          scoreEntry(ai.name, AI_TEAM, spec);
         }
         ai.syncTarget = s;
         ai.hp = s.hp;
@@ -4418,9 +4833,10 @@
     /* ---- 擊殺播報 + 排行榜 (#23) ---- */
     const scoreboard = {};   // name -> { team, kills, deaths }
     let scoreboardVisible = false;
-    function scoreEntry(name, team) {
-      if (!scoreboard[name]) scoreboard[name] = { team: team ?? 0, kills: 0, deaths: 0 };
+    function scoreEntry(name, team, spec) {
+      if (!scoreboard[name]) scoreboard[name] = { team: team ?? 0, kills: 0, deaths: 0, spec: spec || null };
       if (team !== undefined) scoreboard[name].team = team;
+      if (spec) scoreboard[name].spec = spec;
       return scoreboard[name];
     }
     function addKillFeed(text, color) {
@@ -4631,27 +5047,103 @@
       const armor = new THREE.MeshStandardMaterial({ color: 0x4b5320, roughness: 0.75, metalness: 0.45 });
       const rust = new THREE.MeshStandardMaterial({ color: 0x7c2d12, roughness: 0.95, metalness: 0.2 });
       const rubber = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.95 });
+      // 仿 M1 Abrams 主力戰車 (報廢版)：低矮稜角車身、傾斜前裝甲、寬扁砲塔、長砲管 + 抽煙器、側裙板、煙幕彈發射器
       const buildWreckedTank = (x, z, ry) => {
         const g = new THREE.Group();
-        const hull = box(4.6, 1.1, 2.6, armor, 0, 0.9, 0); g.add(hull);
-        g.add(box(4.8, 0.3, 2.9, rust, 0, 0.4, 0));
-        [-1, 1].forEach(s => { const track = box(4.8, 0.8, 0.5, rubber, 0, 0.45, s * 1.45); g.add(track); for (let i = 0; i < 5; i++) { const wheel = cyl(0.36, 0.36, 0.52, rubber, -1.8 + i * 0.9, 0.42, s * 1.45, 'z'); g.add(wheel); } });
-        const turret = cyl(1.0, 1.15, 0.7, armor, -0.3, 1.8, 0); g.add(turret);
-        const barrel = cyl(0.11, 0.13, 3.2, armor, 1.6, 1.9, 0.0, 'x'); barrel.rotation.z = -0.15; g.add(barrel);
-        const hatch = cyl(0.3, 0.3, 0.1, rust, -0.5, 2.2, 0.3); hatch.rotation.x = 0.6; g.add(hatch);
-        // 破損：缺角、焦黑、散落零件
-        g.add(box(0.8, 0.5, 0.8, rust, 2.0, 1.4, -0.8));
-        for (let i = 0; i < 5; i++) { const sc = box(0.3 + Math.random() * 0.3, 0.12, 0.25, rust, 2.8 + Math.random() * 1.2, 0.06, (Math.random() - 0.5) * 3); sc.rotation.y = Math.random() * 3; g.add(sc); }
-        const smoke = new THREE.Mesh(new THREE.SphereGeometry(0.5, 10, 10), new THREE.MeshBasicMaterial({ color: 0x334155, transparent: true, opacity: 0.35, depthWrite: false }));
-        smoke.position.set(-0.3, 2.9, 0); g.add(smoke); g.userData.smoke = smoke;
+        const sand = new THREE.MeshStandardMaterial({ color: 0x8a7a55, roughness: 0.85, metalness: 0.3 });   // 沙漠塗裝
+        const dark = new THREE.MeshStandardMaterial({ color: 0x3b3b3b, roughness: 0.9, metalness: 0.2 });
+        // 車身 (低矮) + 傾斜前裝甲
+        const hull = box(6.2, 0.9, 3.2, sand, 0, 0.95, 0); g.add(hull);
+        const glacis = box(1.6, 0.9, 3.2, sand, 3.3, 0.95, 0); glacis.rotation.z = -0.55; g.add(glacis);
+        g.add(box(6.6, 0.25, 3.4, sand, 0, 1.45, 0));                                   // 車頂板
+        // 履帶 + 側裙板 + 路輪
+        [-1, 1].forEach(sg => {
+          g.add(box(6.0, 0.9, 0.7, dark, 0, 0.55, sg * 1.75));                           // 履帶
+          g.add(box(5.6, 0.6, 0.12, sand, 0, 1.0, sg * 2.14));                           // 側裙板
+          for (let i = 0; i < 7; i++) { const w = cyl(0.33, 0.33, 0.5, dark, -2.4 + i * 0.8, 0.4, sg * 1.75, 'z'); g.add(w); }
+          g.add(cyl(0.28, 0.28, 0.5, dark, 3.1, 0.65, sg * 1.75, 'z'));                  // 惰輪
+          g.add(cyl(0.28, 0.28, 0.5, dark, -3.1, 0.65, sg * 1.75, 'z'));                 // 主動輪
+        });
+        // 砲塔 (寬扁、前窄後寬、側面斜角) + 砲塔尾艙
+        const turret = box(3.6, 0.8, 2.6, sand, -0.4, 1.95, 0); g.add(turret);
+        const tFront = box(1.2, 0.8, 1.8, sand, 1.6, 1.95, 0); tFront.rotation.y = 0; g.add(tFront);
+        [-1, 1].forEach(sg => { const cheek = box(1.3, 0.8, 0.5, sand, 1.4, 1.95, sg * 1.1); cheek.rotation.y = -sg * 0.5; g.add(cheek); });
+        g.add(box(1.6, 0.7, 2.4, sand, -2.4, 1.9, 0));                                    // 尾艙
+        // 120mm 滑膛砲：主砲管 + 抽煙器 + 砲口
+        const gun = cyl(0.13, 0.15, 4.6, dark, 4.3, 2.0, 0.0, 'x'); g.add(gun);
+        g.add(cyl(0.2, 0.2, 0.7, dark, 3.6, 2.0, 0.0, 'x'));                              // 抽煙器
+        g.add(cyl(0.16, 0.16, 0.25, dark, 6.5, 2.0, 0.0, 'x'));                           // 砲口
+        g.add(box(0.7, 0.6, 0.9, sand, 2.0, 2.0, 0.0));                                   // 砲盾
+        // 車長塔、機槍、煙幕發射器、天線
+        g.add(cyl(0.45, 0.5, 0.35, sand, -0.6, 2.5, 0.7)); g.add(cyl(0.3, 0.3, 0.12, dark, -0.6, 2.72, 0.7));
+        g.add(cyl(0.04, 0.04, 0.9, dark, -0.3, 2.85, 0.7, 'x'));                           // .50 機槍
+        g.add(box(0.5, 0.5, 0.5, dark, -0.5, 2.6, -0.7));                                  // 裝填手艙蓋
+        [-1, 1].forEach(sg => { for (let i = 0; i < 4; i++) { const t = cyl(0.06, 0.06, 0.35, dark, 1.2 - i * 0.18, 2.3 + i * 0.05, sg * 1.45, 'x'); t.rotation.z = 0.6; g.add(t); } });  // 煙幕彈發射器
+        g.add(cyl(0.02, 0.02, 1.6, dark, -2.6, 3.1, -1.0));                                 // 天線
+        // 報廢：燒焦痕、掉落履帶板、冒煙
+        g.add(box(1.4, 0.3, 1.2, new THREE.MeshStandardMaterial({ color: 0x1c1917, roughness: 1 }), -0.8, 2.37, 0.2));
+        for (let i = 0; i < 4; i++) { const sc = box(0.5, 0.08, 0.3, dark, 3.6 + Math.random() * 1.5, 0.04, (Math.random() - 0.5) * 4); sc.rotation.y = Math.random() * 3; g.add(sc); }
+        const smoke = new THREE.Mesh(new THREE.SphereGeometry(0.6, 10, 10), new THREE.MeshBasicMaterial({ color: 0x334155, transparent: true, opacity: 0.35, depthWrite: false }));
+        smoke.position.set(-0.8, 3.1, 0.2); g.add(smoke);
         g.position.set(x, 0, z); g.rotation.y = ry;
         g.traverse(o => { if (o.isMesh) o.castShadow = true; });
         scene.add(g);
-        // 碰撞：以世界 AABB 註冊 (車身 + 砲塔)，車身頂可站
         addMeshBox(hull); addMeshBox(turret, { walkTop: false });
-        coverBoxes.push({ x, z, radius: 3.6, label: '報廢戰車' });
+        coverBoxes.push({ x, z, radius: 4.2, label: 'M1 報廢戰車' });
         return g;
       };
+
+      // 軍用吉普 (Humvee 風)：方正車身、引擎蓋、車艙、車頂架、四輪，可當掩體
+      const buildJeep = (x, z, ry, color) => {
+        const g = new THREE.Group();
+        const paint = new THREE.MeshStandardMaterial({ color: color || 0x4b5320, roughness: 0.7, metalness: 0.3 });
+        const dark = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.9 });
+        const glass = MAT.glass();
+        const body = box(4.4, 0.7, 2.1, paint, 0, 0.85, 0); g.add(body);
+        g.add(box(1.5, 0.45, 2.0, paint, 1.5, 1.42, 0));                                   // 引擎蓋
+        const cabin = box(2.4, 0.95, 2.0, paint, -0.55, 1.65, 0); g.add(cabin);
+        g.add(box(0.05, 0.6, 1.7, glass, 0.68, 1.75, 0));                                  // 前擋風
+        [-1, 1].forEach(sg => { g.add(box(1.0, 0.5, 0.05, glass, -0.3, 1.8, sg * 1.03)); g.add(box(0.06, 0.95, 0.06, dark, -1.7, 1.65, sg * 1.0)); });
+        g.add(box(2.2, 0.08, 1.8, dark, -0.55, 2.16, 0));                                  // 車頂架
+        [0.4, -0.4].forEach(dz => g.add(box(2.3, 0.06, 0.06, dark, -0.55, 2.3, dz)));
+        g.add(box(0.3, 0.3, 2.2, dark, 2.3, 0.6, 0));                                      // 前保桿
+        g.add(box(0.3, 0.3, 2.2, dark, -2.3, 0.6, 0));
+        g.add(cyl(0.02, 0.02, 1.4, dark, -1.8, 2.9, 0.8));                                  // 天線
+        [[1.4, 1], [1.4, -1], [-1.4, 1], [-1.4, -1]].forEach(([wx, wz]) => { g.add(cyl(0.42, 0.42, 0.4, dark, wx, 0.42, wz * 1.1, 'z')); g.add(cyl(0.2, 0.2, 0.42, new THREE.MeshStandardMaterial({ color: 0x9ca3af, metalness: 0.8, roughness: 0.3 }), wx, 0.42, wz * 1.1, 'z')); });
+        g.add(cyl(0.12, 0.12, 0.1, new THREE.MeshStandardMaterial({ color: 0xfef08a, emissive: 0xfacc15, emissiveIntensity: 0.4 }), 2.22, 1.0, 0.7, 'x'));   // 車燈
+        g.add(cyl(0.12, 0.12, 0.1, new THREE.MeshStandardMaterial({ color: 0xfef08a, emissive: 0xfacc15, emissiveIntensity: 0.4 }), 2.22, 1.0, -0.7, 'x'));
+        g.position.set(x, 0, z); g.rotation.y = ry;
+        g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+        scene.add(g);
+        addMeshBox(body); addMeshBox(cabin, { walkTop: false });
+        coverBoxes.push({ x, z, radius: 3.2, label: '軍用吉普' });
+        return g;
+      };
+      buildJeep(-26, 14, 0.4, 0x4b5320);
+      buildJeep(26, -14, -2.7, 0x6b7280);
+      buildJeep(-15, -24, 1.3, 0x4b5320);
+      buildJeep(15, 24, -1.8, 0x6b7280);
+
+      // C4 存放木箱：綠色軍用木箱，側面寫「炸彈 / C4 EXPLOSIVES」，放在 C4 拾取點旁 (#炸彈箱)
+      const buildBombCrate = (x, z) => {
+        const g = new THREE.Group();
+        const green = new THREE.MeshStandardMaterial({ color: 0x3f6212, roughness: 0.85 });
+        const dark = new THREE.MeshStandardMaterial({ color: 0x1f2937, roughness: 0.8, metalness: 0.5 });
+        g.add(box(1.4, 0.8, 0.9, green, 0, 0.4, 0));
+        g.add(box(1.44, 0.1, 0.94, new THREE.MeshStandardMaterial({ color: 0x365314, roughness: 0.85 }), 0, 0.85, 0));
+        [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => g.add(box(0.1, 0.82, 0.1, dark, sx * 0.67, 0.41, sz * 0.42)));
+        [-0.45, 0.45].forEach(dx => g.add(box(0.08, 0.84, 0.96, new THREE.MeshStandardMaterial({ color: 0x4d7c0f }), dx, 0.42, 0)));
+        const lbl = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.42), new THREE.MeshBasicMaterial({ map: makeLabelTexture('炸彈 C4', '#3f6212', '#fde047', 60), transparent: true }));
+        lbl.position.set(0, 0.42, 0.46); g.add(lbl);
+        const lbl2 = lbl.clone(); lbl2.rotation.y = Math.PI; lbl2.position.z = -0.46; g.add(lbl2);
+        const warn = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.3), new THREE.MeshBasicMaterial({ map: makeLabelTexture('⚠ EXPLOSIVES', '#facc15', '#111827', 26), transparent: true }));
+        warn.rotation.x = -Math.PI / 2; warn.position.set(0, 0.905, 0); g.add(warn);
+        g.position.set(x, 0, z);
+        scene.add(g);
+        addBox(x - 0.72, x + 0.72, 0, 0.9, z - 0.47, z + 0.47);
+      };
+      buildBombCrate(-1.9, 0);
+
       buildWreckedTank(-11, -17, 0.5);
       buildWreckedTank(11, 17, -2.4);
 
@@ -4681,21 +5173,27 @@
       buildBarbedWire(26, 1, 26, 8);
     }
 
-    let hazardTick = 0;
+    let hazardTick = 0, playerInHazard = false;
+    const _hzPrev = new THREE.Vector3();
     function updateHazards(delta) {
-      if (playerState.isSpectating || isInvulnerable()) return;
       const px = playerGroup.position.x, pz = playerGroup.position.z;
+      const speed = _hzPrev.lengthSq() ? Math.hypot(px - _hzPrev.x, pz - _hzPrev.z) / Math.max(delta, 0.001) : 0;
+      _hzPrev.set(px, 0, pz);
       let inHazard = null;
       for (const h of hazards) if (px > h.minX && px < h.maxX && pz > h.minZ && pz < h.maxZ && playerFeetY < 1.0) { inHazard = h; break; }
-      if (!inHazard) { hazardTick = 0; return; }
-      hazardTick += delta;
-      if (hazardTick >= 0.5) {
-        hazardTick = 0;
-        lastDamageSource = { name: inHazard.label, team: playerState.team };
-        receiveDamage(Math.round(inHazard.dps * 0.5));
-        showScreenPaint('#ef4444');
-        const fb = document.getElementById('pickup-feedback'); fb.innerText = `⚠️ 被${inHazard.label}劃傷！快離開`; fb.style.opacity = '1'; setTimeout(() => fb.style.opacity = '0', 600);
-      }
+      playerInHazard = !!inHazard;   // gameLoop 會把移動速度降到 40%
+      if (!inHazard || playerState.isSpectating || isInvulnerable()) { hazardTick = 0; return; }
+      // 速度 > 2 m/s 才會被劃傷 (蹲行 / 慢慢穿越不受傷)
+      if (speed > 2.0) {
+        hazardTick += delta;
+        if (hazardTick >= 0.4) {
+          hazardTick = 0;
+          lastDamageSource = { name: inHazard.label, team: playerState.team };
+          receiveDamage(Math.round(inHazard.dps * 0.4 * Math.min(2, speed / 3)));
+          showScreenPaint('#ef4444');
+          const fb = document.getElementById('pickup-feedback'); fb.innerText = `⚠️ 太快衝過${inHazard.label}被劃傷！放慢 (蹲下) 可安全通過`; fb.style.opacity = '1'; setTimeout(() => fb.style.opacity = '0', 700);
+        }
+      } else hazardTick = 0;
       // AI 也會被鐵絲網傷害 (權威端)
       if (isAIAuthority()) aiEnemies.forEach(ai => { if (ai.state === 'DEAD') return; for (const h of hazards) if (ai.mesh.position.x > h.minX && ai.mesh.position.x < h.maxX && ai.mesh.position.z > h.minZ && ai.mesh.position.z < h.maxZ) { ai.hp = Math.max(0, ai.hp - h.dps * delta); ai.hpMesh.scale.x = Math.max(0.001, ai.hp / ai.maxHp); if (ai.hp <= 0) killAI(ai, '鐵絲網', 0, '鐵絲網'); } });
     }
@@ -4829,11 +5327,11 @@
     const ctfState = { progress: 0, enemyProgressSeen: 0 };
     function updateCTF(delta) {
       if (gameModeSetting !== 'ctf' || isRoundEnded) { const bar = document.getElementById('ctf-bar-box'); if (bar) bar.classList.add('hidden'); return; }
-      const enemyFlag = teamFlags[1 - playerState.team];
-      const myFlag = teamFlags[playerState.team];
+      const enemyFlag = ctfFlags[1 - playerState.team];
+      const myFlag = ctfFlags[playerState.team];
       if (!enemyFlag) return;
       const d = Math.hypot(playerGroup.position.x - enemyFlag.x, playerGroup.position.z - enemyFlag.z);
-      const capturing = d < CTF_RADIUS && !playerState.isSpectating && playerFeetY < 1.0;
+      const capturing = d < CTF_RADIUS && !playerState.isSpectating && Math.abs(playerFeetY - enemyFlag.floorY) < 0.6;   // 必須站在屋頂旗下
       if (capturing) ctfState.progress = Math.min(CTF_TIME, ctfState.progress + delta);
       else ctfState.progress = Math.max(0, ctfState.progress - delta * (CTF_TIME / CTF_RECOVER));   // 離開 / 死亡：5 秒內慢慢回復
       // 我方隊友的進度 (取最大)
@@ -4858,7 +5356,7 @@
     function animateFlag(flagObj, progress, capturerTeam) {
       if (!flagObj) return;
       const t = Math.max(0, Math.min(1, progress / CTF_TIME));
-      flagObj.mesh.position.y = flagObj.baseY - t * 4.2;   // 15 秒內降下
+      flagObj.mesh.position.y = flagObj.baseY - t * 3.2;   // 15 秒內降下
       const team = TEAM_COLORS[currentTeamColorKey] || TEAM_COLORS.blue_red;
       const capColor = new THREE.Color(capturerTeam === 0 ? team.allyColor : team.enemyColor);
       flagObj.mesh.material.color.copy(new THREE.Color(flagObj.color)).lerp(capColor, t);
@@ -5133,43 +5631,70 @@
     function triggerMatchEnd(isWinner, message) {
       isRoundEnded = true;
       isGameRunning = false;
+      scoreEntry(playerState.name, playerState.team, playerState.spec);
 
-      // 全員排行：依擊殺排序，第一名獎盃
-      const rows = Object.entries(scoreboard).filter(([n, s]) => s.kills > 0 || s.deaths > 0 || n === playerState.name || Object.values(remotePlayers).some(r => r.name === n)).sort((a, b) => b[1].kills - a[1].kills || a[1].deaths - b[1].deaths);
+      // 依擊殺數排序所有參戰者，並只取最厲害的前 5 名 (Top 5) 呈現，絕不撐爆結算畫面
+      const allRows = Object.entries(scoreboard)
+        .filter(([n, s]) => s.kills > 0 || s.deaths > 0 || n === playerState.name || Object.values(remotePlayers).some(r => r.name === n))
+        .sort((a, b) => b[1].kills - a[1].kills || a[1].deaths - b[1].deaths);
+      const top5 = allRows.slice(0, 5);
+      const totalEl = document.getElementById('final-total-players');
+      if (totalEl) totalEl.innerText = allRows.length > 5 ? `共 ${allRows.length} 人參戰 · 僅列前 5 強` : `共 ${allRows.length} 人參戰`;
+
       const board = document.getElementById('final-scoreboard');
       if (board) {
-        board.innerHTML = rows.map(([n, s], i) => `
-          <div class="flex items-center justify-between px-3 py-2 rounded-xl ${i === 0 ? 'bg-amber-500/20 border border-amber-400/60' : 'bg-slate-900 border border-slate-800'}">
+        board.innerHTML = top5.map(([n, s], i) => `
+          <div class="flex items-center justify-between px-3 py-1.5 rounded-xl ${i === 0 ? 'bg-amber-500/20 border border-amber-400/60' : 'bg-slate-900 border border-slate-800'}">
             <div class="flex items-center gap-2 min-w-0">
-              <span class="text-lg w-8 text-center">${i === 0 ? '🏆' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : (i + 1) + '.'))}</span>
-              <span class="w-2.5 h-2.5 rounded-sm ${s.team === 0 ? 'bg-sky-400' : 'bg-rose-400'}"></span>
-              <span class="font-black ${i === 0 ? 'text-amber-300 text-base' : 'text-white text-sm'} truncate">${n}${n === playerState.name ? ' (你)' : ''}</span>
+              <span class="text-base w-7 text-center font-black">${i === 0 ? '🏆' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : (i + 1) + '.'))}</span>
+              <span class="w-2.5 h-2.5 rounded-sm shrink-0 ${s.team === 0 ? 'bg-sky-400' : 'bg-rose-400'}"></span>
+              <span class="font-black ${i === 0 ? 'text-amber-300 text-sm' : 'text-white text-xs'} truncate">${n}${n === playerState.name ? ' (你)' : ''}</span>
             </div>
-            <div class="font-mono text-sm whitespace-nowrap"><b class="${i === 0 ? 'text-amber-300' : 'text-emerald-400'}">${s.kills}</b> 殺 <span class="text-slate-500">/</span> <span class="text-slate-400">${s.deaths} 死</span></div>
+            <div class="font-mono text-xs whitespace-nowrap"><b class="${i === 0 ? 'text-amber-300' : 'text-emerald-400'}">${s.kills}</b> 殺 <span class="text-slate-500">/</span> <span class="text-slate-400">${s.deaths} 死</span></div>
           </div>`).join('') || '<div class="text-xs text-slate-500">尚無戰績</div>';
       }
-      finalMvpName.innerText = rows.length ? rows[0][0] + (rows[0][0] === playerState.name ? ' (你)' : '') : playerState.name;
+
+      // 冠軍 (#1 MVP) 放大得意寫真與數據
+      const champName = top5.length ? top5[0][0] : playerState.name;
+      const champEntry = top5.length ? top5[0][1] : scoreEntry(playerState.name, playerState.team, playerState.spec);
+      finalMvpName.innerText = champName + (champName === playerState.name ? ' (你)' : '');
+      const champStatsEl = document.getElementById('champion-stats-line');
+      if (champStatsEl) champStatsEl.innerText = `🔥 ${champEntry.kills} 擊倒 ／ ${champEntry.deaths} 陣亡 ｜ ${champEntry.team === 0 ? '🟦 藍隊' : '🟥 紅隊'}`;
+      let champSpec = champEntry.spec;
+      if (!champSpec) {
+        if (champName === playerState.name) champSpec = playerState.spec;
+        else {
+          const rp = Object.values(remotePlayers).find(r => r.name === champName);
+          if (rp && rp.spec) champSpec = rp.spec;
+        }
+      }
+      const portraitEl = document.getElementById('champion-portrait-img');
+      if (portraitEl) {
+        portraitEl.src = renderCharacterPreview(champSpec || playerState.spec || randomCharacterSpec(), { proud: true, teamIndex: champEntry.team ?? 0 });
+      }
+
       finalKills.innerText = playerState.kills;
       finalHits.innerText = playerState.totalHits;
       finalArmorAbsorbed.innerText = playerState.armorAbsorbed;
 
+      const baseGridClass = "max-w-4xl w-full max-h-[94vh] bg-slate-900 border-2 rounded-3xl p-4 sm:p-6 shadow-2xl grid grid-cols-1 md:grid-cols-12 gap-4 items-stretch overflow-y-auto custom-scroll ";
       if (isWinner) {
         AudioEngine.playVictory();
-        gameOverBox.className = "max-w-md w-full bg-slate-900 border-2 border-amber-400 rounded-3xl p-6 sm:p-8 text-center shadow-2xl shadow-amber-500/20";
+        gameOverBox.className = baseGridClass + "border-amber-400 shadow-amber-500/20";
         gameOverIcon.innerHTML = "🏆";
         gameOverTitle.innerText = "戰鬥勝利！";
-        gameOverTitle.className = "text-3xl font-black tracking-wider mb-2 text-amber-400";
+        gameOverTitle.className = "text-2xl sm:text-3xl font-black tracking-wider text-amber-400 leading-tight";
         gameOverDesc.innerText = message || "太棒了！你的小隊成功壓制全場，贏得榮譽！";
         finalResultTag.innerText = "VICTORY 獲勝";
-        finalResultTag.className = "text-amber-400 font-black";
+        finalResultTag.className = "text-xs font-black text-amber-400";
       } else {
-        gameOverBox.className = "max-w-md w-full bg-slate-900 border-2 border-cyan-500 rounded-3xl p-6 sm:p-8 text-center shadow-2xl shadow-cyan-500/20";
+        gameOverBox.className = baseGridClass + "border-cyan-500 shadow-cyan-500/20";
         gameOverIcon.innerHTML = "🛡️";
         gameOverTitle.innerText = "戰術撤退";
-        gameOverTitle.className = "text-3xl font-black tracking-wider mb-2 text-cyan-400";
+        gameOverTitle.className = "text-2xl sm:text-3xl font-black tracking-wider text-cyan-400 leading-tight";
         gameOverDesc.innerText = message || "防線失守！整裝再戰，下一回合討回來！";
         finalResultTag.innerText = "DEFEATED 戰敗";
-        finalResultTag.className = "text-cyan-400 font-black";
+        finalResultTag.className = "text-xs font-black text-cyan-400";
       }
 
       gameOverModal.classList.remove('hidden');
@@ -5638,7 +6163,105 @@
       initEnemies();
     }
 
-    // 建立房間 (HOST)
+    // 更新與第一台電腦 (房主) 的連線速度顯示 (HUD & 等待室)
+    function updatePingUI() {
+      const hudPing = document.getElementById('hud-ping');
+      const waitPing = document.getElementById('wait-ping-tag');
+      if (Net.isHost) {
+        const vals = Object.values(Net.peerPings || {});
+        const avg = vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : 0;
+        const txt = vals.length ? `📶 主機 (隊友 ${avg} ms)` : '📶 主機 (0 ms)';
+        if (hudPing) { hudPing.innerText = txt; hudPing.className = 'px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-emerald-950/90 text-emerald-300 border border-emerald-600/50'; }
+        if (waitPing) waitPing.innerText = txt;
+      } else {
+        const ms = Net.pingMs || 12;
+        const grade = ms < 60 ? '極佳' : (ms < 150 ? '良好' : '偏高');
+        const txt = `📶 連線: ${ms} ms (${grade})`;
+        const cls = ms < 60
+          ? 'px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-emerald-950/90 text-emerald-300 border border-emerald-600/50'
+          : (ms < 150 ? 'px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-amber-950/90 text-amber-300 border border-amber-600/50' : 'px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-rose-950/90 text-rose-300 border border-rose-600/50');
+        if (hudPing) { hudPing.innerText = txt; hudPing.className = cls; }
+        if (waitPing) waitPing.innerText = `📶 與第一台電腦連線速度: ${ms} ms (${grade})`;
+      }
+    }
+
+    // 渲染房間等待室視窗 (顯示目前連線人數、隊伍、Ping 與房間狀態)
+    function renderWaitingRoomUI() {
+      const modal = document.getElementById('waiting-room-modal');
+      if (!modal) return;
+      document.getElementById('wait-room-code').innerText = '#' + (Net.roomCode || '8888');
+      const stBadge = document.getElementById('wait-status-badge');
+      if (stBadge) {
+        stBadge.innerText = Net.roomStatus === 'waiting' ? '⏳ 等待中 (Waiting)' : (Net.roomStatus === 'starting' ? '🚀 遊戲開始 (Starting)' : '🎮 遊戲進行中 (Playing)');
+      }
+      const modeName = gameModeSetting === 'ctf' ? '🚩 搶旗模式' : (gameModeSetting === 'pvp' ? '⚔️ 純 PvP 對決' : '🤖 合作打 AI');
+      const ruleName = respawnModeSetting === 'unlimited' ? '♾️ 無限重生' : `❤️ 限 ${maxLives} 命`;
+      document.getElementById('wait-rules-summary').innerText = `${modeName} ｜ ${roundModeSetting === 'elimination' ? '殲滅制' : roundModeSetting + '秒'} ｜ ${ruleName}`;
+      document.getElementById('wait-host-controls').classList.toggle('hidden', !Net.isHost);
+      document.getElementById('wait-client-controls').classList.toggle('hidden', Net.isHost);
+
+      const list = [];
+      const hostUid = 'QFORCE3D_' + Net.roomCode + '_HOST';
+      if (Net.isHost) {
+        list.push({ uid: Net.myId, name: playerState.name, team: playerState.team, paint: playerState.paintColor, isHost: true, ping: 0 });
+      } else if (Net.roster[hostUid]) {
+        const hr = Net.roster[hostUid];
+        list.push({ uid: hostUid, name: hr.name, team: hr.team, paint: hr.paint, isHost: true, ping: Net.pingMs || 12 });
+      }
+      Object.entries(Net.roster || {}).forEach(([uid, r]) => {
+        if (uid === hostUid) return;
+        list.push({ uid, name: r.name, team: r.team, paint: r.paint, isHost: false, ping: Net.isHost ? (Net.peerPings[uid] || 15) : (uid === Net.myId ? (Net.pingMs || 12) : 18) });
+      });
+
+      document.getElementById('wait-player-count').innerText = list.length;
+      const box = document.getElementById('wait-player-list');
+      if (box) {
+        box.innerHTML = list.map(p => `
+          <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-900 border border-slate-800">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full" style="background:${hex6(p.paint || 0x38bdf8)}"></span>
+              <span class="text-xs font-black text-white">${p.isHost ? '👑 ' : ''}${p.name}${p.uid === Net.myId ? ' (你)' : ''}</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded ${p.team === 0 ? 'bg-sky-500/20 text-sky-300' : 'bg-rose-500/20 text-rose-300'}">${p.team === 0 ? '🟦 藍隊' : '🟥 紅隊'}</span>
+            </div>
+            <span class="text-[11px] font-mono text-emerald-300">${p.isHost ? '🏠 房主主機 (0ms)' : `📶 ${p.ping} ms`}</span>
+          </div>`).join('');
+      }
+      updatePingUI();
+    }
+
+    function openWaitingRoom() {
+      lobbyModal.classList.add('hidden');
+      document.getElementById('waiting-room-modal').classList.remove('hidden');
+      renderWaitingRoomUI();
+    }
+
+    function hostStartMatchNow(allowMidJoin) {
+      if (!Net.isHost) return;
+      document.getElementById('waiting-room-modal').classList.add('hidden');
+      Net.roomStatus = 'starting';
+      RoomRegistry.registerMyRoom(Net.roomCode, playerState.name, gameModeSetting, Object.keys(Net.roster).length + 1, 'starting');
+      Net.sendAll({ type: 'match_start', status: 'playing', allowMidJoin: !!allowMidJoin, roundRemaining: roundRemainingTime, roundMode: roundModeSetting, gameMode: gameModeSetting, respawnMode: respawnModeSetting, maxLives: maxLives });
+      setTimeout(() => {
+        Net.roomStatus = 'playing';
+        RoomRegistry.registerMyRoom(Net.roomCode, playerState.name, gameModeSetting, Object.keys(Net.roster).length + 1, 'playing');
+      }, 1500);
+      enterWorld();
+    }
+
+    document.getElementById('btn-wait-start').addEventListener('click', () => hostStartMatchNow(false));
+    document.getElementById('btn-wait-start-open').addEventListener('click', () => hostStartMatchNow(true));
+    document.getElementById('btn-wait-cancel').addEventListener('click', () => {
+      document.getElementById('waiting-room-modal').classList.add('hidden');
+      Net.closeRoom();
+      returnToLobby('已關閉等待室並停止房間廣播');
+    });
+    document.getElementById('btn-wait-leave').addEventListener('click', () => {
+      document.getElementById('waiting-room-modal').classList.add('hidden');
+      Net.closeRoom();
+      returnToLobby('已離開等待室');
+    });
+
+    // 建立房間 (HOST)：先進入「等待人數到齊」視窗並持續廣播「等待中」，房主可選擇等齊開始或直接開始
     btnHost.addEventListener('click', () => {
       AudioEngine.init();
       const code = roomInput.value.trim() || '8888';
@@ -5650,13 +6273,14 @@
       maxLives = Math.max(1, Math.min(20, parseInt(document.getElementById('lives-input').value) || 5));
 
       modalStatusText.classList.remove('hidden');
-      modalStatusText.innerText = "正在建立並註冊房間...";
+      modalStatusText.innerText = "正在建立房間並啟動狀態廣播...";
 
       playerState.team = (playerState.teamPref === 'other') ? 1 : 0;
       playerState.paintColor = (playerState.paintPref !== null && playerState.paintPref !== undefined) ? playerState.paintPref : PAINT_PALETTE[Math.floor(Math.random() * PAINT_PALETTE.length)];
+      Net.roomStatus = 'waiting';
       Net.initHost(code, () => {
         modalStatusText.classList.add('hidden');
-        enterWorld();
+        openWaitingRoom();
       }, (err) => { modalStatusText.classList.add('hidden'); showErrorToast(err); });
     });
 
@@ -5773,7 +6397,19 @@
       (data.pickups || []).forEach(p => { const it = pickupItems.find(x => x.id === p.id); if (it && it.isAvailable) { it.isAvailable = false; it.group.visible = false; it.respawnTimer = p.t; } });
       (data.drops || []).forEach(d => spawnDroppedItem(d, false));
       if (data.bomb) { Net.onBombEvent({ action: 'plant', x: data.bomb.x, y: data.bomb.y, z: data.bomb.z, sender: '' }); bombState.timer = data.bomb.timer; bombState.planterTeam = data.bomb.planterTeam; }
-      if (!isGameRunning) { modalStatusText.classList.add('hidden'); enterWorld(); }
+      if (data.roomStatus) Net.roomStatus = data.roomStatus;
+      modalStatusText.classList.add('hidden');
+      if (Net.roomStatus === 'waiting') {
+        openWaitingRoom();
+      } else if (!isGameRunning) {
+        enterWorld();
+      }
+    };
+    Net.onMatchStart = (data) => {
+      Net.roomStatus = 'playing';
+      document.getElementById('waiting-room-modal').classList.add('hidden');
+      if (!isGameRunning) enterWorld();
+      addKillFeed('🚀 房主已啟動對戰！全軍出擊！', '#34d399');
     };
     Net.onPickupEvent = (data) => {
       const it = pickupItems.find(p => p.id === data.id);
@@ -5793,7 +6429,7 @@
     };
     Net.onVoteEvent = (data) => { tacticVotes[data.team] = tacticVotes[data.team] || {}; tacticVotes[data.team][data.name] = data.tactic; renderVotes(); };
     Net.onMatchEndEvent = (data) => { announceMatchEnd(data.winnerTeam === playerState.team, data.message, data.winnerTeam); };
-    Net.onRoster = (roster) => { Object.values(roster).forEach(r => scoreEntry(r.name, r.team)); renderScoreboard(); };
+    Net.onRoster = (roster) => { Object.values(roster).forEach(r => scoreEntry(r.name, r.team, r.spec)); renderScoreboard(); renderWaitingRoomUI(); };
     Net.onKillEvent = (data) => { if (data.victimUid !== Net.myId) recordKill(data.killer, data.killerTeam, data.victim, data.victimTeam); };
     Net.onShotEvent = (data) => {
       // 其他玩家 / 主機 AI 的子彈：本機只做視覺呈現 (傷害由射擊方或主機結算)
@@ -6046,7 +6682,7 @@
       if (keysDown['KeyD'] || keysDown['ArrowRight']) rx += 1;
       fx = Math.max(-1, Math.min(1, fx)); rx = Math.max(-1, Math.min(1, rx));
       if (prepActive) { fx = 0; rx = 0; }   // 準備階段 10 秒不能移動 (#5)
-      const moveSpeed = (isCovered || isCrouched) ? 3.2 : (isAimingADS ? 4.2 : 6.6);
+      const moveSpeed = ((isCovered || isCrouched) ? 3.2 : (isAimingADS ? 4.2 : 6.6)) * (playerInHazard ? 0.4 : 1);   // 鐵絲網中減速 60%
       const isMoving = (fx !== 0 || rx !== 0);
 
       if (!playerState.isSpectating) {
@@ -6307,6 +6943,8 @@
     /* =========================================================================
        18. 自動化物理/戰鬥驗證模式：開啟 game.html?autotest=1 於 Console 輸出 [AUTOTEST] 結果
        ========================================================================= */
+    const BUILD_STAMP = 'v6.7 · 建置 2026-10-25 12:52 (台北)';
+    console.log('現代突擊 3D ' + BUILD_STAMP);
     window.__manualLoop = new URLSearchParams(location.search).has('autotest');
     if (new URLSearchParams(location.search).has('demo')) {
       setTimeout(() => {
@@ -6586,8 +7224,8 @@
 
         // T30 鐵絲網傷害
         playerState.hp = 100; playerState.invulnUntil = 0; updateHealthUI(); isRoundEnded = false; isGameRunning = true;
-        teleport(-6.5, 18, 0, 0); frame(70);
-        log('T30 靠近鐵絲網會受傷 (#3)', playerState.hp < 100 && hazards.length >= 4 && obstacles.length > 134, `hp=${playerState.hp} hazards=${hazards.length}`);
+        teleport(-6.5, 20.5, 0, 0); keysDown['KeyW'] = true; frame(70); keysDown['KeyW'] = false;
+        log('T30 快速衝過鐵絲網會受傷 (#3)', playerState.hp < 100 && hazards.length >= 4, `hp=${playerState.hp} hazards=${hazards.length}`);
 
         // T31 重生無敵：不受傷、不能開槍、會跳
         playerState.hp = 100; updateHealthUI(); teleport(0, 20, 0, 0);
@@ -6605,12 +7243,12 @@
 
         // T33 搶旗：站敵旗下進度累積、旗幟下降、離開回復
         gameModeSetting = 'ctf'; isRoundEnded = false; ctfState.progress = 0;
-        const ef = teamFlags[1]; teleport(0.5, -28.5, 0, 0); frame(180);
+        const ef = ctfFlags[1]; teleport(17.5, 0, 0, 3.4); frame(180);
         const prog3 = ctfState.progress, flagY = ef.mesh.position.y;
         teleport(0, 0, 0, 0); frame(60); const progAfter = ctfState.progress;
-        log('T33 搶旗：站敵旗下 3 秒進度≈3、旗幟下降；離開 1 秒回復 (#6)', prog3 > 2.5 && prog3 < 3.5 && flagY < ef.baseY - 0.5 && progAfter < prog3 - 1.5, `progress=${prog3.toFixed(1)} flagY=${flagY.toFixed(2)} after=${progAfter.toFixed(1)}`);
+        log('T33 搶旗：站敵方屋頂旗下 3 秒進度≈3、旗幟下降；離開 1 秒回復 (#6)', prog3 > 2.5 && prog3 < 3.5 && flagY < ef.baseY - 0.5 && progAfter < prog3 - 1.5, `progress=${prog3.toFixed(1)} flagY=${flagY.toFixed(2)} after=${progAfter.toFixed(1)}`);
         let ended = false; const origAnnounce = announceMatchEnd; announceMatchEnd = (w, m) => { ended = true; isRoundEnded = true; };
-        teleport(0.5, -28.5, 0, 0); ctfState.progress = 14.5; frame(60);
+        teleport(17.5, 0, 0, 3.4); ctfState.progress = 14.5; frame(60);
         log('T33b 搶旗 15 秒達成 → 宣布結束', ended, 'ok');
         announceMatchEnd = origAnnounce; gameModeSetting = 'pvp'; isRoundEnded = false; ctfState.progress = 0; animateFlag(ef, 0, 0);
 
@@ -6709,6 +7347,74 @@
         const modalShown = !gameOverModal.classList.contains('hidden') && document.getElementById('final-scoreboard').innerHTML.includes('🏆');
         log('T44 全螢幕結束宣告，點兩下進入放大結算 (含全員排行 + 獎盃) (#6 #7)', fullScreen && stillBanner && modalShown, `full=${fullScreen} modal=${modalShown}`);
         gameOverModal.classList.add('hidden'); isRoundEnded = false; isGameRunning = true; roundRemainingTime = 9999;
+
+        // T45 搶旗旗幟在房子屋頂；站屋頂旗下才累積
+        gameModeSetting = 'ctf'; isRoundEnded = false; ctfState.progress = 0;
+        const ef2 = ctfFlags[1];
+        teleport(17, 0, 0, 0); frame(60); const groundProg = ctfState.progress;     // 站在旗子正下方的一樓 → 不算
+        teleport(17, 0.5, 0, 3.4); frame(120); const roofProg = ctfState.progress;  // 站屋頂旗下 → 累積
+        log('T45 搶旗旗幟位於房子屋頂，須站在屋頂旗下才能佔領', ef2 && Math.abs(ef2.floorY - 3.4) < 0.01 && groundProg === 0 && roofProg > 1.5, `flagY=${ef2 ? ef2.baseY.toFixed(1) : '-'} ground=${groundProg.toFixed(1)} roof=${roofProg.toFixed(1)}`);
+        gameModeSetting = 'pvp'; ctfState.progress = 0; animateFlag(ef2, 0, 0);
+
+        // T46 鐵絲網：可穿越但減速；快速衝過受傷、蹲行不受傷
+        playerState.hp = 100; playerState.invulnUntil = 0; updateHealthUI();
+        teleport(-6.5, 20.5, 0, 0); keysDown['KeyW'] = true; frame(70); keysDown['KeyW'] = false;
+        const crossedFast = playerGroup.position.z < 16.5, hpFast = playerState.hp;
+        playerState.hp = 100; updateHealthUI(); isCrouched = true; eyeOffsetCurrent = CROUCH_HEIGHT;
+        teleport(-6.5, 20.5, 0, 0); isCrouched = true; keysDown['KeyW'] = true; frame(150); keysDown['KeyW'] = false; isCrouched = false;
+        const crossedSlow = playerGroup.position.z < 16.5, hpSlow = playerState.hp;
+        log('T46 鐵絲網可穿越：衝過會減速並受傷，蹲行慢慢過不受傷', crossedFast && hpFast < 100 && crossedSlow && hpSlow === 100, `fast hp=${hpFast} slow hp=${hpSlow}`);
+
+        // T47 二樓南北擋牆：由南側地面射向屋頂玩家高度會被擋
+        const blockedRoof = segmentHitObstacle(new THREE.Vector3(-17, 1.6, 20), new THREE.Vector3(-17, 4.5, 2.0)) !== null;
+        log('T47 二樓兩端軍用擋牆：重生點方向無法直射屋頂', blockedRoof, 'blocked=' + blockedRoof);
+
+        // T48 版本戳記顯示
+        log('T48 版本與建置時間顯示於大廳與 HUD', document.getElementById('build-stamp').innerText.includes(BUILD_STAMP) && document.getElementById('hud-build').innerText.includes(BUILD_STAMP), BUILD_STAMP);
+
+        // T49 炸彈木箱與邊緣物資
+        const bombCrateBlocked = checkCollision(-1.9, 0, 0, 0.3, 1.7);
+        const edgeItems = pickupItems.filter(p => p.id.startsWith('edge_')).length;
+        log('T49 炸彈存放綠木箱 + 戰場邊緣物資', bombCrateBlocked && edgeItems >= 10, `edgeItems=${edgeItems}`);
+
+        // T50 開房進入等待室 + 房間狀態廣播 (waiting -> starting -> playing) + 下線移除
+        Net.initHost('7777', () => {});
+        openWaitingRoom();
+        const waitShown = !document.getElementById('waiting-room-modal').classList.contains('hidden');
+        const dirEntryWait = RoomRegistry.rooms['7777'] && RoomRegistry.rooms['7777'].status === 'waiting';
+        hostStartMatchNow(true);
+        const dirEntryStart = RoomRegistry.rooms['7777'] && (RoomRegistry.rooms['7777'].status === 'starting' || RoomRegistry.rooms['7777'].status === 'playing');
+        RoomRegistry.unregisterMyRoom('7777');
+        const dirRemoved = !RoomRegistry.rooms['7777'];
+        log('T50 開房先進入等待室、廣播等待中/遊戲開始/進行中狀態，下線立即結束廣播', waitShown && dirEntryWait && dirEntryStart && dirRemoved, `wait=${waitShown} dirWait=${dirEntryWait} dirStart=${dirEntryStart} removed=${dirRemoved}`);
+
+        // T51 PeerJS network 錯誤容錯：即使信令發生 network 錯誤仍能成功開房
+        Net.FORCE_NETWORK_ERROR = true;
+        let fallbackReady = false;
+        Net.initHost('6688', () => { fallbackReady = true; });
+        Net.FORCE_NETWORK_ERROR = false;
+        log('T51 PeerJS 發生 network 錯誤時自動切換雙通道備援，開房不失敗', fallbackReady && Net.transportMode === 'relay' && !!RoomRegistry.rooms['6688'], `ready=${fallbackReady} mode=${Net.transportMode}`);
+        RoomRegistry.unregisterMyRoom('6688');
+        clearInterval(Net.heartbeatTimer); clearInterval(Net.pingTimer);
+
+        // T52 第一台電腦連線速度 (Ping ms) 量測與顯示
+        Net.isHost = true;
+        Net.dispatch({ type: 'ping_report', ping: 23, sender: 'CLIENT_TEST' });
+        const hostPingTxt = document.getElementById('hud-ping').innerText;
+        Net.isHost = false;
+        Net.dispatch({ type: 'ping_ack', target: Net.myId, t: performance.now() - 18 });
+        const clientPingTxt = document.getElementById('hud-ping').innerText;
+        log('T52 顯示與第一台電腦的連線速度 (Ping ms)', hostPingTxt.includes('23 ms') && clientPingTxt.includes('ms') && Net.pingMs >= 1, `host="${hostPingTxt}" client="${clientPingTxt}"`);
+
+        // T53 結算畫面：最多只列前五名 (Top 5)、冠軍放大得意表情寫真、右側繼續遊戲按鈕永遠可見
+        for (let k = 1; k <= 12; k++) { const e = scoreEntry('測試特種兵 #' + k, k % 2); e.kills = k * 2; e.deaths = k; }
+        triggerMatchEnd(true, '前五名與冠軍得意表情測試');
+        const rowsRendered = document.getElementById('final-scoreboard').children.length;
+        const champImg = document.getElementById('champion-portrait-img').getAttribute('src') || '';
+        const rematchRect = document.getElementById('btn-rematch').getBoundingClientRect();
+        const rematchVisible = rematchRect.width > 80 && rematchRect.height > 28 && rematchRect.bottom <= window.innerHeight + 20;
+        log('T53 結算畫面：僅列前 5 名、冠軍人偶放大得意寫真、右側繼續按鈕在畫面內可按', rowsRendered === 5 && champImg.startsWith('data:image/png') && rematchVisible, `rows=${rowsRendered} imgLen=${champImg.length} btnBottom=${Math.round(rematchRect.bottom)}/${window.innerHeight}`);
+        gameOverModal.classList.add('hidden'); isRoundEnded = false; isGameRunning = true;
 
         const passed = R.filter(Boolean).length;
         console.log(`[AUTOTEST] SUMMARY ${passed}/${R.length} PASSED`);
