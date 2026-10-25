@@ -8,7 +8,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="現代突擊3D">
-  <title>Q版特種部隊：現代突擊 3D v6.3 - 跨平台電競對戰</title>
+  <title>Q版特種部隊：現代突擊 3D v6.4 - 跨平台電競對戰</title>
   <!-- Tailwind CSS (支援 Jetski 官方與外部 CDN) -->
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -274,6 +274,8 @@
   <!-- 雙槍背包 (#17 #18)：右下角、避開最右側按鈕欄 -->
   <div id="weapon-slots" class="absolute bottom-4 right-[88px] z-20 flex flex-col gap-1.5 items-end pointer-events-none"></div>
 
+  <!-- 射線被牆擋住提示 -->
+  <div id="block-tag" class="hidden absolute top-[calc(50%+30px)] left-1/2 -translate-x-1/2 z-20 text-xs font-black text-red-300 bg-black/70 px-2.5 py-1 rounded-lg pointer-events-none">🧱 射線被牆擋住 — 子彈射不出去</div>
   <!-- 重生無敵提示 (#2) -->
   <div id="invuln-tag" class="hidden absolute top-32 left-1/2 -translate-x-1/2 z-30 px-4 py-1.5 rounded-xl bg-sky-600/90 border border-sky-300 text-white text-sm font-black shadow-xl pointer-events-none"></div>
   <!-- 戰術標籤 (#5) -->
@@ -356,7 +358,7 @@
         <span>●</span> WebRTC P2P + 本地雙通道零延遲連線架構
       </div>
       <h1 class="text-2xl sm:text-3xl font-black tracking-wider text-white mb-1">
-        Q版特種部隊：現代突擊 3D v6.3
+        Q版特種部隊：現代突擊 3D v6.4
       </h1>
       <p class="text-xs text-slate-400 mb-4 font-medium">支援 iPad 觸控手勢與電腦 PC 鍵鼠同場競技 ｜ 藍天白雲雙層 CQB 戰場</p>
 
@@ -1363,31 +1365,53 @@
           return;
         }
 
-        try {
-          if (this.peer) this.peer.destroy();
+        let hostAttempt = 0;
+        const createPeer = () => {
+          if (this.peer) { try { this.peer.destroy(); } catch (e) {} }
           this.peer = new Peer(this.myId, {
             config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' }] }
           });
+          this.bindPeerEvents(onReady, onFail, targetHostId, () => hasResolved, (v) => { hasResolved = v; }, () => {
+            // 房號剛被釋放 (上一局關閉/離開後 PeerJS 伺服器需數秒回收 ID)：自動重試最多 6 次 (#開房失敗修正)
+            hostAttempt++;
+            if (hostAttempt <= 6) {
+              const st = document.getElementById('modal-status-text');
+              if (st) st.innerText = `房號 [${this.roomCode}] 正在釋放中，重試 ${hostAttempt}/6…`;
+              setTimeout(createPeer, 1200);
+              return true;
+            }
+            return false;
+          });
+        };
+        try {
+          createPeer();
+        } catch (e) {
+          if (onReady && !hasResolved) { hasResolved = true; onReady(); }
+        }
+      },
 
+      bindPeerEvents: function(onReady, onFail, targetHostId, getResolved, setResolved, retryHost) {
+        {
+          const hasResolvedRef = { get v() { return getResolved(); }, set v(x) { setResolved(x); } };
           this.peer.on('open', () => {
             if (this.isHost) {
               RoomRegistry.registerMyRoom(this.roomCode, playerState.name, gameModeSetting, 1);
               this.startHeartbeat();
-              if (onReady && !hasResolved) { hasResolved = true; onReady(); }
+              if (onReady && !hasResolvedRef.v) { hasResolvedRef.v = true; onReady(); }
             } else {
               const conn = this.peer.connect(targetHostId, { reliable: true });
               const connectTimeout = setTimeout(() => {
-                if (!hasResolved) { hasResolved = true; if (onFail) onFail(`找不到房間 [${this.roomCode}]！請確認房主已建立房間。`); }
+                if (!hasResolvedRef.v) { hasResolvedRef.v = true; if (onFail) onFail(`找不到房間 [${this.roomCode}]！請確認房主已建立房間。`); }
               }, 4000);
               conn.on('open', () => {
                 clearTimeout(connectTimeout);
                 this.setupConnection(conn);
-                if (onReady && !hasResolved) { hasResolved = true; onReady(); }
+                if (onReady && !hasResolvedRef.v) { hasResolvedRef.v = true; onReady(); }
                 this.sendHelloQuery();
               });
               conn.on('error', () => {
                 clearTimeout(connectTimeout);
-                if (!hasResolved) { hasResolved = true; if (onFail) onFail(`連入房間失敗: 該房間未開啟。`); }
+                if (!hasResolvedRef.v) { hasResolvedRef.v = true; if (onFail) onFail(`連入房間失敗: 該房間未開啟。`); }
               });
             }
           });
@@ -1396,18 +1420,21 @@
 
           this.peer.on('error', (err) => {
             console.warn("P2P Notice:", err.type);
-            if (!this.isHost && (err.type === 'peer-unavailable' || err.type === 'network') && !hasResolved) {
-              hasResolved = true;
+            if (!this.isHost && (err.type === 'peer-unavailable' || err.type === 'network') && !hasResolvedRef.v) {
+              hasResolvedRef.v = true;
               if (onFail) onFail(`❌ 找不到房間 [${this.roomCode}]！該房間尚未建立或已關閉。`);
             }
-            if (this.isHost && err.type === 'unavailable-id' && !hasResolved) {
-              hasResolved = true;
-              if (onFail) onFail(`❌ 房號 [${this.roomCode}] 已有人使用，請換一個房號。`);
-              else alert(`房號 [${this.roomCode}] 已有人使用，請換一個房號。`);
+            if (this.isHost && err.type === 'unavailable-id' && !hasResolvedRef.v) {
+              if (retryHost && retryHost()) return;
+              hasResolvedRef.v = true;
+              if (onFail) onFail(`❌ 房號 [${this.roomCode}] 已有人使用 (或上一局尚未釋放)，請換一個房號或稍候再試。`);
+            }
+            if (this.isHost && (err.type === 'network' || err.type === 'server-error' || err.type === 'socket-error') && !hasResolvedRef.v) {
+              hasResolvedRef.v = true;
+              if (onFail) onFail(`❌ 無法連上 PeerJS 連線伺服器 (${err.type})，請檢查網路後重試。`);
             }
           });
-        } catch (e) {
-          if (onReady && !hasResolved) { hasResolved = true; onReady(); }
+          this.peer.on('disconnected', () => { try { if (this.peer && !this.peer.destroyed) this.peer.reconnect(); } catch (e) {} });
         }
       },
 
@@ -2082,7 +2109,9 @@
     }
     function addMeshBox(mesh, opts) {
       // 以網格的世界 AABB 直接註冊碰撞盒 (保證「看得到的就擋得住」，杜絕穿牆 #9)
-      mesh.updateMatrixWorld(true);
+      // 先更新到最上層父節點，確保群組的位移/旋轉已套用 (否則子網格的世界 AABB 會停在原點)
+      let root = mesh; while (root.parent) root = root.parent;
+      root.updateMatrixWorld(true);
       const bb = new THREE.Box3().setFromObject(mesh);
       return addBox(bb.min.x, bb.max.x, bb.min.y, bb.max.y, bb.min.z, bb.max.z, opts);
     }
@@ -3218,6 +3247,7 @@
       const teamColor = teamIndex === 0 ? currentTeam.allyColor : currentTeam.enemyColor;
 
       const group = new THREE.Group();
+      group.rotation.order = 'YXZ';   // 先偏航後俯仰：受擊/倒地改 rotation.x 不會破壞面向 (XYZ 順序下面向 -z 會被分解成 (π,0,π))
       const paintTargets = [];
       const matTeam = new THREE.MeshStandardMaterial({ color: teamColor, roughness: 0.55, metalness: 0.15 });
       const matSkin = new THREE.MeshStandardMaterial({ color: spec.skin, roughness: 0.7 });
@@ -3547,9 +3577,12 @@
       return best;
     }
 
+    // 屋內 / 掩體後會把槍舉高到窗口高度 (1.32m)，矮個子角色也能從窗戶射出
+    function aiInsideHouse(ai) { const p = ai.mesh.position; return Math.abs(Math.abs(p.x) - 17) < 5.2 && Math.abs(p.z) < 4.7 && p.y < 2; }
+    function aiMuzzleHeight(ai) { return Math.max(ai.bodyHeight * 0.66, aiInsideHouse(ai) ? 1.32 : 0); }
     function aiHasLOS(ai, target) {
       if (!target) return false;
-      const from = new THREE.Vector3(ai.mesh.position.x, ai.mesh.position.y + ai.bodyHeight * 0.75, ai.mesh.position.z);
+      const from = new THREE.Vector3(ai.mesh.position.x, ai.mesh.position.y + aiMuzzleHeight(ai) + 0.05, ai.mesh.position.z);
       const to = new THREE.Vector3(target.x, target.y + target.h * 0.8, target.z);
       return segmentHitObstacle(from, to) === null;
     }
@@ -3620,9 +3653,9 @@
       setTimeout(() => { ai.gunFlash.material.opacity = 0; }, 70);
       const dist = Math.hypot(target.x - ai.mesh.position.x, target.z - ai.mesh.position.z);
       AudioEngine.playGunshot(wpn.type, dist);
-      const muzzle = ai.mesh.position.clone().add(new THREE.Vector3(0, ai.bodyHeight * 0.66, 0));
+      const muzzle = ai.mesh.position.clone().add(new THREE.Vector3(0, aiMuzzleHeight(ai), 0));
       _v1.set(target.x - muzzle.x, 0, target.z - muzzle.z).normalize();
-      muzzle.addScaledVector(_v1, 0.9);
+      muzzle.addScaledVector(_v1, 0.6);
       const aimPt = new THREE.Vector3(target.x, target.y + target.h * 0.6, target.z);
       const dir = ballisticDirection(muzzle, aimPt, wpn.speed);
       const spread = 0.05 + (ai.hitTimer > 0 ? 0.04 : 0);
@@ -3675,6 +3708,97 @@
       spawnAIEnemyFromBase(0);
     }
 
+    // 屋內找得到視線的射擊點：先試同一層所有窗口/欄杆點，找不到 → 一樓的上二樓、二樓的下樓離開
+    function houseSpotsFor(x, floor) {
+      const cx = x < 0 ? -17 : 17, sgn = x < 0 ? -1 : 1, innerX = x < 0 ? -12 : 12;
+      if (floor === 2) {
+        const pts = [];
+        [-3.5, -1.5, 0.5, 2.5].forEach(z => pts.push({ x: innerX - sgn * 1.4, z, y: 3.4 }));
+        [cx - 3, cx, cx + 3].forEach(px => { pts.push({ x: px, z: 3.8, y: 3.4 }); pts.push({ x: px, z: -3.8, y: 3.4 }); });
+        return pts;
+      }
+      const pts = [];
+      [-3, -1.5, 0, 1.5, 3].forEach(z => pts.push({ x: innerX - sgn * 1.0, z, y: 0 }));
+      pts.push({ x: cx, z: 3.6, y: 0 }); pts.push({ x: cx, z: -3.6, y: 0 });
+      [-3, 0, 3].forEach(z => pts.push({ x: cx + sgn * 4.0, z, y: 0 }));   // 靠外牆側窗 (側牆為實牆，僅前後窗)
+      return pts;
+    }
+    function spotHasLOS(spot, target, muzzleH) {
+      if (!target) return false;
+      const from = new THREE.Vector3(spot.x, spot.y + muzzleH, spot.z);
+      const to = new THREE.Vector3(target.x, target.y + target.h * 0.8, target.z);
+      return segmentHitObstacle(from, to) === null;
+    }
+    function aiRepositionForLOS(ai, target) {
+      const onTwo = ai.mesh.position.y > 2;
+      const spots = houseSpotsFor(ai.mesh.position.x, onTwo ? 2 : 1);
+      const mh = Math.max(ai.bodyHeight * 0.66, 1.32);
+      const good = spots.filter(sp => spotHasLOS(sp, target, mh)).sort((a, b) => Math.hypot(a.x - ai.mesh.position.x, a.z - ai.mesh.position.z) - Math.hypot(b.x - ai.mesh.position.x, b.z - ai.mesh.position.z));
+      if (good.length) {
+        ai.route = { kind: onTwo ? '2F' : '1F', pts: [good[0]] }; ai.routeIdx = 0; ai.campNoLOS = 0;
+        aiSetState(ai, 'HUNT', 0);
+        return 'window';
+      }
+      if (!onTwo && !ai.triedUpstairs) {
+        // 一樓都射不到 → 上二樓試試
+        ai.triedUpstairs = true;
+        const r = HOUSE_ROUTES.find(rt => rt.kind === '2F' && Math.sign(rt.pts[0].x) === Math.sign(ai.mesh.position.x));
+        ai.route = { kind: '2F', pts: r.pts.map(p => ({ x: p.x, z: p.z })) }; ai.routeIdx = 0; ai.campNoLOS = 0;
+        aiSetState(ai, 'HUNT', 0);
+        return 'upstairs';
+      }
+      // 二樓也不行 / 已試過 → 下樓離開房子回到掩體戰
+      ai.triedUpstairs = false; ai.route = null; ai.goal = null;
+      const cx = ai.mesh.position.x < 0 ? -17 : 17;
+      if (onTwo) { const r = HOUSE_ROUTES.find(rt => rt.kind === '2F' && Math.sign(rt.pts[0].x) === Math.sign(cx)); ai.route = { kind: 'down', pts: r.pts.slice(0, 3).reverse().map(p => ({ x: p.x, z: p.z })) }; ai.routeIdx = 0; ai.leaveAfterRoute = true; aiSetState(ai, 'HUNT', 0); return 'downstairs'; }
+      ai.route = { kind: 'exit', pts: [{ x: cx, z: ai.mesh.position.z >= 0 ? 7.5 : -7.5 }] }; ai.routeIdx = 0; ai.leaveAfterRoute = true; aiSetState(ai, 'HUNT', 0);
+      return 'exit';
+    }
+
+    // 聽覺：敵人從背後逼近 (6m 內、越近越快察覺、蹲行較難被聽到)，警覺值滿 → 轉身射擊
+    function aiUpdateHearing(ai, delta, now) {
+      ai.awareness = ai.awareness || 0;
+      let gain = 0, who = null;
+      const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(ai.mesh.quaternion);
+      aiEnemyCandidates().forEach(c => {
+        const dx = c.x - ai.mesh.position.x, dz = c.z - ai.mesh.position.z, d = Math.hypot(dx, dz);
+        if (d > 6 || d < 0.01) return;
+        const behind = (dx * fwd.x + dz * fwd.z) / d < 0.2;
+        if (!behind) return;
+        let moving = 0;
+        if (c.local) moving = (keysDown['KeyW'] || keysDown['KeyS'] || keysDown['KeyA'] || keysDown['KeyD'] || moveInput.forward || moveInput.right) ? (isCrouched ? 0.3 : 1) : 0;
+        else { const rp = remotePlayers[c.uid]; if (rp) { const sp = rp.lastPos ? Math.hypot(rp.mesh.position.x - rp.lastPos.x, rp.mesh.position.z - rp.lastPos.z) / Math.max(delta, 0.016) : 0; moving = sp > 0.5 ? (rp.mesh.scale.y < 1 ? 0.3 : 1) : 0; } }
+        if (moving > 0) { const g = moving * (1 - d / 6); if (g > gain) { gain = g; who = c; } }
+      });
+      if (gain > 0) ai.awareness = Math.min(1.2, ai.awareness + gain * delta * 1.4); else ai.awareness = Math.max(0, ai.awareness - delta * 0.5);
+      if (ai.awareness >= 1 && who && ai.state !== 'FLEE') {
+        ai.awareness = 0;
+        ai.target = who;
+        ai.mesh.lookAt(who.x, ai.mesh.position.y, who.z);
+        ai.lastEngaged = now;
+        if (ai.state !== 'CAMP') aiSetState(ai, 'PEEK_SHOOT', 1.6 + Math.random());
+        ai.gunFlash.material.opacity = 0.3; setTimeout(() => { ai.gunFlash.material.opacity = 0; }, 60);
+        if (typeof addKillFeed === 'function' && who.local) addKillFeed(`👂 ${ai.name} 聽到你的腳步聲，轉身了！`, '#fbbf24');
+      }
+    }
+
+    function aiInFOV(ai, target) {
+      if (!target) return false;
+      const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(ai.mesh.quaternion);
+      const dx = target.x - ai.mesh.position.x, dz = target.z - ai.mesh.position.z, d = Math.hypot(dx, dz) || 1;
+      return (dx * fwd.x + dz * fwd.z) / d > 0.26;   // cos 75°
+    }
+    function aiUnstick(ai) {
+      const p = ai.mesh.position;
+      for (let r = 0.5; r <= 3.0; r += 0.5) {
+        for (let k = 0; k < 8; k++) {
+          const a = k * Math.PI / 4, nx = p.x + Math.cos(a) * r, nz = p.z + Math.sin(a) * r;
+          if (!checkCollision(nx, nz, p.y, 0.4, ai.bodyHeight)) { p.x = nx; p.z = nz; return true; }
+        }
+      }
+      return false;
+    }
+
     function updateAIBrains(delta, now) {
       if (!isAIAuthority()) return;
       if (aiEnabled) {
@@ -3691,10 +3815,19 @@
           continue;
         }
         ai.animTimer += delta * 7;
+        // 卡在障礙物裡 (生成/推擠造成) → 往最近的空位推出
+        if (checkCollision(ai.mesh.position.x, ai.mesh.position.z, ai.mesh.position.y, 0.4, ai.bodyHeight)) aiUnstick(ai);
         const target = aiPickTarget(ai);
-        const los = target ? aiHasLOS(ai, target) : false;
-        if (los) ai.noLOSTimer = 0; else ai.noLOSTimer += delta;
+        const geomLOS = target ? aiHasLOS(ai, target) : false;
+        // 「看見」= 有視線 且 在 ±75° 視野內；背後的敵人要靠聽覺
+        const los = geomLOS && aiInFOV(ai, target);
+        if (los) { ai.noLOSTimer = 0; ai.lastSeenTime = now; } else ai.noLOSTimer += delta;
+        const seenRecently = (now - (ai.lastSeenTime || 0)) < 4000;
         ai.stateTimer -= delta;
+
+        aiUpdateHearing(ai, delta, now);
+        ai.houseTime = (ai.state === 'HUNT' || ai.state === 'CAMP') ? (ai.houseTime || 0) + delta : 0;
+        if (ai.houseTime > 40) { ai.route = null; ai.goal = null; ai.houseTime = 0; ai.triedUpstairs = false; aiSetState(ai, 'ADVANCE', 0); }   // 保險：待太久強制離開
 
         // 受擊後仰 + 擊退
         if (ai.hitTimer > 0) {
@@ -3713,7 +3846,7 @@
           }
           case 'HIDE': {
             ai.legL.rotation.x = 0; ai.legR.rotation.x = 0;
-            if (target) ai.mesh.lookAt(target.x, ai.mesh.position.y, target.z);
+            if (target && (los || seenRecently)) ai.mesh.lookAt(target.x, ai.mesh.position.y, target.z);
             if (ai.stateTimer <= 0) aiSetState(ai, 'PEEK_SHOOT', 1.4 + Math.random() * 1.2);
             break;
           }
@@ -3742,7 +3875,10 @@
             break;
           }
           case 'HUNT': {
-            if (!ai.route || ai.routeIdx >= ai.route.pts.length) { aiSetState(ai, 'CAMP', 14 + Math.random() * 8); break; }
+            if (!ai.route || ai.routeIdx >= ai.route.pts.length) {
+              if (ai.leaveAfterRoute) { ai.leaveAfterRoute = false; ai.route = null; ai.goal = null; aiSetState(ai, 'ADVANCE', 0); break; }
+              aiSetState(ai, 'CAMP', 14 + Math.random() * 8); ai.campNoLOS = 0; break;
+            }
             const wp = ai.route.pts[ai.routeIdx];
             const d = aiMoveTowards(ai, wp.x, wp.z, AI_SPEED, delta);
             if (d < 0.7) ai.routeIdx++;
@@ -3755,9 +3891,12 @@
             if (target) {
               ai.mesh.lookAt(target.x, ai.mesh.position.y, target.z);
               ai.armR.rotation.x = -0.95;
-              if (los && ai.targetDist < 55) { aiFire(ai, target, now); ai.lastEngaged = now; }
+              if (los && ai.targetDist < 55) { aiFire(ai, target, now); ai.lastEngaged = now; ai.campNoLOS = 0; }
+              else ai.campNoLOS = (ai.campNoLOS || 0) + delta;
             }
-            if (ai.stateTimer <= 0) { ai.route = null; ai.goal = null; aiSetState(ai, 'ADVANCE', 0); }
+            // 被牆擋住超過 3 秒：換窗口 / 上二樓 / 下樓離開
+            if (ai.campNoLOS > 3) { ai.campNoLOS = 0; aiRepositionForLOS(ai, target); break; }
+            if (ai.stateTimer <= 0) { ai.route = null; ai.goal = null; ai.triedUpstairs = false; aiSetState(ai, 'ADVANCE', 0); }
             break;
           }
         }
@@ -3983,7 +4122,7 @@
       if (ch) {
         ch.classList.add('scale-150');
         ch.style.filter = 'drop-shadow(0 0 6px #f87171)';
-        setTimeout(() => { ch.classList.remove('scale-150'); ch.style.filter = ''; }, 90);
+        setTimeout(() => { ch.classList.remove('scale-150'); ch.style.filter = crosshairBlocked ? 'drop-shadow(0 0 6px #ef4444) hue-rotate(300deg) saturate(3)' : ''; }, 90);
       }
     }
 
@@ -5916,7 +6055,9 @@
       checkGroundPickups(delta);
       animatePickups(now);
       updateLaser();
+      updateCrosshairBlockIndicator();
       expirePaintDecals(now);
+      for (const uid in remotePlayers) { const rp = remotePlayers[uid]; if (!rp.lastPos) rp.lastPos = rp.mesh.position.clone(); }
 
       // 5. 漆彈
       for (let i = projectiles.length - 1; i >= 0; i--) {
@@ -5931,7 +6072,13 @@
         const hit = segmentHitObstacle(proj.prevPos, proj.pos);
         if (hit) {
           const hp = _v1.copy(proj.prevPos).lerp(proj.pos, Math.max(0, hit.t - 0.01));
-          spawnPaintSplatter(hp.clone(), proj.color, estimateHitNormal(hit.obs, hp));
+          const n = estimateHitNormal(hit.obs, hp);
+          spawnPaintSplatter(hp.clone(), proj.color, n);
+          // 出膛 1.5m 內就撞牆 = 被自己身旁的牆擋下：加強回饋 (#明顯判定)
+          if (proj.traveledDist < 1.5) {
+            spawnWallBlockBurst(hp.clone(), n, proj.color);
+            if (proj.isAlly && proj.shooterId === Net.myId) { const fb = document.getElementById('pickup-feedback'); fb.innerText = '🧱 漆彈被牆擋下了！換個窗口或角度'; fb.style.opacity = '1'; setTimeout(() => fb.style.opacity = '0', 700); }
+          }
           done = true;
         }
         if (!done) {
@@ -6037,8 +6184,39 @@
         });
       }
 
+      for (const uid in remotePlayers) { const rp = remotePlayers[uid]; if (rp.lastPos) rp.lastPos.copy(rp.mesh.position); }
       updateMinimap(delta);
       renderer.render(scene, camera);
+    }
+
+    // 撞牆火花 + 大片顏料 + 悶響
+    function spawnWallBlockBurst(pos, normal, color) {
+      for (let i = 0; i < 14; i++) {
+        const p = new THREE.Mesh(new THREE.SphereGeometry(0.05 + Math.random() * 0.05, 6, 6), new THREE.MeshBasicMaterial({ color: i % 3 === 0 ? 0xffffff : color }));
+        p.position.copy(pos);
+        scene.add(p);
+        const vel = new THREE.Vector3((Math.random() - 0.5) * 5, Math.random() * 3 + 1, (Math.random() - 0.5) * 5).addScaledVector(normal, 4);
+        particleSystems.push({ mesh: p, vel, life: 0.5 + Math.random() * 0.3 });
+      }
+      AudioEngine.playFootstep('metal');
+    }
+
+    // 準心擋牆指示：槍口前 2m 內若有牆/掩體擋住射線 → 準心變紅並顯示 🧱
+    const _cFrom = new THREE.Vector3(), _cDir = new THREE.Vector3(), _cTo = new THREE.Vector3();
+    let crosshairBlocked = false;
+    function updateCrosshairBlockIndicator() {
+      const ch = document.getElementById('crosshair');
+      const tag = document.getElementById('block-tag');
+      if (!ch || playerState.isSpectating) return;
+      camera.getWorldPosition(_cFrom); camera.getWorldDirection(_cDir);
+      _cFrom.addScaledVector(_cDir, 0.3); _cFrom.y -= 0.12;
+      _cTo.copy(_cFrom).addScaledVector(_cDir, 2.2);
+      const blocked = segmentHitObstacle(_cFrom, _cTo) !== null;
+      if (blocked !== crosshairBlocked) {
+        crosshairBlocked = blocked;
+        ch.style.filter = blocked ? 'drop-shadow(0 0 6px #ef4444) hue-rotate(300deg) saturate(3)' : '';
+        if (tag) tag.classList.toggle('hidden', !blocked);
+      }
     }
 
     // 掩體偵測 (不直接操作 DOM，由 gameLoop 以遲滯方式更新按鈕)
@@ -6384,6 +6562,49 @@
         const bannerShown = !document.getElementById('match-end-banner').classList.contains('hidden');
         log('T34 倒數歸零會結束：先顯示宣告橫幅，3 秒後進結算 (#1 #4)', isRoundEnded && bannerShown, `ended=${isRoundEnded} banner=${bannerShown}`);
         clearTimeout(endBannerTimer); document.getElementById('match-end-banner').classList.add('hidden'); isRoundEnded = false; roundRemainingTime = 9999;
+
+        // T35 屋內 AI 被牆擋住 → 自動換到有視線的窗口
+        aiEnemies.forEach(e => scene.remove(e.mesh)); aiEnemies.length = 0; aiEnabled = true; isRoundEnded = false; isGameRunning = true;
+        playerState.maxHp = 100000; playerState.hp = 100000; playerState.invulnUntil = 0;
+        const camper = spawnAIEnemyFromBase(0);
+        camper.mesh.position.set(-19.5, 0, -1); camper.lastEngaged = simTime; aiSetState(camper, 'CAMP', 60); camper.campNoLOS = 0; camper.mesh.lookAt(-20.5, 0, 20);
+        teleport(-20.5, 20, 0, 0);
+        const losBefore = aiHasLOS(camper, aiPickTarget(camper));
+        frame(60 * 4.5);
+        const moved = camper.route && camper.route.pts.length ? camper.route.pts[0] : null;
+        log('T35a 屋內 AI 被牆擋住 3 秒後改走有視線的窗口/樓層', !losBefore && (camper.state === 'HUNT' || camper.state === 'CAMP') && moved !== null, `state=${camper.state} spot=${moved ? moved.x.toFixed(1) + ',' + moved.z.toFixed(1) : '-'}`);
+        frame(60 * 6);
+        log('T35b 到達窗口後能看見並射擊 (有視線)', aiHasLOS(camper, aiPickTarget(camper)), `state=${camper.state} pos=${camper.mesh.position.x.toFixed(1)},${camper.mesh.position.z.toFixed(1)} los=${aiHasLOS(camper, aiPickTarget(camper))}`);
+
+        // T36 背後腳步聲：逼近很近才察覺 → 轉身射擊
+        aiEnemies.forEach(e => scene.remove(e.mesh)); aiEnemies.length = 0;
+        const listener = spawnAIEnemyFromBase(0);
+        listener.mesh.position.set(0, 0, 0); listener.mesh.lookAt(0, 0, -30); aiSetState(listener, 'HIDE', 999); listener.lastEngaged = simTime; listener.awareness = 0;
+        teleport(2.0, 12, 0, 0);   // 12m 外 (超出 6m 聽覺範圍)
+        keysDown['KeyW'] = true; frame(45); keysDown['KeyW'] = false;
+        const farAware = listener.awareness;
+        teleport(0.5, 2.8, 0, 0);   // 在 AI 背後 2.8m 左右來回走動 (保持在背後、不進入視野)
+        let heardAt = -1, turned = false;
+        for (let i = 0; i < 150; i++) {
+          keysDown['KeyA'] = (Math.floor(i / 12) % 2 === 0); keysDown['KeyD'] = !keysDown['KeyA'];
+          frame(1);
+          if (listener.state === 'PEEK_SHOOT' && heardAt < 0) { heardAt = i; const f = new THREE.Vector3(0, 0, 1).applyQuaternion(listener.mesh.quaternion); turned = f.z > 0.5; }
+        }
+        keysDown['KeyA'] = false; keysDown['KeyD'] = false;
+        log('T36 背後腳步聲：遠處聽不到，逼近 3m 內逐漸察覺並轉身射擊', farAware === 0 && heardAt > 10 && turned, `farAware=${farAware.toFixed(2)} 察覺於第 ${heardAt} 幀 (${(heardAt / 60).toFixed(1)}s) 轉身=${turned}`);
+        aiEnemies.forEach(e => scene.remove(e.mesh)); aiEnemies.length = 0; aiEnabled = false; playerState.maxHp = 100; playerState.hp = 100;
+
+        // T38 戰車碰撞盒在戰車位置 (回歸測試：群組 AABB 不可停在原點)
+        const originBlocked = checkCollision(0, 0, 0, 0.4, 1.7);
+        const tankBlocked = checkCollision(-11, -17, 0, 0.4, 1.7);
+        log('T38 戰車碰撞盒位於戰車處，場地中央無隱形牆', !originBlocked && tankBlocked, `origin=${originBlocked} tank=${tankBlocked}`);
+
+        // T37 準心擋牆指示
+        teleport(-20.5, 5.0, 0, 0); frame(2);   // 面對一樓實牆 (z=4.5)
+        const blockedTag = !document.getElementById('block-tag').classList.contains('hidden');
+        teleport(0, 20, 0, 0); frame(2);
+        const clearTag = document.getElementById('block-tag').classList.contains('hidden');
+        log('T37 準心擋牆指示：面對牆紅色 🧱，開闊處正常', blockedTag && clearTag, `wall=${blockedTag} open=${clearTag}`);
 
         const passed = R.filter(Boolean).length;
         console.log(`[AUTOTEST] SUMMARY ${passed}/${R.length} PASSED`);
