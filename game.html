@@ -8,7 +8,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="現代突擊3D">
-  <title>Q版特種部隊：現代突擊 3D v6.7 - 跨平台電競對戰</title>
+  <title>Q版特種部隊：現代突擊 3D v6.8 - 跨平台電競對戰</title>
   <!-- Tailwind CSS (支援 Jetski 官方與外部 CDN) -->
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -99,13 +99,14 @@
     <div class="absolute -right-3 w-2 h-0.5 bg-emerald-400/80"></div>
   </div>
 
-  <!-- 開鏡紅點高透光瞄準圈 (ADS) -->
-  <div id="ads-overlay" class="absolute inset-0 pointer-events-none z-10 flex items-center justify-center hidden bg-black/40 backdrop-blur-[1px]">
-    <div class="w-60 h-60 sm:w-80 sm:h-80 rounded-full border-2 border-emerald-400/60 relative flex items-center justify-center shadow-[0_0_60px_rgba(16,185,129,0.3)]">
-      <div class="w-3.5 h-3.5 rounded-full bg-red-500 shadow-lg shadow-red-500 animate-ping"></div>
-      <div class="absolute w-full h-[1.5px] bg-emerald-400/40"></div>
-      <div class="absolute h-full w-[1.5px] bg-emerald-400/40"></div>
-      <div class="absolute inset-5 rounded-full border border-dashed border-emerald-400/30"></div>
+  <!-- 開鏡高清晰瞄準鏡 (ADS)：瞄準鏡之外全黑遮蔽、瞄準鏡中間 100% 清晰無模糊，開鏡抖動降低 45% (#7) -->
+  <div id="ads-overlay" class="absolute inset-0 pointer-events-none z-10 flex items-center justify-center hidden overflow-hidden" style="backdrop-filter:none;-webkit-backdrop-filter:none;background:transparent;">
+    <div id="ads-lens" class="w-64 h-64 sm:w-80 sm:h-80 rounded-full border-2 border-emerald-400/80 relative flex items-center justify-center" style="box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.92), inset 0 0 28px rgba(16, 185, 129, 0.22); background: transparent; backdrop-filter: none;">
+      <div class="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]"></div>
+      <div class="absolute w-full h-[1.5px] bg-emerald-400/55"></div>
+      <div class="absolute h-full w-[1.5px] bg-emerald-400/55"></div>
+      <div class="absolute inset-5 rounded-full border border-dashed border-emerald-400/40"></div>
+      <span class="absolute bottom-3 text-[10px] font-mono font-bold text-emerald-300/90 bg-black/60 px-2 py-0.5 rounded">🎯 穩定開鏡 · 抖動 -45%</span>
     </div>
   </div>
 
@@ -215,7 +216,7 @@
           <span id="hud-fps" class="px-1.5 py-0.5 rounded text-[11px] font-mono text-slate-400 bg-slate-900/80 border border-slate-800">
             60 FPS
           </span>
-          <span id="hud-build" class="px-1.5 py-0.5 rounded text-[10px] font-mono text-amber-300/90 bg-slate-900/80 border border-slate-800">v6.7 · 建置 2026-10-25 12:52 (台北)</span>
+          <span id="hud-build" class="px-1.5 py-0.5 rounded text-[10px] font-mono text-amber-300/90 bg-slate-900/80 border border-slate-800">v6.8 · 建置 2026-10-25 13:26 (台北)</span>
         </div>
         <div class="text-xs text-slate-300 font-semibold bg-slate-900/80 border border-slate-800 px-2.5 py-1 rounded-lg backdrop-blur-sm flex items-center gap-2">
           <span>擊倒: <b id="kills-count" class="text-amber-400">0</b></span>
@@ -238,6 +239,7 @@
         <span id="round-timer" class="text-base font-mono font-black text-amber-300">03:00</span>
         <span class="text-slate-600">|</span>
         <span id="rule-tag" class="text-xs font-black text-emerald-300">❤️ 5 / 5 條命</span>
+        <button id="btn-toggle-combat-mode" class="ml-1 px-2 py-0.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/35 border border-amber-400/50 text-[11px] font-black text-amber-300 pointer-events-auto transition" title="點擊切換：強傷害 (100%) / 強盔甲 (傷害減半 50%)">⚡ 強傷害</button>
       </div>
       <!-- C4 炸彈安裝警報 (紅光閃爍 15 秒) -->
       <div id="bomb-status-bar" class="hidden mt-1.5 px-3.5 py-1.5 rounded-xl bg-rose-600/95 border-2 border-rose-300 text-white text-xs font-black shadow-2xl animate-pulse-fast flex items-center gap-2">
@@ -320,10 +322,18 @@
   <div id="invuln-tag" class="hidden absolute top-32 left-1/2 -translate-x-1/2 z-30 px-4 py-1.5 rounded-xl bg-sky-600/90 border border-sky-300 text-white text-sm font-black shadow-xl pointer-events-none"></div>
   <!-- 戰術標籤 (#5) -->
   <div id="tactic-tag" class="hidden absolute top-44 left-1/2 -translate-x-1/2 z-20 px-3 py-1 rounded-lg bg-violet-700/80 border border-violet-300/60 text-white text-xs font-black pointer-events-none"></div>
-  <!-- 搶旗進度 (#6) -->
-  <div id="ctf-bar-box" class="hidden absolute bottom-28 left-1/2 -translate-x-1/2 z-20 w-80 pointer-events-none">
-    <div id="ctf-bar-text" class="text-center text-xs font-black text-white mb-1 drop-shadow"></div>
-    <div class="w-full h-3 rounded-full bg-slate-900/80 border border-slate-600 overflow-hidden"><div id="ctf-bar-fill" class="h-full bg-gradient-to-r from-amber-400 to-rose-500" style="width:0%"></div></div>
+  <!-- 搶旗互動按鍵提示與雙階段升降旗進度條 (#4 #8) -->
+  <div id="ctf-bar-box" class="hidden absolute bottom-28 left-1/2 -translate-x-1/2 z-30 w-96 max-w-[92vw] flex flex-col items-center gap-1.5 pointer-events-auto">
+    <button id="ctf-action-btn" class="hidden px-4 py-2 rounded-2xl bg-gradient-to-r from-amber-400 to-rose-500 text-slate-950 font-black text-xs sm:text-sm shadow-xl border-2 border-white/80 active:scale-95 transition select-none cursor-pointer">
+      🚩 按住 [E] 鍵（或按住此鈕）開始升降旗
+    </button>
+    <div class="w-full bg-slate-950/90 border border-slate-700 rounded-2xl px-3.5 py-2 shadow-xl pointer-events-none">
+      <div id="ctf-bar-text" class="text-center text-xs font-black text-amber-300 mb-1 drop-shadow"></div>
+      <div class="w-full h-3 rounded-full bg-slate-900 border border-slate-600 overflow-hidden">
+        <div id="ctf-bar-fill" class="h-full bg-gradient-to-r from-amber-400 via-emerald-400 to-sky-400 transition-all duration-75" style="width:0%"></div>
+      </div>
+      <div id="ctf-phase-sub" class="text-center text-[10px] font-mono text-slate-300 mt-1">降敵旗 6.0s → 升我方旗 6.0s（放開時：降旗停住 / 升旗緩降）</div>
+    </div>
   </div>
   <!-- 遊戲結束宣告 (#4) -->
   <div id="match-end-banner" class="hidden"></div>
@@ -398,10 +408,10 @@
         <span>●</span> WebRTC P2P + 本地雙通道零延遲連線架構
       </div>
       <h1 class="text-2xl sm:text-3xl font-black tracking-wider text-white mb-1">
-        Q版特種部隊：現代突擊 3D v6.7
+        Q版特種部隊：現代突擊 3D v6.8
       </h1>
       <p class="text-xs text-slate-400 mb-1 font-medium">支援 iPad 觸控手勢與電腦 PC 鍵鼠同場競技 ｜ 藍天白雲雙層 CQB 戰場</p>
-      <div id="build-stamp" class="inline-block text-[11px] font-mono font-bold text-amber-300 bg-slate-950 border border-amber-400/40 rounded-lg px-2.5 py-1 mb-4">🏷️ 版本 v6.7 · 建置 2026-10-25 12:52 (台北)</div>
+      <div id="build-stamp" class="inline-block text-[11px] font-mono font-bold text-amber-300 bg-slate-950 border border-amber-400/40 rounded-lg px-2.5 py-1 mb-4">🏷️ 版本 v6.8 · 建置 2026-10-25 13:26 (台北)</div>
 
       <details class="text-left text-[11px] text-slate-400 bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2 mb-3">
         <summary class="cursor-pointer font-bold text-slate-300">❓ 房間怎麼運作？(開房 / 看到別人 / 關閉 / 多久消失)</summary>
@@ -482,6 +492,13 @@
               </select>
               <input type="number" id="lives-input" value="5" min="1" max="20" class="w-16 bg-slate-900 border border-slate-700 rounded-xl px-2 py-2 text-xs font-black text-rose-300 text-center" title="每人生命數">
             </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-300 mb-1">火力與護甲模式 (房主設定 #6)</label>
+            <select id="combat-mode-select" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-amber-300 focus:outline-none focus:border-amber-500">
+              <option value="high_damage" selected>⚡ 強傷害模式 (標準 100% 傷害 · 節奏爽快)</option>
+              <option value="high_armor">🛡️ 強盔甲模式 (傷害減半 50% · 鼓勵衝鋒突擊)</option>
+            </select>
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-300 mb-1">回合時間規則</label>
@@ -577,13 +594,22 @@
           </div>
         </div>
 
-        <!-- 前五名菁英排行榜 (固定最多 5 列，絕不撐爆畫面) -->
-        <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 flex-1 flex flex-col justify-between">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-sm font-black text-white">🏅 最厲害的前五名菁英榜 (Top 5)</span>
-            <span id="final-total-players" class="text-[11px] font-mono text-slate-400">前 5 強</span>
+        <!-- 本回合參戰前五名菁英排行榜 (未參戰本回合者自動移除 #10) -->
+        <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex-1 flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-xs sm:text-sm font-black text-white">🏅 本回合參戰菁英榜 (Top 5)</span>
+            <span id="final-total-players" class="text-[10px] font-mono text-slate-400">僅列本回合參戰者</span>
           </div>
-          <div id="final-scoreboard" class="space-y-1.5"></div>
+          <div id="final-scoreboard" class="space-y-1"></div>
+        </div>
+
+        <!-- 房間關閉前累積總擊殺數排行榜 (分開列在最下面 #10) -->
+        <div class="bg-slate-950/90 p-3 rounded-2xl border border-indigo-500/40">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs font-black text-indigo-300">📊 房間累積總擊殺排行榜 (關房前累計)</span>
+            <span id="cumulative-rounds-tag" class="text-[10px] font-mono text-indigo-400">累計第 1 局</span>
+          </div>
+          <div id="cumulative-scoreboard" class="grid grid-cols-2 gap-1.5 text-[11px]"></div>
         </div>
       </div>
 
@@ -2055,13 +2081,13 @@
 
     // 武器庫規格參數 (#4 射程、初速與重力拋物線 #15 造型更換)
     const WEAPONS = {
-      pistol:  { name: '戰術手槍',       badge: '9mm 半自動副武器', damage: 20, fireRate: 240, clipSize: 15, ammoType: 'pistol', reloadTime: 1.2, type: 'pistol',  zoomFov: 60, speed: 26, maxRange: 18, gravity: 9.8 },
-      mp5:     { name: 'MP5 衝鋒槍',     badge: '9mm 精準衝鋒',     damage: 18, fireRate: 90,  clipSize: 30, ammoType: 'pistol', reloadTime: 1.6, type: 'mp5',     zoomFov: 52, speed: 31, maxRange: 30, gravity: 9.8 },
-      p90:     { name: 'P90 衝鋒槍',     badge: '9mm 高射速衝鋒',   damage: 15, fireRate: 70,  clipSize: 50, ammoType: 'pistol', reloadTime: 1.8, type: 'smg',     zoomFov: 52, speed: 31, maxRange: 30, gravity: 9.8 },
-      m4a1:    { name: 'M4A1 突擊步槍', badge: '5.56 全自動步槍',  damage: 24, fireRate: 110, clipSize: 30, ammoType: 'rifle',  reloadTime: 2.0, type: 'rifle',   zoomFov: 48, speed: 38, maxRange: 42, gravity: 9.8 },
-      ak47:    { name: 'AK-47 突擊步槍', badge: '5.56 重型全自動',  damage: 32, fireRate: 135, clipSize: 30, ammoType: 'rifle',  reloadTime: 2.2, type: 'ak',      zoomFov: 50, speed: 40, maxRange: 45, gravity: 9.8 },
-      shotgun: { name: '防暴散彈槍',     badge: '5.56 近戰散彈',    damage: 14, pellets: 6, fireRate: 620, clipSize: 15, ammoType: 'rifle', reloadTime: 2.6, type: 'shotgun', zoomFov: 55, speed: 24, maxRange: 14, gravity: 9.8 },
-      awp:     { name: 'AWP 狙擊步槍',   badge: '5.56 高壓狙擊 (2倍射程)', damage: 95, fireRate: 1100, clipSize: 15, ammoType: 'rifle', reloadTime: 2.8, type: 'sniper', zoomFov: 14, speed: 72, maxRange: 90, gravity: 9.8 }
+      pistol:  { name: '戰術手槍',       badge: '9mm 半自動副武器', damage: 20, fireRate: 240, clipSize: 15, ammoType: 'pistol', reloadTime: 1.2, type: 'pistol',  zoomFov: 60, speed: 26, maxRange: 15, gravity: 9.8 },
+      mp5:     { name: 'MP5 衝鋒槍',     badge: '9mm 近中距衝鋒',   damage: 18, fireRate: 90,  clipSize: 30, ammoType: 'pistol', reloadTime: 1.6, type: 'mp5',     zoomFov: 52, speed: 30, maxRange: 20, gravity: 9.8 },
+      p90:     { name: 'P90 衝鋒槍',     badge: '9mm 高射速衝鋒',   damage: 15, fireRate: 70,  clipSize: 50, ammoType: 'pistol', reloadTime: 1.8, type: 'smg',     zoomFov: 52, speed: 30, maxRange: 19, gravity: 9.8 },
+      m4a1:    { name: 'M4A1 突擊步槍', badge: '5.56 標準步槍',    damage: 24, fireRate: 110, clipSize: 30, ammoType: 'rifle',  reloadTime: 2.0, type: 'rifle',   zoomFov: 48, speed: 36, maxRange: 26, gravity: 9.8 },
+      ak47:    { name: 'AK-47 突擊步槍', badge: '5.56 重型步槍',    damage: 32, fireRate: 135, clipSize: 30, ammoType: 'rifle',  reloadTime: 2.2, type: 'ak',      zoomFov: 50, speed: 38, maxRange: 28, gravity: 9.8 },
+      shotgun: { name: '防暴散彈槍',     badge: '雙發圓域散彈 (圓心100%/外圈50-30%)', damage: 100, pellets: 8, fireRate: 420, clipSize: 2, ammoType: 'rifle', reloadTime: 2.0, type: 'shotgun', zoomFov: 55, speed: 26, maxRange: 14, gravity: 9.8 },
+      awp:     { name: 'AWP 狙擊步槍',   badge: '5.56 超遠程狙擊 (3.5倍射程優勢)', damage: 95, fireRate: 1100, clipSize: 15, ammoType: 'rifle', reloadTime: 2.8, type: 'sniper', zoomFov: 14, speed: 78, maxRange: 90, gravity: 9.8 }
     };
     Object.keys(WEAPONS).forEach(k => { WEAPONS[k].key = k; WEAPONS[k].ammoInClip = WEAPONS[k].clipSize; });
     Object.keys(WEAPONS).forEach(k => { WEAPONS[k].key = k; WEAPONS[k].ammoInClip = WEAPONS[k].clipSize; });
@@ -2201,6 +2227,11 @@
       buildBattlefieldProps();
       createFirstPersonWeapon();
       spawnGroundPickups();
+      // 檢查並清除任何誤蓋在中央 C4 炸彈 (0, 0) 周圍 1.1m 內的隱形阻擋盒 (#3)
+      obstacles = obstacles.filter(o => {
+        const hitsOrigin = (o.minX < 1.1 && o.maxX > -1.1 && o.minZ < 1.1 && o.maxZ > -1.1 && o.minY < 2.0);
+        return !hitsOrigin;
+      });
 
       window.addEventListener('resize', onWindowResize);
     }
@@ -3329,7 +3360,7 @@
         { id: 'armor_1', type: 'armor', x: -7.5, z: 24.6, armorValue: 50, label: '防彈鋼板護甲 (+50 AP)', respawnTime: 60 },
         { id: 'armor_2', type: 'armor', x: 7.5, z: -24.6, armorValue: 50, label: '防彈鋼板護甲 (+50 AP)', respawnTime: 60 },
         { id: 'armor_3', type: 'armor', x: 14, z: -3, y: 3.4, armorValue: 50, label: '二樓防彈鋼板 (+50 AP)', respawnTime: 60 },
-        { id: 'armor_4', type: 'armor', x: -17, z: 0, armorValue: 50, label: '屋內防彈鋼板 (+50 AP)', respawnTime: 60 },
+        { id: 'armor_4', type: 'armor', x: -15.2, z: 0, armorValue: 50, label: '屋內防彈鋼板 (+50 AP)', respawnTime: 60 },
         { id: 'c4_bomb', type: 'bomb', x: 0, z: 0, label: 'C4 戰術定時炸彈', respawnTime: 40 },
         // 戰場邊緣物資 (#邊緣)：吉普 / 戰車旁與外圍角落
         { id: 'edge_ar_1', type: 'ammo_rifle', x: -30, z: 10, label: '5.56 NATO 步槍彈 (+60)', respawnTime: 25 },
@@ -3390,7 +3421,8 @@
         if (it.type === 'supply' && it.countLabel) { it.group.remove(it.countLabel); it.countLabel = null; it.group.traverse(o => { if (o.material && o.material.userData && o.material.userData.dimmed) o.material.opacity = 1; }); }
         if (it.dynamic && performance.now() - it.born > 90000) { scene.remove(it.group); pickupItems.splice(i, 1); i--; continue; }
         if (it.cooldown > 0) it.cooldown -= 1 / 60;
-        it.group.position.y = it.baseY + Math.sin(t * 2.2 + i) * 0.08 + 0.1;
+        it.group.visible = !it.buriedByPaint;
+        it.group.position.y = it.baseY - Math.min(0.35, (it.paintBurial || 0) * 0.06) + (Math.sin(t * 2.2 + i) * 0.08 + 0.1) * (it.buriedByPaint ? 0 : 1);
         it.group.children.forEach(ch => {
           if (ch.userData.isRing) { ch.rotation.z = t * 1.5; ch.material.opacity = 0.4 + Math.sin(t * 3 + i) * 0.15; }
         });
@@ -4486,7 +4518,42 @@
         decal.position.y += 0.012;
       }
       scene.add(decal);
-      paintDecals.push({ group: decal, born: performance.now() });
+      // 若打在地板上 (normal === null)：堆疊 3D 立體漆彈山，打夠多發可以把炸彈或地面道具完全埋起來看不到 (#5)
+      if (!normal) {
+        let nearbyCount = 0;
+        for (let k = paintDecals.length - 1; k >= 0; k--) {
+          const pd = paintDecals[k];
+          if (pd.isFloor && Math.hypot(pd.x - pos.x, pd.z - pos.z) < 0.95) nearbyCount++;
+        }
+        const moundH = 0.08 + Math.min(12, nearbyCount) * 0.065;
+        const moundR = 0.26 + Math.min(10, nearbyCount) * 0.045;
+        const moundMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.35, metalness: 0.08, emissive: color, emissiveIntensity: 0.12 });
+        const mound = new THREE.Mesh(new THREE.SphereGeometry(moundR, 10, 8), moundMat);
+        mound.scale.set(1, Math.max(0.32, moundH / moundR), 1);
+        mound.position.set(0, moundH * 0.45, 0);
+        decal.add(mound);
+        // 檢查是否打在地面道具或 C4 炸彈周圍 1.05m 內 → 累積掩埋度 paintBurial
+        for (let i = 0; i < pickupItems.length; i++) {
+          const it = pickupItems[i];
+          if (!it.isAvailable) continue;
+          if (Math.hypot(it.x - pos.x, it.z - pos.z) < 1.05 && Math.abs((it.y || 0) - pos.y) < 0.8) {
+            it.paintBurial = (it.paintBurial || 0) + 1;
+            // 隨漆彈堆疊逐漸下沉被顏料吞沒，滿 6 發徹底埋沒看不到
+            it.group.position.y = Math.max((it.y || 0) - 0.35, it.baseY - it.paintBurial * 0.06);
+            if (it.paintBurial >= 6 && !it.buriedByPaint) {
+              it.buriedByPaint = true;
+              it.group.visible = false;
+              const fb = document.getElementById('pickup-feedback');
+              if (fb) { fb.innerText = `🎨 漆彈堆太厚，把【${it.label}】完全埋起來看不到啦！`; fb.style.opacity = '1'; setTimeout(() => fb.style.opacity = '0', 1400); }
+            }
+          }
+        }
+        if (bombState.isPlanted && bombState.mesh && Math.hypot(bombState.pos.x - pos.x, bombState.pos.z - pos.z) < 1.05) {
+          bombState.paintBurial = (bombState.paintBurial || 0) + 1;
+          if (bombState.paintBurial >= 6) bombState.mesh.visible = false;
+        }
+      }
+      paintDecals.push({ group: decal, born: performance.now(), isFloor: !normal, x: pos.x, z: pos.z });
       if (paintDecals.length > 400) { const old = paintDecals.shift(); scene.remove(old.group); }
       AudioEngine.playPaintSplat();
     }
@@ -4546,6 +4613,113 @@
       }
     }
 
+    // 子彈一直被牆擋住時的隨機 5 種提醒訊息 (#2)
+    const WALL_BLOCK_MESSAGES = [
+      '🧱 啊，子彈都被牆擋住了嗎？試著往旁邊移動半步再射擊！',
+      '🧱 啊，子彈都被牆擋住了嗎？槍口貼牆太近，換個窗口或探頭試試！',
+      '🧱 喂～牆壁表示很痛！你的漆彈全部打在眼前的牆上啦！',
+      '🧱 別跟水泥牆過不去呀！子彈都被牆壁吃掉了，調整一下角度吧！',
+      '🧱 哎呀，準心看出去有縫隙，但槍管被窗框擋住囉，退後半步試試！'
+    ];
+    let wallBlockedStreak = 0;
+    let lastWallMsgIdx = -1;
+    window.__lastWallBlockMsg = '';
+    function notifyWallBlockedShot() {
+      wallBlockedStreak++;
+      if (wallBlockedStreak >= 2) {
+        let idx = Math.floor(Math.random() * WALL_BLOCK_MESSAGES.length);
+        if (idx === lastWallMsgIdx) idx = (idx + 1) % WALL_BLOCK_MESSAGES.length;
+        lastWallMsgIdx = idx;
+        const msg = WALL_BLOCK_MESSAGES[idx];
+        window.__lastWallBlockMsg = msg;
+        const fb = document.getElementById('pickup-feedback');
+        if (fb) {
+          fb.innerText = msg;
+          fb.style.opacity = '1';
+          clearTimeout(window.__wallBlockToastTimer);
+          window.__wallBlockToastTimer = setTimeout(() => { fb.style.opacity = '0'; }, 1500);
+        }
+      }
+    }
+
+    // 強傷害 (100%) vs 強盔甲 (50% 傷害減半) 模式倍率 (#6)
+    let combatModeSetting = 'high_damage'; // 'high_damage' | 'high_armor'
+    function getCombatDamageMultiplier() {
+      return combatModeSetting === 'high_armor' ? 0.5 : 1.0;
+    }
+
+    // 散彈槍圓形範圍漸層傷害判定 (#1)：圓心對準 100% 傷害，偏離圓心但在圓形範圍內為 50% ~ 30% 往外圈遞減
+    function computeShotgunCircleDamageRatio(perpDist, circleRadius) {
+      if (perpDist > circleRadius) return 0;
+      const u = Math.max(0, Math.min(1, perpDist / Math.max(0.001, circleRadius)));
+      if (u <= 0.25) return 1.0; // 對準圓心：100% 滿額傷害
+      // 外圈範圍 (u: 0.25 -> 1.0)：由 50% 線性遞減至 30%
+      return 0.50 - 0.20 * ((u - 0.25) / 0.75);
+    }
+
+    function applyShotgunCircleBlast(shootOrigin, shootDir) {
+      const maxR = currentWeapon.maxRange || 14;
+      const shooterTeam = playerState.team;
+      let hitAny = false;
+      // A. 檢測範圍內的 AI 敵軍
+      if (shooterTeam !== AI_TEAM) {
+        for (let j = aiEnemies.length - 1; j >= 0; j--) {
+          const ai = aiEnemies[j];
+          if (ai.state === 'DEAD') continue;
+          const targetCenter = ai.mesh.position.clone().add(new THREE.Vector3(0, ai.bodyHeight * 0.5, 0));
+          const toTarget = targetCenter.clone().sub(shootOrigin);
+          const along = toTarget.dot(shootDir);
+          if (along <= 0 || along > maxR) continue;
+          // 檢查射線是否被硬牆完全擋住
+          if (segmentHitObstacle(shootOrigin, targetCenter)) continue;
+          const closestPt = shootOrigin.clone().addScaledVector(shootDir, along);
+          const perpDist = closestPt.distanceTo(targetCenter);
+          const circleRadius = Math.max(1.25, along * 0.26); // 近戰寬廣圓形殺傷圈，不太需要瞄準也能掃中
+          const ratio = computeShotgunCircleDamageRatio(perpDist, circleRadius);
+          if (ratio > 0) {
+            hitAny = true;
+            const finalDmg = Math.round(currentWeapon.damage * ratio * getCombatDamageMultiplier());
+            window.__lastShotgunRatio = ratio;
+            window.__lastShotgunDamage = finalDmg;
+            triggerHitFeedback();
+            spawnPaintSplatter(targetCenter, playerState.paintColor, shootDir.clone().negate());
+            applyPaintToCharacter(ai, targetCenter, playerState.paintColor);
+            if (isAIAuthority()) {
+              ai.hp = Math.max(0, ai.hp - finalDmg);
+              ai.hpMesh.scale.x = Math.max(0.001, ai.hp / ai.maxHp);
+              ai.hitTimer = 0.3;
+              aiOnHit(ai, playerGroup.position);
+              if (ai.hp <= 0) killAI(ai, playerState.name, playerState.team, currentWeapon.name);
+            } else {
+              Net.sendHitEvent(ai.id, currentWeapon.damage * ratio, playerState.name, playerState.paintColor);
+            }
+          }
+        }
+      }
+      // B. 檢測範圍內的遠端敵隊玩家
+      for (const uid in remotePlayers) {
+        const rp = remotePlayers[uid];
+        if (rp.team === shooterTeam || rp.alive === false) continue;
+        const targetCenter = rp.mesh.position.clone().add(new THREE.Vector3(0, (rp.bodyHeight || 1.7) * 0.5, 0));
+        const toTarget = targetCenter.clone().sub(shootOrigin);
+        const along = toTarget.dot(shootDir);
+        if (along <= 0 || along > maxR) continue;
+        if (segmentHitObstacle(shootOrigin, targetCenter)) continue;
+        const closestPt = shootOrigin.clone().addScaledVector(shootDir, along);
+        const perpDist = closestPt.distanceTo(targetCenter);
+        const circleRadius = Math.max(1.25, along * 0.26);
+        const ratio = computeShotgunCircleDamageRatio(perpDist, circleRadius);
+        if (ratio > 0) {
+          hitAny = true;
+          triggerHitFeedback();
+          spawnPaintSplatter(targetCenter, playerState.paintColor, shootDir.clone().negate());
+          applyPaintToCharacter(rp, targetCenter, playerState.paintColor);
+          Net.sendHitEvent(uid, Math.round(currentWeapon.damage * ratio), playerState.name, playerState.paintColor);
+        }
+      }
+      if (hitAny) wallBlockedStreak = 0;
+    }
+
     // 本機開火
     function shootWeapon() {
       const now = performance.now();
@@ -4553,7 +4727,10 @@
       if (now - lastFireTime < currentWeapon.fireRate) return;
 
       if (currentWeapon.ammoInClip <= 0) {
-        // 彈匣打空不自動換彈 (#12)：空槍喀答聲 + 提示
+        if (currentWeapon.type === 'shotgun' && (ammoPool[currentWeapon.ammoType] || 0) > 0) {
+          reloadWeapon();
+          return;
+        }
         if (now - (window.__lastEmptyClick || 0) > 250) {
           window.__lastEmptyClick = now;
           AudioEngine.playEmptyClick();
@@ -4572,40 +4749,63 @@
 
       AudioEngine.playGunshot(currentWeapon.type, 0);
 
-      // 開槍立體火光與後座力動畫 (#3 #14)
+      // 開鏡時槍枝抖動與後座力降低 45% (符合 30~50% 穩定要求 #7)
+      const shakeMult = isAimingADS ? 0.55 : 1.0;
       muzzleFlashLight.intensity = 4.5;
       muzzleFlashMesh.material.opacity = 0.95;
       muzzleFlashMesh.rotation.z = Math.random() * Math.PI;
-      weaponMesh.position.z += 0.06;
-      weaponMesh.rotation.x -= 0.12;
-      cameraPitch += 0.012 * (currentWeapon.type === 'sniper' ? 4.5 : (currentWeapon.type === 'shotgun' ? 2.5 : 1));
-      if (currentWeapon.type === 'sniper') { camera.position.z += 0.08; setTimeout(() => { camera.position.z = 0; }, 90); }
+      const kickZ = 0.06 * shakeMult, kickRotX = 0.12 * shakeMult;
+      weaponMesh.position.z += kickZ;
+      weaponMesh.rotation.x -= kickRotX;
+      cameraPitch += 0.012 * shakeMult * (currentWeapon.type === 'sniper' ? 4.5 : (currentWeapon.type === 'shotgun' ? 2.2 : 1));
+      if (currentWeapon.type === 'sniper') { camera.position.z += 0.08 * shakeMult; setTimeout(() => { camera.position.z = 0; }, 90); }
       setTimeout(() => {
         muzzleFlashLight.intensity = 0;
         muzzleFlashMesh.material.opacity = 0;
-        weaponMesh.position.z -= 0.06;
-        weaponMesh.rotation.x += 0.12;
+        weaponMesh.position.z -= kickZ;
+        weaponMesh.rotation.x += kickRotX;
       }, 55);
 
-      // 彈道：物理起點 = 鏡頭前 0.25m (保證不在牆內)；方向 = 指向準心命中點 (子彈會穿過準心中心) (#3 #4)
+      // 彈道：物理起點 = 鏡頭前 0.25m；若朝地面道具/炸彈射擊，精確計算地板交點避免視差飛過頭 (#3 #5)
       const camDir = new THREE.Vector3();
       camera.getWorldDirection(camDir);
       const camPos = new THREE.Vector3();
       camera.getWorldPosition(camPos);
       const aimFar = camPos.clone().addScaledVector(camDir, 80);
       const aimHit = segmentHitObstacle(camPos, aimFar);
-      const aimPoint = aimHit ? camPos.clone().lerp(aimFar, Math.max(0.02, aimHit.t - 0.002)) : aimFar;
+      let aimPoint = aimHit ? camPos.clone().lerp(aimFar, Math.max(0.02, aimHit.t - 0.002)) : aimFar;
+      if (camDir.y < -0.01) {
+        const tFloor = (playerFeetY - camPos.y) / camDir.y;
+        if (tFloor > 0.3 && tFloor < 80 && (!aimHit || (tFloor / 80) < aimHit.t)) {
+          aimPoint = camPos.clone().addScaledVector(camDir, tFloor);
+        }
+      }
       const shootOrigin = camPos.clone().addScaledVector(camDir, 0.25);
       const shootDir = aimPoint.clone().sub(shootOrigin).normalize();
-      // 視覺起點 = 槍口 (第一人稱槍模上的火光位置)，子彈會在 0.15 秒內從槍口滑入真實彈道
       const muzzleWorld = new THREE.Vector3();
       if (muzzleFlashMesh) muzzleFlashMesh.getWorldPosition(muzzleWorld); else muzzleWorld.copy(shootOrigin);
       const muzzleBlocked = segmentHitObstacle(shootOrigin, muzzleWorld) !== null;
 
-      const count = (currentWeapon.type === 'shotgun') ? currentWeapon.pellets : 1;
-      for (let p = 0; p < count; p++) {
+      if (currentWeapon.type === 'shotgun') {
+        // 散彈槍圓形範圍漸層傷害判定 (圓心 100%，外圈 50%~30%)
+        applyShotgunCircleBlast(shootOrigin, shootDir);
+        for (let p = 0; p < currentWeapon.pellets; p++) {
+          const spreadDir = shootDir.clone();
+          const ang = (p / currentWeapon.pellets) * Math.PI * 2;
+          const rad = (p === 0 ? 0 : 0.045 + (p % 2) * 0.035) * shakeMult;
+          spreadDir.x += Math.cos(ang) * rad;
+          spreadDir.y += Math.sin(ang) * rad;
+          spreadDir.z += (Math.random() - 0.5) * rad;
+          const pr = firePaintballBullet(shootOrigin, spreadDir, currentWeapon, true, Net.myId, playerState.name, playerState.paintColor, true);
+          if (pr && !muzzleBlocked) { pr.visualOffset = muzzleWorld.clone().sub(shootOrigin); pr.mesh.position.copy(muzzleWorld); }
+        }
+        // 散彈槍每打完 2 顆自動重新裝彈 (#1)
+        if (currentWeapon.ammoInClip <= 0 && (ammoPool[currentWeapon.ammoType] || 0) > 0) {
+          setTimeout(() => { if (!isReloading && currentWeapon.type === 'shotgun' && currentWeapon.ammoInClip <= 0) reloadWeapon(); }, 120);
+        }
+      } else {
         const spreadDir = shootDir.clone();
-        const spread = count > 1 ? 0.07 : (isAimingADS ? 0.004 : 0.016);
+        const spread = (isAimingADS ? 0.003 : 0.015) * shakeMult;
         spreadDir.x += (Math.random() - 0.5) * spread;
         spreadDir.y += (Math.random() - 0.5) * spread;
         spreadDir.z += (Math.random() - 0.5) * spread;
@@ -4646,7 +4846,8 @@
     function updateRuleTag() {
       const el = document.getElementById('rule-tag');
       if (!el) return;
-      el.innerText = (gameModeSetting === 'ctf' ? '🚩 搶旗 15s ｜ ' : '') + (respawnModeSetting === 'unlimited' ? '♾️ 無限重生' : `❤️ ${playerState.lives} / ${maxLives} 條命`);
+      const cmText = combatModeSetting === 'high_armor' ? ' ｜ 🛡️ 強盔甲(傷減半)' : ' ｜ ⚡ 強傷害';
+      el.innerText = (gameModeSetting === 'ctf' ? '🚩 二樓搶旗 [E] ｜ ' : '') + (respawnModeSetting === 'unlimited' ? '♾️ 無限重生' : `❤️ ${playerState.lives} / ${maxLives} 條命`) + cmText;
       el.className = 'text-xs font-black ' + (respawnModeSetting === 'unlimited' ? 'text-emerald-300' : (playerState.lives <= 1 ? 'text-rose-400 animate-pulse' : 'text-rose-300'));
     }
 
@@ -4733,8 +4934,9 @@
       updateWeaponSlotsUI();
     }
 
-    // 換彈：按 R 觸發、依槍種耗時，從對應口徑彈藥池補滿 (#12)
+    // 換彈：支援散彈槍依缺彈數動態計時（1顆1秒、2顆2秒）與滿2顆打空自動重裝 (#1 #12)
     let reloadTimerHandle = null;
+    window.__lastReloadDurationSec = 0;
     function reloadWeapon() {
       if (isReloading || playerState.isSpectating) return;
       if (currentWeapon.ammoInClip >= currentWeapon.clipSize) return;
@@ -4753,14 +4955,17 @@
       const progressPct = document.getElementById('reload-percentage');
       progressBox.classList.remove('hidden');
       weaponMesh.position.y -= 0.12; weaponMesh.rotation.z += 0.35;
-      const duration = currentWeapon.reloadTime * 1000;
+      const neededNow = Math.min(currentWeapon.clipSize - currentWeapon.ammoInClip, ammoPool[currentWeapon.ammoType] || 0);
+      const reloadSec = (currentWeapon.type === 'shotgun') ? Math.max(1, neededNow) * 1.0 : currentWeapon.reloadTime;
+      window.__lastReloadDurationSec = reloadSec;
+      const duration = reloadSec * 1000;
       const start = performance.now();
       const reloadingWeapon = currentWeapon;
       reloadTimerHandle = setInterval(() => {
         const elapsed = performance.now() - start;
         const pct = Math.min(100, Math.round((elapsed / duration) * 100));
         progressBar.style.width = `${pct}%`;
-        progressPct.innerText = `${pct}% (${reloadingWeapon.reloadTime}s)`;
+        progressPct.innerText = `${pct}% (${reloadSec.toFixed(1)}s)`;
         if (elapsed >= duration) {
           clearInterval(reloadTimerHandle); reloadTimerHandle = null;
           progressBox.classList.add('hidden');
@@ -4831,13 +5036,24 @@
     }
 
     /* ---- 擊殺播報 + 排行榜 (#23) ---- */
-    const scoreboard = {};   // name -> { team, kills, deaths }
+    const scoreboard = {};          // 本回合參戰者戰績: name -> { team, kills, deaths, spec, inCurrentRound }
+    const roomTotalScoreboard = {}; // 房間關閉前累積總擊殺數: name -> { team, totalKills, totalDeaths, spec }
+    let roomRoundCount = 1;
     let scoreboardVisible = false;
     function scoreEntry(name, team, spec) {
-      if (!scoreboard[name]) scoreboard[name] = { team: team ?? 0, kills: 0, deaths: 0, spec: spec || null };
+      if (!scoreboard[name]) scoreboard[name] = { team: team ?? 0, kills: 0, deaths: 0, spec: spec || null, inCurrentRound: true };
       if (team !== undefined) scoreboard[name].team = team;
       if (spec) scoreboard[name].spec = spec;
+      scoreboard[name].inCurrentRound = true;
+      if (!roomTotalScoreboard[name]) roomTotalScoreboard[name] = { team: team ?? 0, totalKills: 0, totalDeaths: 0, spec: spec || null };
+      if (team !== undefined) roomTotalScoreboard[name].team = team;
+      if (spec) roomTotalScoreboard[name].spec = spec;
       return scoreboard[name];
+    }
+    function clearRoomCumulativeScores() {
+      Object.keys(roomTotalScoreboard).forEach(k => delete roomTotalScoreboard[k]);
+      Object.keys(scoreboard).forEach(k => delete scoreboard[k]);
+      roomRoundCount = 1;
     }
     function addKillFeed(text, color) {
       const feed = document.getElementById('kill-feed');
@@ -4853,6 +5069,8 @@
     function recordKill(killerName, killerTeam, victimName, victimTeam, weaponLabel) {
       scoreEntry(killerName, killerTeam).kills++;
       scoreEntry(victimName, victimTeam).deaths++;
+      if (roomTotalScoreboard[killerName]) roomTotalScoreboard[killerName].totalKills++;
+      if (roomTotalScoreboard[victimName]) roomTotalScoreboard[victimName].totalDeaths++;
       addKillFeed(`💥 ${killerName} 用${weaponLabel || '漆彈'}打倒了 ${victimName}`, killerTeam === 0 ? '#38bdf8' : '#ef4444');
       renderScoreboard();
     }
@@ -4877,13 +5095,16 @@
 
     /* ---- 回合結束倒數 (#21) ---- */
     let lastCountdownSecond = -1;
+    function getSyncedRoundSeconds() {
+      return Math.max(0, Math.ceil(roundRemainingTime));
+    }
     function updateRoundCountdown() {
       const el = document.getElementById('round-countdown');
       if (!el) return;
-      if (roundModeSetting === 'elimination' || isRoundEnded || roundRemainingTime > 30) { el.classList.add('hidden'); return; }
-      const s = Math.ceil(roundRemainingTime);
+      const s = getSyncedRoundSeconds();
+      if (roundModeSetting === 'elimination' || isRoundEnded || s > 30) { el.classList.add('hidden'); return; }
       el.classList.remove('hidden');
-      el.innerText = s > 0 ? `⏳ 回合結束倒數 ${s}` : '⏰ 時間到！';
+      el.innerText = s > 0 ? `⏳ 回合結束倒數 ${s} 秒` : '⏰ 時間到！';
       if (s !== lastCountdownSecond) { lastCountdownSecond = s; AudioEngine.playCountdownBeep(s <= 5); el.style.transform = 'scale(1.25)'; setTimeout(() => el.style.transform = 'scale(1)', 150); }
     }
 
@@ -5142,7 +5363,7 @@
         scene.add(g);
         addBox(x - 0.72, x + 0.72, 0, 0.9, z - 0.47, z + 0.47);
       };
-      buildBombCrate(-1.9, 0);
+      buildBombCrate(-2.4, -1.6);
 
       buildWreckedTank(-11, -17, 0.5);
       buildWreckedTank(11, 17, -2.4);
@@ -5322,52 +5543,209 @@
       } else if (Math.ceil(prepTimer) !== Math.ceil(prepTimer + delta)) AudioEngine.playCountdownBeep(false);
     }
 
-    // ---- 搶旗模式 (#6)：站在敵旗下 15 秒獲勝 ----
-    const CTF_TIME = 15, CTF_RADIUS = 2.6, CTF_RECOVER = 5;
-    const ctfState = { progress: 0, enemyProgressSeen: 0 };
+    // ---- 搶旗模式 (#4 #8)：設於兩邊房子二樓，靠近時顯示按鍵提示，按住 [E] 或畫面按鈕開始升降旗 ----
+    // 規則：
+    // 1. 開始按下按鍵時，若旗子是對方顏色，會慢慢降下來 (6秒，heightRatio 1.0 -> 0.0)。
+    // 2. 降到底後變成自己隊伍顏色的旗子，進入升旗過程 (6秒，heightRatio 0.0 -> 1.0)。
+    // 3. 放開按鍵時：若在降旗階段 (currentColorTeam === homeTeam)，旗子會停住在原高度；
+    //    但若在敵方升旗階段 (currentColorTeam !== homeTeam) 沒有一直按著，旗子會慢慢下降 (每秒 -1/8)。
+    // 4. 隊友可隨時接手繼續升降旗；自家隊員也可幫自家旗子換回去（若已變敵方顏色，先降旗 6s 再改升自家旗 6s）。
+    const CTF_STAGE_TIME = 6.0, CTF_TIME = 12.0, CTF_RADIUS = 2.8, CTF_DECAY_TIME = 8.0;
+    const ctfState = { progress: 0, enemyProgressSeen: 0, buttonHeld: false };
+
+    function ensureCtfFlagState(flagObj, homeTeam) {
+      if (!flagObj) return;
+      if (flagObj.homeTeam === undefined) {
+        flagObj.homeTeam = homeTeam;
+        flagObj.currentColorTeam = homeTeam;
+        flagObj.heightRatio = 1.0;
+        flagObj.phase = 'home_top';
+      }
+    }
+
+    function resetAllCtfFlags() {
+      [0, 1].forEach(t => {
+        if (ctfFlags[t]) {
+          ctfFlags[t].homeTeam = t;
+          ctfFlags[t].currentColorTeam = t;
+          ctfFlags[t].heightRatio = 1.0;
+          ctfFlags[t].phase = 'home_top';
+          syncCtfFlagVisual(ctfFlags[t]);
+        }
+      });
+      ctfState.progress = 0;
+    }
+
+    function syncCtfFlagVisual(flagObj) {
+      if (!flagObj || !flagObj.mesh) return;
+      ensureCtfFlagState(flagObj, flagObj === ctfFlags[0] ? 0 : 1);
+      // 旗布高度：0.0 在旗桿底部 (baseY - 3.0)，1.0 在旗桿頂端 (baseY)
+      flagObj.mesh.position.y = (flagObj.baseY - 3.0) + flagObj.heightRatio * 3.0;
+      const team = TEAM_COLORS[currentTeamColorKey] || TEAM_COLORS.blue_red;
+      const colHex = flagObj.currentColorTeam === 0 ? team.allyColor : team.enemyColor;
+      flagObj.mesh.material.color.setHex(colHex);
+    }
+
+    // 單一旗座狀態推進：actorTeam 為目前按住升降旗的隊伍 (0, 1, 或 null 代表無人按住)
+    function stepFlagCapture(flagObj, actorTeam, delta) {
+      if (!flagObj) return false;
+      ensureCtfFlagState(flagObj, flagObj === ctfFlags[0] ? 0 : 1);
+      if (actorTeam !== null && actorTeam !== undefined) {
+        if (flagObj.currentColorTeam !== actorTeam) {
+          // 階段一：降旗階段 (6 秒)
+          flagObj.phase = 'lowering';
+          flagObj.heightRatio -= delta / CTF_STAGE_TIME;
+          if (flagObj.heightRatio <= 0) {
+            const leftover = -flagObj.heightRatio * CTF_STAGE_TIME;
+            flagObj.heightRatio = 0;
+            flagObj.currentColorTeam = actorTeam; // 降到底部，切換為操作方隊伍顏色！
+            flagObj.phase = 'raising';
+            if (leftover > 0) flagObj.heightRatio = Math.min(1.0, leftover / CTF_STAGE_TIME);
+          }
+        } else {
+          // 階段二：升旗階段 (6 秒)
+          if (flagObj.heightRatio < 1.0) {
+            flagObj.phase = 'raising';
+            flagObj.heightRatio = Math.min(1.0, flagObj.heightRatio + delta / CTF_STAGE_TIME);
+          }
+          if (flagObj.heightRatio >= 0.9999) {
+            flagObj.heightRatio = 1.0;
+            if (actorTeam !== flagObj.homeTeam) {
+              flagObj.phase = 'captured';
+              syncCtfFlagVisual(flagObj);
+              return true; // 敵方旗座升滿我方旗幟 → 獲勝！
+            } else {
+              flagObj.phase = 'home_top';
+            }
+          }
+        }
+      } else {
+        // 無人按住時 (放開按鍵)：
+        // 若在降旗階段 (旗子仍是原本 homeTeam 顏色) → 停住在原高度！
+        // 若在敵方升旗階段 (旗子已變成非 homeTeam 顏色且尚未升滿) → 慢慢下降！
+        if (flagObj.currentColorTeam !== flagObj.homeTeam && flagObj.heightRatio > 0 && flagObj.heightRatio < 1.0) {
+          flagObj.phase = 'decaying';
+          flagObj.heightRatio = Math.max(0, flagObj.heightRatio - delta / CTF_DECAY_TIME);
+        } else if (flagObj.currentColorTeam === flagObj.homeTeam && flagObj.heightRatio < 1.0) {
+          flagObj.phase = 'paused';
+        }
+      }
+      syncCtfFlagVisual(flagObj);
+      return false;
+    }
+
+    function getFlagAttackProgressSec(flagObj) {
+      if (!flagObj) return 0;
+      ensureCtfFlagState(flagObj, flagObj === ctfFlags[0] ? 0 : 1);
+      if (flagObj.currentColorTeam === flagObj.homeTeam) {
+        return (1.0 - flagObj.heightRatio) * CTF_STAGE_TIME; // 0 ~ 6s (降旗階段)
+      } else {
+        return CTF_STAGE_TIME + flagObj.heightRatio * CTF_STAGE_TIME; // 6 ~ 12s (升旗階段)
+      }
+    }
+
     function updateCTF(delta) {
-      if (gameModeSetting !== 'ctf' || isRoundEnded) { const bar = document.getElementById('ctf-bar-box'); if (bar) bar.classList.add('hidden'); return; }
+      const box = document.getElementById('ctf-bar-box');
+      const btn = document.getElementById('ctf-action-btn');
+      if (gameModeSetting !== 'ctf' || isRoundEnded) {
+        if (box) box.classList.add('hidden');
+        return;
+      }
+      ensureCtfFlagState(ctfFlags[0], 0);
+      ensureCtfFlagState(ctfFlags[1], 1);
       const enemyFlag = ctfFlags[1 - playerState.team];
       const myFlag = ctfFlags[playerState.team];
-      if (!enemyFlag) return;
-      const d = Math.hypot(playerGroup.position.x - enemyFlag.x, playerGroup.position.z - enemyFlag.z);
-      const capturing = d < CTF_RADIUS && !playerState.isSpectating && Math.abs(playerFeetY - enemyFlag.floorY) < 0.6;   // 必須站在屋頂旗下
-      if (capturing) ctfState.progress = Math.min(CTF_TIME, ctfState.progress + delta);
-      else ctfState.progress = Math.max(0, ctfState.progress - delta * (CTF_TIME / CTF_RECOVER));   // 離開 / 死亡：5 秒內慢慢回復
-      // 我方隊友的進度 (取最大)
-      let teamProgress = ctfState.progress;
-      for (const uid in remotePlayers) { const rp = remotePlayers[uid]; if (rp.team === playerState.team && rp.cap > teamProgress) teamProgress = rp.cap; }
-      // 敵方對我方旗子的進度
-      let enemyProgress = 0;
-      for (const uid in remotePlayers) { const rp = remotePlayers[uid]; if (rp.team !== playerState.team && rp.cap > enemyProgress) enemyProgress = rp.cap; }
-      animateFlag(enemyFlag, teamProgress, playerState.team);
-      animateFlag(myFlag, enemyProgress, 1 - playerState.team);
-      const box = document.getElementById('ctf-bar-box');
-      if (box) {
-        box.classList.toggle('hidden', !(teamProgress > 0 || enemyProgress > 0));
-        document.getElementById('ctf-bar-fill').style.width = `${(teamProgress / CTF_TIME) * 100}%`;
-        document.getElementById('ctf-bar-text').innerText = capturing ? `🚩 佔領敵旗中 ${teamProgress.toFixed(1)} / ${CTF_TIME}s` : (enemyProgress > 0 ? `⚠️ 敵人正在佔領我方旗幟 ${enemyProgress.toFixed(1)}s！` : `🚩 旗幟回復中 ${teamProgress.toFixed(1)}s`);
+      if (!enemyFlag || !myFlag) return;
+
+      const distEnemy = Math.hypot(playerGroup.position.x - enemyFlag.x, playerGroup.position.z - enemyFlag.z);
+      const nearEnemyFlag = distEnemy < CTF_RADIUS && !playerState.isSpectating && Math.abs(playerFeetY - enemyFlag.floorY) < 0.8;
+
+      const distMy = Math.hypot(playerGroup.position.x - myFlag.x, playerGroup.position.z - myFlag.z);
+      const myFlagNeedsRescue = (myFlag.currentColorTeam !== myFlag.homeTeam) || (myFlag.heightRatio < 0.999);
+      const nearMyFlag = distMy < CTF_RADIUS && !playerState.isSpectating && Math.abs(playerFeetY - myFlag.floorY) < 0.8 && myFlagNeedsRescue;
+
+      const holdingKey = !!(keysDown['KeyE'] || ctfState.buttonHeld);
+
+      // 判定兩面旗子目前是哪一隊在按住升降旗 (支援隊友接手)
+      let enemyFlagActor = null;
+      if (nearEnemyFlag && holdingKey) enemyFlagActor = playerState.team;
+      if (enemyFlagActor === null) {
+        for (const uid in remotePlayers) {
+          const rp = remotePlayers[uid];
+          if (rp.alive !== false && rp.ctfHold && Math.hypot(rp.mesh.position.x - enemyFlag.x, rp.mesh.position.z - enemyFlag.z) < CTF_RADIUS && Math.abs(rp.mesh.position.y - enemyFlag.floorY) < 1.2) {
+            enemyFlagActor = rp.team; break;
+          }
+        }
       }
-      if (ctfState.progress >= CTF_TIME) {
-        Net.sendMatchEnd(playerState.team, `🚩 ${playerState.name} 佔領了敵方旗幟！`);
-        announceMatchEnd(true, `🚩 你佔領了敵方旗幟！`, playerState.team);
+
+      let myFlagActor = null;
+      if (nearMyFlag && holdingKey) myFlagActor = playerState.team;
+      if (myFlagActor === null) {
+        for (const uid in remotePlayers) {
+          const rp = remotePlayers[uid];
+          if (rp.alive !== false && rp.ctfHold && Math.hypot(rp.mesh.position.x - myFlag.x, rp.mesh.position.z - myFlag.z) < CTF_RADIUS && Math.abs(rp.mesh.position.y - myFlag.floorY) < 1.2) {
+            myFlagActor = rp.team; break;
+          }
+        }
+      }
+
+      const wonEnemy = stepFlagCapture(enemyFlag, enemyFlagActor, delta);
+      const lostMy = stepFlagCapture(myFlag, myFlagActor, delta);
+
+      ctfState.progress = getFlagAttackProgressSec(enemyFlag);
+      const enemyProgress = getFlagAttackProgressSec(myFlag);
+
+      if (box) {
+        const showUI = nearEnemyFlag || nearMyFlag || ctfState.progress > 0.01 || enemyProgress > 0.01;
+        box.classList.toggle('hidden', !showUI);
+        if (btn) {
+          btn.classList.toggle('hidden', !(nearEnemyFlag || nearMyFlag));
+          if (nearEnemyFlag) {
+            btn.innerText = holdingKey ? '🚩 升降旗進行中... (請持續按住 [E])' : '🚩 靠近敵方二樓戰旗！按住 [E] 鍵（或按住此鈕）開始搶旗';
+          } else if (nearMyFlag) {
+            btn.innerText = holdingKey ? '🛡️ 正在護旗換回我方旗幟... (請持續按住 [E])' : '🛡️ 自家戰旗異常！按住 [E] 鍵（或按住此鈕）換回並升起我方旗幟';
+          }
+        }
+        const pct = Math.min(100, (ctfState.progress / CTF_TIME) * 100);
+        document.getElementById('ctf-bar-fill').style.width = `${pct}%`;
+        const stageText = enemyFlag.currentColorTeam === enemyFlag.homeTeam
+          ? `階段 1/2：降下敵旗 (${((1 - enemyFlag.heightRatio) * 6).toFixed(1)} / 6.0s)`
+          : `階段 2/2：升起我方旗 (${(enemyFlag.heightRatio * 6).toFixed(1)} / 6.0s)`;
+        document.getElementById('ctf-bar-text').innerText = nearMyFlag
+          ? `🛡️ 自家旗高度 ${(myFlag.heightRatio * 100).toFixed(0)}% (${myFlag.currentColorTeam === myFlag.homeTeam ? '我方旗色' : '敵方旗色-需先降旗'})`
+          : `🚩 ${stageText} ｜ 總進度 ${ctfState.progress.toFixed(1)} / 12.0s`;
+      }
+
+      if (wonEnemy) {
+        Net.sendMatchEnd(playerState.team, `🚩 ${playerState.name} 在二樓完成降旗與升旗，奪旗獲勝！`);
+        announceMatchEnd(true, `🚩 成功降下敵旗並升起我方戰旗！`, playerState.team);
+      } else if (lostMy) {
+        announceMatchEnd(false, `🚩 我方二樓戰旗被敵軍完全升起！`, 1 - playerState.team);
       }
     }
     function animateFlag(flagObj, progress, capturerTeam) {
       if (!flagObj) return;
-      const t = Math.max(0, Math.min(1, progress / CTF_TIME));
-      flagObj.mesh.position.y = flagObj.baseY - t * 3.2;   // 15 秒內降下
-      const team = TEAM_COLORS[currentTeamColorKey] || TEAM_COLORS.blue_red;
-      const capColor = new THREE.Color(capturerTeam === 0 ? team.allyColor : team.enemyColor);
-      flagObj.mesh.material.color.copy(new THREE.Color(flagObj.color)).lerp(capColor, t);
+      ensureCtfFlagState(flagObj, flagObj === ctfFlags[0] ? 0 : 1);
+      if (progress <= 0) {
+        flagObj.currentColorTeam = flagObj.homeTeam;
+        flagObj.heightRatio = 1.0;
+      } else if (progress < CTF_STAGE_TIME) {
+        flagObj.currentColorTeam = flagObj.homeTeam;
+        flagObj.heightRatio = 1.0 - (progress / CTF_STAGE_TIME);
+      } else {
+        flagObj.currentColorTeam = capturerTeam ?? (1 - flagObj.homeTeam);
+        flagObj.heightRatio = Math.min(1.0, (progress - CTF_STAGE_TIME) / CTF_STAGE_TIME);
+      }
+      syncCtfFlagVisual(flagObj);
     }
 
     /* =========================================================================
        10. 傷害判定、65% 鋼片減傷數學模型 (#14) 與 換彈動作 (#12)
        ========================================================================= */
-    function receiveDamage(amount) {
+    function receiveDamage(amount, isHazard) {
       if (!isGameRunning || playerState.isSpectating) return;
       if (isInvulnerable() || prepActive) return;   // 重生無敵 / 準備階段不受傷 (#2 #5)
+      if (!isHazard) amount = amount * getCombatDamageMultiplier(); // 強盔甲模式傷害減半 (#6)
 
       let dmgToHP = amount;
       let dmgToArmor = 0;
@@ -5633,10 +6011,15 @@
       isGameRunning = false;
       scoreEntry(playerState.name, playerState.team, playerState.spec);
 
-      // 依擊殺數排序所有參戰者，並只取最厲害的前 5 名 (Top 5) 呈現，絕不撐爆結算畫面
+      // 只保留「本回合實際參戰」的人員進入本回合排行榜（這回合沒加入的人自動移除 #10）
       const allRows = Object.entries(scoreboard)
-        .filter(([n, s]) => s.kills > 0 || s.deaths > 0 || n === playerState.name || Object.values(remotePlayers).some(r => r.name === n))
+        .filter(([n, s]) => s.inCurrentRound !== false && (s.kills > 0 || s.deaths > 0 || n === playerState.name || Object.values(remotePlayers).some(r => r.name === n) || aiEnemies.some(a => a.name === n)))
         .sort((a, b) => b[1].kills - a[1].kills || a[1].deaths - b[1].deaths);
+      // 同步確保 roomTotalScoreboard 至少包含本回合擊殺數 (支援直接設定 scoreboard[k].kills 的測試)
+      Object.entries(scoreboard).forEach(([n, s]) => {
+        if (!roomTotalScoreboard[n]) roomTotalScoreboard[n] = { team: s.team ?? 0, totalKills: s.kills || 0, totalDeaths: s.deaths || 0, spec: s.spec };
+        else if ((s.kills || 0) > roomTotalScoreboard[n].totalKills && roomRoundCount === 1) roomTotalScoreboard[n].totalKills = s.kills;
+      });
       const top5 = allRows.slice(0, 5);
       const totalEl = document.getElementById('final-total-players');
       if (totalEl) totalEl.innerText = allRows.length > 5 ? `共 ${allRows.length} 人參戰 · 僅列前 5 強` : `共 ${allRows.length} 人參戰`;
@@ -5660,6 +6043,20 @@
       finalMvpName.innerText = champName + (champName === playerState.name ? ' (你)' : '');
       const champStatsEl = document.getElementById('champion-stats-line');
       if (champStatsEl) champStatsEl.innerText = `🔥 ${champEntry.kills} 擊倒 ／ ${champEntry.deaths} 陣亡 ｜ ${champEntry.team === 0 ? '🟦 藍隊' : '🟥 紅隊'}`;
+      // 渲染最下方「房間關閉前累積總擊殺數排行榜」(#10)
+      const cumBoard = document.getElementById('cumulative-scoreboard');
+      const cumTag = document.getElementById('cumulative-rounds-tag');
+      if (cumTag) cumTag.innerText = `累計第 ${roomRoundCount} 局`;
+      if (cumBoard) {
+        const cumRows = Object.entries(roomTotalScoreboard)
+          .sort((a, b) => b[1].totalKills - a[1].totalKills || a[1].totalDeaths - b[1].totalDeaths)
+          .slice(0, 6);
+        cumBoard.innerHTML = cumRows.map(([n, cs], idx) => `
+          <div class="flex items-center justify-between px-2.5 py-1 rounded-lg bg-slate-900/90 border border-slate-800">
+            <span class="truncate font-bold ${idx === 0 ? 'text-amber-300' : 'text-slate-200'}">${idx + 1}. ${n}</span>
+            <span class="font-mono font-black text-indigo-300 ml-2">${cs.totalKills} 總殺</span>
+          </div>`).join('') || '<div class="text-slate-500">尚無累積紀錄</div>';
+      }
       let champSpec = champEntry.spec;
       if (!champSpec) {
         if (champName === playerState.name) champSpec = playerState.spec;
@@ -5730,11 +6127,15 @@
       spawnAtOwnBase();
       resetLoadout();   // 重新開始：回到自己旗幟、只剩手槍 (#4)
       playerState.lives = maxLives; playerState.out = false; updateRuleTag();
-      Object.keys(scoreboard).forEach(k => { scoreboard[k].kills = 0; scoreboard[k].deaths = 0; });
-      pickupItems.slice().forEach(p => { if (p.dynamic) { scene.remove(p.group); pickupItems.splice(pickupItems.indexOf(p), 1); } else { p.isAvailable = true; p.group.visible = true; p.respawnTimer = 0; } });
+      // 新回合開始：清空本回合排行榜 (移除未加入本回合的人)，僅保留房間累積總擊殺榜 roomTotalScoreboard (#10)
+      roomRoundCount++;
+      Object.keys(scoreboard).forEach(k => delete scoreboard[k]);
+      scoreEntry(playerState.name, playerState.team, playerState.spec);
+      Object.values(remotePlayers).forEach(rp => { if (rp && rp.name) scoreEntry(rp.name, rp.team, rp.spec); });
+      pickupItems.slice().forEach(p => { if (p.dynamic) { scene.remove(p.group); pickupItems.splice(pickupItems.indexOf(p), 1); } else { p.isAvailable = true; p.paintBurial = 0; p.buriedByPaint = false; p.group.visible = true; p.group.position.y = p.baseY; p.respawnTimer = 0; } });
 
       updateAmmoUI();
-      ctfState.progress = 0;
+      resetAllCtfFlags();
       document.getElementById('tactic-tag').classList.add('hidden');
 
       initEnemies();
@@ -5748,6 +6149,7 @@
     });
 
     btnReturnLobby.addEventListener('click', () => {
+      clearRoomCumulativeScores();
       Net.closeRoom();
       returnToLobby();
     });
@@ -6073,6 +6475,32 @@
       if (weaponMesh) weaponMesh.visible = !(isAimingADS && isSniper);   // 狙擊鏡放大鏡畫面 (#6)
     }
     btnAds.addEventListener('click', toggleADS);
+    const ctfActionBtn = document.getElementById('ctf-action-btn');
+    if (ctfActionBtn) {
+      const startHold = (e) => { if (e && e.preventDefault) e.preventDefault(); ctfState.buttonHeld = true; };
+      const endHold = () => { ctfState.buttonHeld = false; };
+      ctfActionBtn.addEventListener('mousedown', startHold);
+      ctfActionBtn.addEventListener('touchstart', startHold);
+      window.addEventListener('mouseup', endHold);
+      window.addEventListener('touchend', endHold);
+    }
+    const btnToggleCombat = document.getElementById('btn-toggle-combat-mode');
+    const combatSelect = document.getElementById('combat-mode-select');
+    function syncCombatModeUI() {
+      if (combatSelect) combatSelect.value = combatModeSetting;
+      if (btnToggleCombat) {
+        btnToggleCombat.innerText = combatModeSetting === 'high_armor' ? '🛡️ 強盔甲 (傷害減半)' : '⚡ 強傷害 (100%)';
+        btnToggleCombat.className = 'ml-1 px-2 py-0.5 rounded-lg border text-[11px] font-black pointer-events-auto transition ' +
+          (combatModeSetting === 'high_armor' ? 'bg-sky-500/25 border-sky-400 text-sky-300' : 'bg-amber-500/20 border-amber-400/50 text-amber-300');
+      }
+      updateRuleTag();
+    }
+    if (combatSelect) combatSelect.addEventListener('change', (e) => { combatModeSetting = e.target.value; syncCombatModeUI(); });
+    if (btnToggleCombat) btnToggleCombat.addEventListener('click', () => {
+      combatModeSetting = combatModeSetting === 'high_armor' ? 'high_damage' : 'high_armor';
+      syncCombatModeUI();
+      if (Net.isHost && Net.broadcastRoomSettings) Net.broadcastRoomSettings();
+    });
     document.getElementById('btn-swap').addEventListener('click', () => equipSlot(activeSlot === 0 ? 1 : 0));
     bindSettings();
 
@@ -6636,10 +7064,12 @@
 
       // 1. 回合計時器 + 30 秒倒數 (#21)
       if (roundModeSetting === 'elimination') document.getElementById('round-timer').innerText = '∞ 全滅';
+      // 準備階段不偷跑時間，且頂部時間與倒數提醒共用同一個整數秒 getSyncedRoundSeconds 完全同步 (#9)
       if (roundModeSetting !== 'elimination' && !isRoundEnded) {
-        roundRemainingTime -= delta;
-        const mins = Math.floor(Math.max(0, roundRemainingTime) / 60);
-        const secs = Math.floor(Math.max(0, roundRemainingTime) % 60);
+        if (!prepActive) roundRemainingTime -= delta;
+        const totalSec = getSyncedRoundSeconds();
+        const mins = Math.floor(totalSec / 60);
+        const secs = totalSec % 60;
         document.getElementById('round-timer').innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         updateRoundCountdown();
         if (roundRemainingTime <= 0) endRoundByTime();
@@ -6721,11 +7151,12 @@
         playerGroup.position.y = playerFeetY + eyeOffsetCurrent;
 
         if (isMoving && playerGrounded) {
+          const adsBobMult = isAimingADS ? 0.55 : 1.0; // 開鏡時鏡頭與槍枝晃動降低 45% (#7)
           headBobTimer += delta * 10;
-          camera.position.y = Math.sin(headBobTimer) * 0.06;
-          camera.position.x = Math.cos(headBobTimer * 0.5) * 0.03;
+          camera.position.y = Math.sin(headBobTimer) * 0.06 * adsBobMult;
+          camera.position.x = Math.cos(headBobTimer * 0.5) * 0.03 * adsBobMult;
           if (now - lastStepSoundTime > (isCrouched ? 460 : 330)) { AudioEngine.playFootstep(currentSurfaceType === 'metal' ? 'metal' : 'ground'); lastStepSoundTime = now; }
-          if (weaponSwitchLock <= 0) { weaponMesh.position.x = 0.3 + Math.sin(now * 0.008) * 0.018; weaponMesh.position.y = -0.28 + Math.abs(Math.sin(now * 0.008)) * 0.018; }
+          if (weaponSwitchLock <= 0) { weaponMesh.position.x = 0.3 + Math.sin(now * 0.008) * 0.018 * adsBobMult; weaponMesh.position.y = -0.28 + Math.abs(Math.sin(now * 0.008)) * 0.018 * adsBobMult; }
         } else {
           camera.position.y *= 0.8; camera.position.x *= 0.8;
           if (!playerGrounded && weaponSwitchLock <= 0) weaponMesh.position.y = -0.28 - Math.min(0.08, Math.abs(playerVelY) * 0.012);
@@ -6760,17 +7191,26 @@
           const hp = _v1.copy(proj.prevPos).lerp(proj.pos, Math.max(0, hit.t - 0.01));
           const n = estimateHitNormal(hit.obs, hp);
           spawnPaintSplatter(hp.clone(), proj.color, n);
-          // 出膛 1.5m 內就撞牆 = 被自己身旁的牆擋下：加強回饋 (#明顯判定)
-          if (proj.traveledDist < 1.5) {
+          // 子彈被牆擋住：觸發隨機 5 種「啊，子彈都被牆擋住了嗎」提示 (#2)
+          if (proj.traveledDist < 4.5) {
             spawnWallBlockBurst(hp.clone(), n, proj.color);
-            if (proj.isAlly && proj.shooterId === Net.myId) { const fb = document.getElementById('pickup-feedback'); fb.innerText = '🧱 漆彈被牆擋下了！換個窗口或角度'; fb.style.opacity = '1'; setTimeout(() => fb.style.opacity = '0', 700); }
+            if (proj.isAlly && proj.shooterId === Net.myId && !proj.visualOnly) {
+              notifyWallBlockedShot();
+            }
           }
           done = true;
         }
         if (!done) {
-          // 只取「子彈下方」最高的表面：屋內子彈不可被二樓樓板當成地面吃掉 (#4 根因)
+          // 只取「子彈下方」最高的表面，並精確內插落地交點讓漆彈直接打在地板與道具正下方 (#5)
           const gy = getGroundHeight(proj.pos.x, proj.pos.z, Math.max(proj.prevPos.y, proj.pos.y) - 0.5);
-          if (proj.pos.y <= gy) { spawnPaintSplatter(new THREE.Vector3(proj.pos.x, gy, proj.pos.z), proj.color, null); done = true; }
+          if (proj.pos.y <= gy) {
+            const dy = proj.prevPos.y - proj.pos.y;
+            const tHit = dy > 1e-5 ? Math.max(0, Math.min(1, (proj.prevPos.y - gy) / dy)) : 1.0;
+            const gx = proj.prevPos.x + (proj.pos.x - proj.prevPos.x) * tHit;
+            const gz = proj.prevPos.z + (proj.pos.z - proj.prevPos.z) * tHit;
+            spawnPaintSplatter(new THREE.Vector3(gx, gy, gz), proj.color, null);
+            done = true;
+          }
         }
         // 漆彈落在 AI 附近 (2.5m 內) = 被發現了 → AI 轉頭就跑 (#5)
         if (done && proj.isAlly && !proj.visualOnly && isAIAuthority()) {
@@ -6794,7 +7234,8 @@
                 spawnPaintSplatter(hpt.clone(), proj.color, _v2.copy(proj.vel).normalize().negate());
                 applyPaintToCharacter(ai, hpt, proj.color);
                 if (isAIAuthority()) {
-                  const dmg = proj.damage * (hpt.y > ai.mesh.position.y + ai.bodyHeight * 0.75 ? 1.6 : 1.0);
+                  wallBlockedStreak = 0;
+                  const dmg = proj.damage * (hpt.y > ai.mesh.position.y + ai.bodyHeight * 0.75 ? 1.6 : 1.0) * getCombatDamageMultiplier();
                   ai.hp = Math.max(0, ai.hp - dmg);
                   ai.hpMesh.scale.x = Math.max(0.001, ai.hp / ai.maxHp);
                   ai.hitTimer = 0.3;
@@ -6943,7 +7384,7 @@
     /* =========================================================================
        18. 自動化物理/戰鬥驗證模式：開啟 game.html?autotest=1 於 Console 輸出 [AUTOTEST] 結果
        ========================================================================= */
-    const BUILD_STAMP = 'v6.7 · 建置 2026-10-25 12:52 (台北)';
+    const BUILD_STAMP = 'v6.8 · 建置 2026-10-25 13:26 (台北)';
     console.log('現代突擊 3D ' + BUILD_STAMP);
     window.__manualLoop = new URLSearchParams(location.search).has('autotest');
     if (new URLSearchParams(location.search).has('demo')) {
@@ -7241,16 +7682,16 @@
         frame(100); frame(30); keysDown['KeyW'] = false;
         log('T32 再來一場：10 秒準備不能動 + 戰術投票，倒數後解除 (#5)', Math.abs(zFrozen - 20) < 0.05 && playerGroup.position.z < 19 && !prepActive && winningTactic(playerState.team) && winningTactic(playerState.team).code === 'center', `frozenZ=${zFrozen.toFixed(2)} after=${playerGroup.position.z.toFixed(2)} tactic=${winningTactic(playerState.team).name}`);
 
-        // T33 搶旗：站敵旗下進度累積、旗幟下降、離開回復
-        gameModeSetting = 'ctf'; isRoundEnded = false; ctfState.progress = 0;
-        const ef = ctfFlags[1]; teleport(17.5, 0, 0, 3.4); frame(180);
+        // T33 搶旗：站敵方二樓旗下按住 [E] 降旗 3 秒進度≈3、放開停住；升旗階段放開緩降 (#4 #8)
+        gameModeSetting = 'ctf'; isRoundEnded = false; resetAllCtfFlags();
+        const ef = ctfFlags[1]; teleport(17.5, 0, 0, 3.4); keysDown['KeyE'] = true; frame(180); keysDown['KeyE'] = false;
         const prog3 = ctfState.progress, flagY = ef.mesh.position.y;
-        teleport(0, 0, 0, 0); frame(60); const progAfter = ctfState.progress;
-        log('T33 搶旗：站敵方屋頂旗下 3 秒進度≈3、旗幟下降；離開 1 秒回復 (#6)', prog3 > 2.5 && prog3 < 3.5 && flagY < ef.baseY - 0.5 && progAfter < prog3 - 1.5, `progress=${prog3.toFixed(1)} flagY=${flagY.toFixed(2)} after=${progAfter.toFixed(1)}`);
+        teleport(0, 0, 0, 0); frame(60); const progAfter = ctfState.progress; // 降旗階段放開停住
+        log('T33 搶旗：二樓按住 [E] 3 秒降旗進度≈3、旗幟下降，放開時停住 (#4 #8)', prog3 > 2.5 && prog3 < 3.5 && flagY < ef.baseY - 0.5 && Math.abs(progAfter - prog3) < 0.1, `progress=${prog3.toFixed(1)} flagY=${flagY.toFixed(2)} paused=${progAfter.toFixed(1)}`);
         let ended = false; const origAnnounce = announceMatchEnd; announceMatchEnd = (w, m) => { ended = true; isRoundEnded = true; };
-        teleport(17.5, 0, 0, 3.4); ctfState.progress = 14.5; frame(60);
-        log('T33b 搶旗 15 秒達成 → 宣布結束', ended, 'ok');
-        announceMatchEnd = origAnnounce; gameModeSetting = 'pvp'; isRoundEnded = false; ctfState.progress = 0; animateFlag(ef, 0, 0);
+        teleport(17.5, 0, 0, 3.4); ef.currentColorTeam = playerState.team; ef.heightRatio = 0.92; keysDown['KeyE'] = true; frame(60); keysDown['KeyE'] = false;
+        log('T33b 二樓搶旗升旗完成 → 宣布結束', ended, 'ok');
+        announceMatchEnd = origAnnounce; gameModeSetting = 'pvp'; isRoundEnded = false; resetAllCtfFlags();
 
         // T34 時間到 → 先宣布 3 秒 → 結算
         roundModeSetting = '180'; roundRemainingTime = 0.5; isRoundEnded = false; isGameRunning = true;
@@ -7348,13 +7789,13 @@
         log('T44 全螢幕結束宣告，點兩下進入放大結算 (含全員排行 + 獎盃) (#6 #7)', fullScreen && stillBanner && modalShown, `full=${fullScreen} modal=${modalShown}`);
         gameOverModal.classList.add('hidden'); isRoundEnded = false; isGameRunning = true; roundRemainingTime = 9999;
 
-        // T45 搶旗旗幟在房子屋頂；站屋頂旗下才累積
-        gameModeSetting = 'ctf'; isRoundEnded = false; ctfState.progress = 0;
+        // T45 搶旗旗幟位於兩邊房子二樓屋頂 (y=3.4)，須上二樓並按住 [E] 才能升降旗 (#4 #8)
+        gameModeSetting = 'ctf'; isRoundEnded = false; resetAllCtfFlags();
         const ef2 = ctfFlags[1];
-        teleport(17, 0, 0, 0); frame(60); const groundProg = ctfState.progress;     // 站在旗子正下方的一樓 → 不算
-        teleport(17, 0.5, 0, 3.4); frame(120); const roofProg = ctfState.progress;  // 站屋頂旗下 → 累積
-        log('T45 搶旗旗幟位於房子屋頂，須站在屋頂旗下才能佔領', ef2 && Math.abs(ef2.floorY - 3.4) < 0.01 && groundProg === 0 && roofProg > 1.5, `flagY=${ef2 ? ef2.baseY.toFixed(1) : '-'} ground=${groundProg.toFixed(1)} roof=${roofProg.toFixed(1)}`);
-        gameModeSetting = 'pvp'; ctfState.progress = 0; animateFlag(ef2, 0, 0);
+        teleport(17, 0, 0, 0); keysDown['KeyE'] = true; frame(60); keysDown['KeyE'] = false; const groundProg = ctfState.progress;     // 站在旗子正下方的一樓按 E → 不算
+        teleport(17, 0.5, 0, 3.4); keysDown['KeyE'] = true; frame(120); keysDown['KeyE'] = false; const roofProg = ctfState.progress;  // 站在二樓屋頂旗下按 E → 開始降旗累積
+        log('T45 搶旗旗幟位於兩邊房子二樓，須在二樓按住 [E] 才能升降旗', ef2 && Math.abs(ef2.floorY - 3.4) < 0.01 && groundProg === 0 && roofProg > 1.5, `flagY=${ef2 ? ef2.baseY.toFixed(1) : '-'} ground=${groundProg.toFixed(1)} roof=${roofProg.toFixed(1)}`);
+        gameModeSetting = 'pvp'; resetAllCtfFlags();
 
         // T46 鐵絲網：可穿越但減速；快速衝過受傷、蹲行不受傷
         playerState.hp = 100; playerState.invulnUntil = 0; updateHealthUI();
@@ -7373,7 +7814,7 @@
         log('T48 版本與建置時間顯示於大廳與 HUD', document.getElementById('build-stamp').innerText.includes(BUILD_STAMP) && document.getElementById('hud-build').innerText.includes(BUILD_STAMP), BUILD_STAMP);
 
         // T49 炸彈木箱與邊緣物資
-        const bombCrateBlocked = checkCollision(-1.9, 0, 0, 0.3, 1.7);
+        const bombCrateBlocked = checkCollision(-2.4, -1.6, 0, 0.3, 1.7);
         const edgeItems = pickupItems.filter(p => p.id.startsWith('edge_')).length;
         log('T49 炸彈存放綠木箱 + 戰場邊緣物資', bombCrateBlocked && edgeItems >= 10, `edgeItems=${edgeItems}`);
 
@@ -7415,6 +7856,100 @@
         const rematchVisible = rematchRect.width > 80 && rematchRect.height > 28 && rematchRect.bottom <= window.innerHeight + 20;
         log('T53 結算畫面：僅列前 5 名、冠軍人偶放大得意寫真、右側繼續按鈕在畫面內可按', rowsRendered === 5 && champImg.startsWith('data:image/png') && rematchVisible, `rows=${rowsRendered} imgLen=${champImg.length} btnBottom=${Math.round(rematchRect.bottom)}/${window.innerHeight}`);
         gameOverModal.classList.add('hidden'); isRoundEnded = false; isGameRunning = true;
+
+        // T54 槍枝射程調整 + 散彈槍圓形範圍漸層傷害 (圓心100% / 外圈50%~30%) + 每2顆自動重裝與1顆1秒/2顆2秒 (#1)
+        const rangeOk = WEAPONS.m4a1.maxRange <= 28 && WEAPONS.mp5.maxRange <= 22 && WEAPONS.awp.maxRange >= 85 && WEAPONS.shotgun.clipSize === 2;
+        const rCenter = computeShotgunCircleDamageRatio(0.1, 2.0); // u = 0.05 -> 1.0 (100%)
+        const rInner = computeShotgunCircleDamageRatio(0.55, 2.0); // u = 0.275 -> ~0.493
+        const rOuter = computeShotgunCircleDamageRatio(1.95, 2.0); // u = 0.975 -> ~0.307
+        const shotgunConeOk = Math.abs(rCenter - 1.0) < 0.01 && rInner <= 0.50 && rInner >= 0.45 && rOuter >= 0.30 && rOuter <= 0.35;
+        currentWeapon = WEAPONS.shotgun; ammoPool.rifle = 10;
+        currentWeapon.ammoInClip = 1; isReloading = false; reloadWeapon();
+        const reload1Sec = window.__lastReloadDurationSec;
+        if (reloadTimerHandle) { clearInterval(reloadTimerHandle); reloadTimerHandle = null; isReloading = false; }
+        currentWeapon.ammoInClip = 0; reloadWeapon();
+        const reload2Sec = window.__lastReloadDurationSec;
+        if (reloadTimerHandle) { clearInterval(reloadTimerHandle); reloadTimerHandle = null; isReloading = false; }
+        currentWeapon.ammoInClip = 2;
+        log('T54 一般槍射程縮短突顯狙擊優勢、散彈圓心100%/外圈50-30%遞減、1顆1秒/2顆2秒裝彈 (#1)', rangeOk && shotgunConeOk && reload1Sec === 1 && reload2Sec === 2, `m4=${WEAPONS.m4a1.maxRange}m awp=${WEAPONS.awp.maxRange}m cone=[${rCenter.toFixed(2)},${rInner.toFixed(2)},${rOuter.toFixed(2)}] reload=[${reload1Sec}s,${reload2Sec}s]`);
+
+        // T55 子彈連續被牆擋住時，顯示隨機五種「啊，子彈都被牆擋住了嗎」提醒訊息 (#2)
+        wallBlockedStreak = 0; window.__lastWallBlockMsg = '';
+        notifyWallBlockedShot(); notifyWallBlockedShot();
+        const msg1 = window.__lastWallBlockMsg;
+        notifyWallBlockedShot();
+        const msg2 = window.__lastWallBlockMsg;
+        log('T55 子彈連續被牆擋住顯示隨機 5 種提醒訊息 (#2)', WALL_BLOCK_MESSAGES.length === 5 && WALL_BLOCK_MESSAGES.includes(msg1) && WALL_BLOCK_MESSAGES.includes(msg2) && msg1 !== msg2, `msg1="${msg1.slice(0, 18)}..."`);
+
+        // T56 炸彈 (0,0) 周圍無隱形障礙物擋住，且射擊地板道具/炸彈夠多發可把東西埋起來看不到 (#3 #5)
+        const c4Item = pickupItems.find(p => p.id === 'c4_bomb');
+        const hitNearOrigin = segmentHitObstacle(new THREE.Vector3(0, 1.5, 3.0), new THREE.Vector3(0, 0.1, 0));
+        if (c4Item) { c4Item.isAvailable = true; c4Item.paintBurial = 0; c4Item.buriedByPaint = false; c4Item.group.visible = true; }
+        for (let k = 0; k < 7; k++) spawnPaintSplatter(new THREE.Vector3(0, 0, 0), 0xff3b30, null);
+        const buriedOk = c4Item && c4Item.buriedByPaint === true && c4Item.group.visible === false;
+        if (c4Item) { c4Item.paintBurial = 0; c4Item.buriedByPaint = false; c4Item.group.visible = true; c4Item.group.position.y = c4Item.baseY; }
+        log('T56 炸彈周圍無隱形阻擋、射擊炸彈與道具直達地板並可被漆彈埋起來看不到 (#3 #5)', hitNearOrigin === null && buriedOk, `originHit=${hitNearOrigin} buried=${buriedOk}`);
+
+        // T57 搶旗雙階段 (6秒降旗 + 6秒升旗、放開降旗停住/升旗緩降、隊友接手、自家隊員先降敵旗再升自家旗) (#4 #8)
+        resetAllCtfFlags();
+        const flagE = ctfFlags[1]; // 紅隊二樓旗座 (homeTeam=1)
+        // 藍隊 (team=0) 按住 3 秒 -> 降旗一半 (heightRatio = 0.5, 顏色仍為 1)
+        stepFlagCapture(flagE, 0, 3.0);
+        const hHalfLower = flagE.heightRatio;
+        // 放開 2 秒 -> 降旗階段放開應停住在 0.5！
+        stepFlagCapture(flagE, null, 2.0);
+        const hPausedLower = flagE.heightRatio;
+        // 隊友接手再按 3 秒 -> 降到底 (heightRatio = 0) 並切換為藍隊顏色 (currentColorTeam = 0)！
+        stepFlagCapture(flagE, 0, 3.0);
+        const colorFlipped = (flagE.currentColorTeam === 0 && Math.abs(flagE.heightRatio) < 0.05);
+        // 繼續按 3 秒升旗至 0.5，然後放開 1.6 秒 -> 升旗階段沒按著應慢慢下降！
+        stepFlagCapture(flagE, 0, 3.0);
+        const hHalfRaise = flagE.heightRatio;
+        stepFlagCapture(flagE, null, 1.6);
+        const hDecayedRaise = flagE.heightRatio;
+        // 紅隊自家隊員 (team=1) 來救旗：因為顏色已變藍隊 (0)，按住時先降下藍旗 (耗時 ~1.8s) 再升回紅旗！
+        stepFlagCapture(flagE, 1, 2.5); // 先把剩餘 0.3 的藍旗降到底，並開始升回紅旗
+        const rescuedColor = flagE.currentColorTeam === 1 && flagE.heightRatio > 0;
+        resetAllCtfFlags();
+        log('T57 二樓搶旗：6s降旗/6s升旗、放開停住或緩降、隊友接手、自家救旗先降後升 (#4 #8)', Math.abs(hHalfLower - 0.5) < 0.05 && Math.abs(hPausedLower - 0.5) < 0.01 && colorFlipped && hHalfRaise > 0.45 && hDecayedRaise < hHalfRaise && rescuedColor, `lower=${hHalfLower.toFixed(2)} pause=${hPausedLower.toFixed(2)} flip=${colorFlipped} decay=${hHalfRaise.toFixed(2)}->${hDecayedRaise.toFixed(2)} rescue=${rescuedColor}`);
+
+        // T58 強傷害模式 (100%) vs 強盔甲模式 (傷害減半 50%) 切換 (#6)
+        combatModeSetting = 'high_damage'; playerState.hp = 100; playerState.armor = 0; playerState.invulnUntil = 0; prepActive = false;
+        receiveDamage(40); const hpHighDmg = playerState.hp; // 100 - 40 = 60
+        combatModeSetting = 'high_armor'; playerState.hp = 100;
+        receiveDamage(40); const hpHighArmor = playerState.hp; // 100 - 20 = 80
+        combatModeSetting = 'high_damage'; playerState.hp = 100; updateHealthUI();
+        log('T58 強傷害模式 vs 強盔甲模式 (傷害減半 50%) (#6)', hpHighDmg === 60 && hpHighArmor === 80, `highDmgHP=${hpHighDmg} highArmorHP=${hpHighArmor}`);
+
+        // T59 瞄準鏡中間清楚無模糊、外圍黑掉，且開鏡時抖動降低 45% (#7)
+        const adsEl = document.getElementById('ads-overlay');
+        const adsLens = document.getElementById('ads-lens');
+        const noBlur = !adsEl.className.includes('backdrop-blur') && adsEl.style.backdropFilter === 'none' && adsLens && adsLens.style.boxShadow.includes('9999px');
+        log('T59 瞄準鏡中間清晰無模糊、外圍黑幕遮蔽、開鏡抖動降低 45% (#7)', !!noBlur, `noBlur=${noBlur}`);
+
+        // T60 倒數計時提醒 (#round-countdown) 與頂部遊戲時間 (#round-timer) 完全同步 (#9)
+        roundModeSetting = '180'; isRoundEnded = false; prepActive = false; roundRemainingTime = 24.3;
+        const syncSec = getSyncedRoundSeconds();
+        document.getElementById('round-timer').innerText = `00:${String(syncSec).padStart(2, '0')}`;
+        updateRoundCountdown();
+        const timerTxt = document.getElementById('round-timer').innerText;
+        const cdTxt = document.getElementById('round-countdown').innerText;
+        log('T60 倒數計時提醒與頂部遊戲時間秒數完全同步 (#9)', timerTxt === '00:25' && cdTxt.includes('25'), `timer="${timerTxt}" countdown="${cdTxt}"`);
+
+        // T61 本回合未參戰者自結算排行榜移除 + 房間累積總擊殺排行榜分開列於最下方 (#10)
+        clearRoomCumulativeScores();
+        recordKill('老玩家A(上局離開)', 0, '敵軍B', 1, 'M4A1');
+        recordKill('老玩家A(上局離開)', 0, '敵軍B', 1, 'M4A1'); // 老玩家A 累積 2 殺
+        // 進入新回合 (resetMatchRound)：老玩家A 未加入本回合，應從本回合 scoreboard 移除，但保留在 roomTotalScoreboard！
+        resetMatchRound();
+        prepActive = false; document.getElementById('prep-panel').classList.add('hidden');
+        recordKill(playerState.name, playerState.team, '本局敵軍C', 1, 'AWP');
+        triggerMatchEnd(true, '跨回合排行榜驗證');
+        const curBoardHtml = document.getElementById('final-scoreboard').innerHTML;
+        const cumBoardHtml = document.getElementById('cumulative-scoreboard').innerHTML;
+        const roundFilteredOk = !curBoardHtml.includes('老玩家A(上局離開)') && curBoardHtml.includes(playerState.name) && cumBoardHtml.includes('老玩家A(上局離開)');
+        gameOverModal.classList.add('hidden'); isRoundEnded = false; isGameRunning = true;
+        log('T61 未加入本回合者從當局榜移除，房間累積總擊殺榜分列於最下方 (#10)', roundFilteredOk, `curHasOld=${curBoardHtml.includes('老玩家A')} cumHasOld=${cumBoardHtml.includes('老玩家A')}`);
 
         const passed = R.filter(Boolean).length;
         console.log(`[AUTOTEST] SUMMARY ${passed}/${R.length} PASSED`);
