@@ -8,7 +8,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="現代突擊3D">
-  <title>Q版特種部隊：現代突擊 3D v6.4 - 跨平台電競對戰</title>
+  <title>Q版特種部隊：現代突擊 3D v6.5 - 跨平台電競對戰</title>
   <!-- Tailwind CSS (支援 Jetski 官方與外部 CDN) -->
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -236,15 +236,14 @@
         </div>
 
         <!-- 當前武器與彈藥 (切槍造型同步換) -->
-        <div class="mt-2.5 pt-2 border-t border-slate-800 flex items-center justify-between">
-          <div class="flex flex-col text-left">
-            <span id="weapon-name" class="text-xs font-black text-amber-400">戰術手槍</span>
-            <span id="weapon-type-badge" class="text-[10px] text-slate-400">連發步槍 ｜ 射程 42m</span>
+        <div class="mt-2.5 pt-2 border-t border-slate-800 text-left">
+          <div class="flex items-center justify-between gap-3">
+            <span id="weapon-name" class="text-sm font-black text-amber-400 truncate">戰術手槍</span>
+            <span class="font-mono font-black text-white whitespace-nowrap"><span id="ammo-clip" class="text-emerald-400 text-2xl">15</span><span class="text-slate-500 text-sm"> / </span><span id="ammo-clipsize" class="text-slate-400 text-sm">15</span></span>
           </div>
-          <div class="text-right">
-            <span class="text-base font-mono font-black text-white">
-              <span id="ammo-clip" class="text-emerald-400 text-xl">15</span> <span id="ammo-reserve" class="text-slate-400 text-[11px]">3 匣 (45 發 9mm)</span>
-            </span>
+          <div class="flex items-center justify-between gap-3 mt-0.5">
+            <span id="weapon-type-badge" class="text-[10px] text-slate-400 truncate">9mm · 250 RPM · 射程 18m · 換彈 1.2s</span>
+            <span id="ammo-reserve" class="text-[11px] font-bold text-sky-300 whitespace-nowrap">3 匣 · 45 發 9mm</span>
           </div>
         </div>
 
@@ -272,7 +271,7 @@
   </div>
 
   <!-- 雙槍背包 (#17 #18)：右下角、避開最右側按鈕欄 -->
-  <div id="weapon-slots" class="absolute bottom-4 right-[88px] z-20 flex flex-col gap-1.5 items-end pointer-events-none"></div>
+  <div id="weapon-slots" class="absolute bottom-48 left-3 z-20 flex flex-col gap-1.5 items-start pointer-events-none"></div>
 
   <!-- 射線被牆擋住提示 -->
   <div id="block-tag" class="hidden absolute top-[calc(50%+30px)] left-1/2 -translate-x-1/2 z-20 text-xs font-black text-red-300 bg-black/70 px-2.5 py-1 rounded-lg pointer-events-none">🧱 射線被牆擋住 — 子彈射不出去</div>
@@ -358,7 +357,7 @@
         <span>●</span> WebRTC P2P + 本地雙通道零延遲連線架構
       </div>
       <h1 class="text-2xl sm:text-3xl font-black tracking-wider text-white mb-1">
-        Q版特種部隊：現代突擊 3D v6.4
+        Q版特種部隊：現代突擊 3D v6.5
       </h1>
       <p class="text-xs text-slate-400 mb-4 font-medium">支援 iPad 觸控手勢與電腦 PC 鍵鼠同場競技 ｜ 藍天白雲雙層 CQB 戰場</p>
 
@@ -515,17 +514,22 @@
 
   <!-- 決勝局結算彈窗 (Victory / Defeat Modal) -->
   <div id="game-over-modal" class="absolute inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 hidden">
-    <div class="max-w-md w-full bg-slate-900 border-2 rounded-3xl p-6 sm:p-8 text-center shadow-2xl transition-all" id="game-over-box">
+    <div class="max-w-3xl w-full bg-slate-900 border-2 rounded-3xl p-6 sm:p-10 text-center shadow-2xl transition-all max-h-[94vh] overflow-y-auto custom-scroll" id="game-over-box">
       <div id="game-over-icon" class="w-20 h-20 mx-auto mb-3 rounded-2xl flex items-center justify-center text-4xl bg-amber-500/20 border border-amber-400/40">
         🏆
       </div>
-      <h2 id="game-over-title" class="text-3xl font-black tracking-wider mb-2 text-amber-400">
+      <h2 id="game-over-title" class="text-5xl font-black tracking-wider mb-2 text-amber-400">
         戰鬥勝利！
       </h2>
       <p id="game-over-desc" class="text-xs text-slate-300 font-medium mb-6">
         你在決鬥中成功擊倒了對手！
       </p>
 
+      <!-- 全員戰績排行 (#7) -->
+      <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 text-left mb-4">
+        <div class="text-sm font-black text-white mb-2">📊 全員戰績排行</div>
+        <div id="final-scoreboard" class="space-y-1.5"></div>
+      </div>
       <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 text-xs font-bold text-slate-300 mb-6 space-y-2.5">
         <div class="flex justify-between items-center">
           <span class="text-slate-400">MVP 特警隊員:</span>
@@ -2750,8 +2754,10 @@
         weaponMesh.add(emitter);
       }
 
-      weaponMesh.position.set(0.24, -0.22, -0.45);
-      weaponMesh.scale.set(0.8, 0.8, 0.8);
+      // 第一人稱槍模：縮小、放右下、槍口略朝準心 (子彈視覺由槍口出發並匯聚到準心) (#2 #3)
+      weaponMesh.position.set(0.3, -0.28, -0.55);
+      weaponMesh.rotation.set(0.02, 0.09, 0);
+      weaponMesh.scale.set(0.55, 0.55, 0.55);
       camera.add(weaponMesh);
     }
 
@@ -3072,7 +3078,7 @@
     ];
     const SKIN_TONES = ['#ffe4c4', '#fcd9b6', '#f5cba7', '#e8b48a', '#fde68a'];
     const ACCENT_COLORS = ['#f97316', '#06b6d4', '#10b981', '#ec4899', '#a855f7', '#facc15', '#38bdf8'];
-    const EXPRESSIONS = ['smile', 'cat', 'open', 'grin', 'wink'];
+    const EXPRESSIONS = ['smile', 'cat', 'open', 'happy', 'wink', 'smile', 'cat', 'star', 'none'];
 
     // 相容舊變數名稱
     const CHIBI_ROSTER_TEMPLATES = CHARACTER_STYLES;
@@ -3082,78 +3088,64 @@
     function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
     // ---- 卡哇伊臉部繪製 (大眼 + 雙高光 + 腮紅 + 多種嘴型) ----
+    // ---- 可愛臉部演算法 v2：「少即是多」----
+    //  1) 眼睛 = 兩顆單純的黑色直立橢圓 (高:寬 ≈ 1.6)，位置在臉的下半 (y≈58%)、距離寬 (±21%)
+    //  2) 每顆眼睛只有一個小白點高光 (左上)，不畫虹膜/睫毛/眉毛 → 像 Animal Crossing / 角落生物
+    //  3) 嘴巴極小：ω 貓嘴、小 ∪ 微笑、小 o、或沒有嘴
+    //  4) 腮紅：兩個淡粉橢圓，寬而扁，放在眼睛外下方
+    //  5) 表情只靠「眼睛形狀」變化：圓點 / 笑眼 ∪∪ / 眨眼 / 星星眼 (稀有)
     function drawKawaiiFace(ctx, S, o) {
       ctx.clearRect(0, 0, S, S);
-      const eyeY = S * 0.57, eyeDX = S * 0.2, eyeW = S * 0.155, eyeH = S * 0.2;
-      const iris = o.eyeColor || '#3b2f2f';
-      // 眉毛
-      ctx.strokeStyle = 'rgba(60,40,40,0.75)';
-      ctx.lineWidth = S * 0.02;
+      const eyeY = S * 0.58, eyeDX = S * 0.21, eyeW = S * 0.07, eyeH = S * 0.115;
+      const ink = '#1f1a17';
+      const happy = o.expression === 'happy' || o.expression === 'grin';
+      const wink = o.expression === 'wink';
+      const star = o.expression === 'star';
       ctx.lineCap = 'round';
-      [-1, 1].forEach(s => {
-        ctx.beginPath();
-        ctx.arc(S / 2 + s * eyeDX, eyeY - eyeH * 1.5, eyeW * 0.9, Math.PI * 1.15, Math.PI * 1.85);
-        ctx.stroke();
-      });
-      [-1, 1].forEach((s, idx) => {
-        const cx = S / 2 + s * eyeDX;
-        if (o.expression === 'wink' && idx === 1) {
-          ctx.strokeStyle = '#2b1d1d'; ctx.lineWidth = S * 0.028;
-          ctx.beginPath(); ctx.arc(cx, eyeY, eyeW * 0.8, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
+      [-1, 1].forEach((sg, idx) => {
+        const cx = S / 2 + sg * eyeDX;
+        if (happy || (wink && idx === 1)) {
+          // 笑眼：倒 U 弧線
+          ctx.strokeStyle = ink; ctx.lineWidth = S * 0.032;
+          ctx.beginPath(); ctx.arc(cx, eyeY + eyeH * 0.3, eyeW * 1.25, Math.PI * 1.12, Math.PI * 1.88); ctx.stroke();
           return;
         }
-        // 眼白
-        ctx.fillStyle = '#ffffff';
+        if (star) {
+          ctx.fillStyle = ink;
+          ctx.beginPath();
+          for (let k = 0; k < 10; k++) { const r = k % 2 ? eyeW * 0.6 : eyeW * 1.4; const a = -Math.PI / 2 + k * Math.PI / 5; ctx.lineTo(cx + Math.cos(a) * r, eyeY + Math.sin(a) * r); }
+          ctx.closePath(); ctx.fill();
+          ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx - eyeW * 0.35, eyeY - eyeH * 0.35, eyeW * 0.3, 0, Math.PI * 2); ctx.fill();
+          return;
+        }
+        // 單純黑色直立橢圓 + 一顆高光
+        ctx.fillStyle = ink;
         ctx.beginPath(); ctx.ellipse(cx, eyeY, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.fill();
-        // 虹膜漸層
-        const grad = ctx.createRadialGradient(cx, eyeY + eyeH * 0.2, eyeW * 0.1, cx, eyeY, eyeW * 0.85);
-        grad.addColorStop(0, iris);
-        grad.addColorStop(0.7, iris);
-        grad.addColorStop(1, '#0b0b0b');
-        ctx.fillStyle = grad;
-        ctx.beginPath(); ctx.ellipse(cx, eyeY + eyeH * 0.08, eyeW * 0.78, eyeH * 0.82, 0, 0, Math.PI * 2); ctx.fill();
-        // 瞳孔
-        ctx.fillStyle = '#0b0b0b';
-        ctx.beginPath(); ctx.ellipse(cx, eyeY + eyeH * 0.12, eyeW * 0.36, eyeH * 0.42, 0, 0, Math.PI * 2); ctx.fill();
-        // 高光 (大 + 小)
         ctx.fillStyle = '#ffffff';
-        ctx.beginPath(); ctx.ellipse(cx - eyeW * 0.3, eyeY - eyeH * 0.32, eyeW * 0.28, eyeH * 0.22, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(cx + eyeW * 0.3, eyeY + eyeH * 0.3, eyeW * 0.12, 0, Math.PI * 2); ctx.fill();
-        // 上眼線
-        ctx.strokeStyle = '#2b1d1d'; ctx.lineWidth = S * 0.022;
-        ctx.beginPath(); ctx.ellipse(cx, eyeY, eyeW, eyeH, 0, Math.PI * 1.08, Math.PI * 1.92); ctx.stroke();
-        // 睫毛
-        ctx.beginPath(); ctx.moveTo(cx + s * eyeW * 0.95, eyeY - eyeH * 0.5); ctx.lineTo(cx + s * eyeW * 1.25, eyeY - eyeH * 0.85); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(cx - eyeW * 0.32, eyeY - eyeH * 0.38, eyeW * 0.34, eyeH * 0.26, 0, 0, Math.PI * 2); ctx.fill();
       });
-      // 腮紅
-      ctx.fillStyle = 'rgba(251,113,133,0.55)';
-      [-1, 1].forEach(s => { ctx.beginPath(); ctx.ellipse(S / 2 + s * S * 0.3, eyeY + eyeH * 1.3, S * 0.07, S * 0.045, 0, 0, Math.PI * 2); ctx.fill(); });
-      // 嘴型
+      // 腮紅 (寬扁、很淡)
+      ctx.fillStyle = 'rgba(251, 113, 133, 0.42)';
+      [-1, 1].forEach(sg => { ctx.beginPath(); ctx.ellipse(S / 2 + sg * S * 0.33, eyeY + eyeH * 1.15, S * 0.085, S * 0.04, 0, 0, Math.PI * 2); ctx.fill(); });
+      // 極小嘴巴
       const my = eyeY + eyeH * 1.75;
-      ctx.strokeStyle = '#7f1d1d'; ctx.lineWidth = S * 0.022; ctx.fillStyle = '#7f1d1d';
-      if (o.expression === 'cat') {            // ω
-        ctx.beginPath();
-        ctx.arc(S / 2 - S * 0.04, my, S * 0.04, 0, Math.PI);
-        ctx.arc(S / 2 + S * 0.04, my, S * 0.04, 0, Math.PI);
-        ctx.stroke();
-      } else if (o.expression === 'open') {    // o
-        ctx.beginPath(); ctx.ellipse(S / 2, my + S * 0.01, S * 0.035, S * 0.045, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#fca5a5'; ctx.beginPath(); ctx.ellipse(S / 2, my + S * 0.03, S * 0.02, S * 0.015, 0, 0, Math.PI * 2); ctx.fill();
-      } else if (o.expression === 'grin') {    // D
-        ctx.beginPath(); ctx.arc(S / 2, my - S * 0.01, S * 0.07, 0.1 * Math.PI, 0.9 * Math.PI); ctx.closePath(); ctx.fill();
-        ctx.fillStyle = '#ffffff'; ctx.fillRect(S / 2 - S * 0.05, my - S * 0.005, S * 0.1, S * 0.02);
-      } else {                                 // smile
-        ctx.beginPath(); ctx.arc(S / 2, my - S * 0.02, S * 0.06, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke();
+      ctx.strokeStyle = '#8b3a3a'; ctx.lineWidth = S * 0.02; ctx.fillStyle = '#8b3a3a';
+      if (o.expression === 'cat') {
+        ctx.beginPath(); ctx.arc(S / 2 - S * 0.03, my, S * 0.03, 0, Math.PI); ctx.arc(S / 2 + S * 0.03, my, S * 0.03, 0, Math.PI); ctx.stroke();
+      } else if (o.expression === 'open') {
+        ctx.beginPath(); ctx.ellipse(S / 2, my, S * 0.026, S * 0.034, 0, 0, Math.PI * 2); ctx.fill();
+      } else if (o.expression !== 'none') {
+        ctx.beginPath(); ctx.arc(S / 2, my - S * 0.015, S * 0.04, 0.2 * Math.PI, 0.8 * Math.PI); ctx.stroke();
       }
-      if (o.animal === 'panda') {              // 熊貓黑眼圈
+      if (o.animal === 'panda') {   // 熊貓眼圈：柔和黑色橢圓墊在眼睛後面
         ctx.globalCompositeOperation = 'destination-over';
-        ctx.fillStyle = '#111827';
-        [-1, 1].forEach(s => { ctx.beginPath(); ctx.ellipse(S / 2 + s * eyeDX, eyeY + eyeH * 0.1, eyeW * 1.7, eyeH * 1.55, s * 0.4, 0, Math.PI * 2); ctx.fill(); });
+        ctx.fillStyle = '#1f2937';
+        [-1, 1].forEach(sg => { ctx.beginPath(); ctx.ellipse(S / 2 + sg * eyeDX, eyeY + eyeH * 0.05, eyeW * 2.4, eyeH * 1.6, sg * 0.35, 0, Math.PI * 2); ctx.fill(); });
         ctx.globalCompositeOperation = 'source-over';
       }
-      if (o.nose) {                            // 動物小鼻子
+      if (o.nose) {   // 動物小鼻：小小倒三角
         ctx.fillStyle = '#3f2a1d';
-        ctx.beginPath(); ctx.moveTo(S / 2 - S * 0.03, my - S * 0.07); ctx.lineTo(S / 2 + S * 0.03, my - S * 0.07); ctx.lineTo(S / 2, my - S * 0.035); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(S / 2 - S * 0.022, my - S * 0.07); ctx.lineTo(S / 2 + S * 0.022, my - S * 0.07); ctx.lineTo(S / 2, my - S * 0.045); ctx.closePath(); ctx.fill();
       }
     }
 
@@ -3161,13 +3153,10 @@
       ctx.clearRect(0, 0, S, S);
       const px = S / 16;
       const put = (x, y, w, h, col) => { ctx.fillStyle = col; ctx.fillRect(x * px, y * px, w * px, h * px); };
-      // 眼睛 (2x3 像素，含高光)
-      [[4, 6], [10, 6]].forEach(([x, y]) => {
-        put(x, y, 2, 3, '#ffffff'); put(x, y + 1, 2, 2, o.eyeColor || '#1d4ed8'); put(x, y, 1, 1, '#ffffff'); put(x + 1, y + 2, 1, 1, '#0b0b0b');
-      });
-      put(3, 10, 2, 1, 'rgba(251,113,133,0.7)'); put(11, 10, 2, 1, 'rgba(251,113,133,0.7)');
-      put(6, 11, 4, 1, '#7f1d1d'); put(5, 10, 1, 1, '#7f1d1d'); put(10, 10, 1, 1, '#7f1d1d');
-      if (o.expression === 'grin') put(6, 12, 4, 1, '#ffffff');
+      // 單純方形黑眼 (2x3) + 左上一顆白點，位置偏下
+      [[4, 8], [10, 8]].forEach(([x, y]) => { put(x, y, 2, 3, '#1f1a17'); put(x, y, 1, 1, '#ffffff'); });
+      put(3, 12, 2, 1, 'rgba(251,113,133,0.6)'); put(11, 12, 2, 1, 'rgba(251,113,133,0.6)');
+      if (o.expression === 'open') put(7, 12, 2, 2, '#8b3a3a'); else put(7, 12, 2, 1, '#8b3a3a');
     }
 
     function makeFaceDecal(o, size, pixel) {
@@ -3620,6 +3609,7 @@
       ai.state = st;
       ai.stateTimer = timer || 0;
       ai.stuckTimer = 0;
+      ai.wdTimer = 0; if (ai.wdPos) ai.wdPos.copy(ai.mesh.position);   // 換狀態重新計時，避免剛從定點轉為移動就被判卡住
       const crouch = (st === 'HIDE');
       ai.mesh.scale.y = crouch ? 0.72 : 1.0;
       if (st !== 'PEEK_SHOOT' && st !== 'CAMP') ai.armR.rotation.x = 0;
@@ -3655,7 +3645,10 @@
       AudioEngine.playGunshot(wpn.type, dist);
       const muzzle = ai.mesh.position.clone().add(new THREE.Vector3(0, aiMuzzleHeight(ai), 0));
       _v1.set(target.x - muzzle.x, 0, target.z - muzzle.z).normalize();
-      muzzle.addScaledVector(_v1, 0.6);
+      // 槍口往前 0.6m，但若會伸進牆裡 (屋內貼窗) 就只前移 0.15m，避免子彈一出膛就被自己的牆吃掉 (#4)
+      const probe = muzzle.clone().addScaledVector(_v1, 0.6);
+      muzzle.addScaledVector(_v1, segmentHitObstacle(muzzle, probe) ? 0.15 : 0.6);
+      ai.shotsSinceHit = (ai.shotsSinceHit || 0) + 1;
       const aimPt = new THREE.Vector3(target.x, target.y + target.h * 0.6, target.z);
       const dir = ballisticDirection(muzzle, aimPt, wpn.speed);
       const spread = 0.05 + (ai.hitTimer > 0 ? 0.04 : 0);
@@ -3664,15 +3657,17 @@
       Net.sendShotEvent({ x: muzzle.x, y: muzzle.y, z: muzzle.z, dx: dir.x, dy: dir.y, dz: dir.z, weapon: ai.weaponKey, paint: ai.paint, ai: true });
     }
 
-    // 被擊中時由子彈判定呼叫 (#10 #12)
-    function aiOnHit(ai, shooterPos) {
-      ai.lastEngaged = performance.now();
+    // 被擊中 / 被發現 (子彈落在附近) 時呼叫 (#10 #12)：轉頭就跑到另一個掩體
+    function aiOnHit(ai, shooterPos, nearMiss) {
+      ai.lastEngaged = gameNow;
+      if (nearMiss && ai.state === 'HIDE') return;   // 已在掩體後蹲著就不理會近失彈
       ai.threatPos = shooterPos ? { x: shooterPos.x, z: shooterPos.z } : (ai.target ? { x: ai.target.x, z: ai.target.z } : null);
       if (ai.state === 'DEAD') return;
       const newCover = aiChooseCover(ai, ai.threatPos, ai.coverTarget, 16);
       ai.coverTarget = newCover;
       ai.fleeGoal = aiCoverGoal(ai, newCover, ai.threatPos);
-      ai.route = null;
+      ai.route = null; ai.leaveAfterRoute = false;
+      if (ai.threatPos) ai.mesh.lookAt(ai.mesh.position.x * 2 - ai.threatPos.x, ai.mesh.position.y, ai.mesh.position.z * 2 - ai.threatPos.z);   // 轉頭背對威脅開跑
       aiSetState(ai, 'FLEE', 4.0);
     }
 
@@ -3689,9 +3684,9 @@
         hp: 100, maxHp: 100, team: AI_TEAM, paint,
         weaponKey: AI_WEAPON_KEYS[Math.floor(Math.random() * AI_WEAPON_KEYS.length)],
         state: 'ADVANCE', stateTimer: 0, stuckTimer: 0, hitTimer: 0,
-        lastShoot: performance.now() + 800 + Math.random() * 1500,
-        lastEngaged: performance.now() + Math.random() * 4000,
-        noLOSTimer: 0, animTimer: Math.random() * 10, target: null, route: null
+        lastShoot: gameNow + 800 + Math.random() * 1500,
+        lastEngaged: gameNow + Math.random() * 4000,
+        noLOSTimer: 0, animTimer: Math.random() * 10, target: null, route: null, spawnTime: gameNow, shotsSinceHit: 0
       });
       ai.coverTarget = aiChooseCover(ai, { x: 0, z: 30 }, null, 60);
       ai.goal = aiCoverGoal(ai, ai.coverTarget, { x: 0, z: 30 });
@@ -3799,6 +3794,43 @@
       return false;
     }
 
+    // 卡住 / 打不中 看門狗 (#5)
+    //  a) 移動狀態下 3 秒內位移 < 0.4m → 朝隨機可通行方向脫困 2m；連續 3 次仍卡 → 傳送到最近掩體旁
+    //  b) 非狙擊槍連開 12 槍且 8 秒沒打中人 → 換掩體 (ADVANCE 到更靠近目標的新掩體)
+    //  c) 同一點停留超過 25 秒 → 強制換位置
+    function aiStuckWatchdog(ai, delta, now, los) {
+      const p = ai.mesh.position;
+      if (!ai.wdPos) { ai.wdPos = p.clone(); ai.wdTimer = 0; ai.samePosTimer = 0; ai.escapeCount = 0; }
+      ai.wdTimer += delta; ai.samePosTimer += delta;
+      if (p.distanceTo(ai.wdPos) > 0.4) { ai.wdPos.copy(p); ai.wdTimer = 0; ai.samePosTimer = 0; ai.escapeCount = 0; }
+      const moving = ['ADVANCE', 'HUNT', 'FLEE'].includes(ai.state);
+      // 移動中 3 秒沒前進，或 原地 6 秒且看不到任何目標 (打不到人) → 視為卡住
+      if ((moving && ai.wdTimer > 3) || (ai.samePosTimer > 6 && !los && ai.state !== 'FLEE')) {
+        ai.samePosTimer = 0;
+        ai.wdTimer = 0; ai.escapeCount++;
+        if (ai.escapeCount >= 3) {
+          let best = null, bd = 1e9;
+          coverBoxes.forEach(cb => { const d = Math.hypot(cb.x - p.x, cb.z - p.z); if (d < bd && d > 1.5) { bd = d; best = cb; } });
+          if (best) { const g = aiCoverGoal(ai, best, ai.target); if (!checkCollision(g.x, g.z, 0, 0.4, ai.bodyHeight)) { p.x = g.x; p.z = g.z; p.y = getGroundHeight(g.x, g.z, 10); } }
+          ai.escapeCount = 0; ai.route = null; ai.goal = null; ai.triedUpstairs = false; aiSetState(ai, 'HIDE', 0.6);
+          return;
+        }
+        for (let k = 0; k < 8; k++) {
+          const a = Math.random() * Math.PI * 2, nx = p.x + Math.cos(a) * 2, nz = p.z + Math.sin(a) * 2;
+          if (!checkCollision(nx, nz, p.y, 0.4, ai.bodyHeight) && segmentHitObstacle(new THREE.Vector3(p.x, p.y + 0.8, p.z), new THREE.Vector3(nx, p.y + 0.8, nz)) === null) {
+            ai.route = { kind: 'escape', pts: [{ x: nx, z: nz }] }; ai.routeIdx = 0; ai.leaveAfterRoute = true; aiSetState(ai, 'HUNT', 0); break;
+          }
+        }
+      }
+      if (ai.samePosTimer > 25 && ai.state !== 'DEAD') { ai.samePosTimer = 0; ai.route = null; ai.triedUpstairs = false; ai.coverTarget = aiChooseCover(ai, ai.target, ai.coverTarget, 60); ai.goal = aiCoverGoal(ai, ai.coverTarget, ai.target); aiSetState(ai, 'ADVANCE', 0); }
+      const wpn = WEAPONS[ai.weaponKey] || WEAPONS.m4a1;
+      if (wpn.type !== 'sniper' && (ai.shotsSinceHit || 0) >= 12 && now - (ai.lastHitTime || ai.spawnTime || 0) > 8000 && (ai.state === 'PEEK_SHOOT' || ai.state === 'CAMP' || ai.state === 'HIDE')) {
+        ai.shotsSinceHit = 0; ai.lastHitTime = now;
+        ai.coverTarget = aiChooseCover(ai, ai.target, ai.coverTarget, 60); ai.goal = aiCoverGoal(ai, ai.coverTarget, ai.target); ai.route = null; ai.triedUpstairs = false;
+        aiSetState(ai, 'ADVANCE', 0);
+      }
+    }
+
     function updateAIBrains(delta, now) {
       if (!isAIAuthority()) return;
       if (aiEnabled) {
@@ -3823,6 +3855,7 @@
         const los = geomLOS && aiInFOV(ai, target);
         if (los) { ai.noLOSTimer = 0; ai.lastSeenTime = now; } else ai.noLOSTimer += delta;
         const seenRecently = (now - (ai.lastSeenTime || 0)) < 4000;
+        aiStuckWatchdog(ai, delta, now, los);
         ai.stateTimer -= delta;
 
         aiUpdateHearing(ai, delta, now);
@@ -4010,6 +4043,7 @@
         visualOnly: !!visualOnly,   // 由遠端/主機同步的子彈只做視覺，不計傷害
         life: 0
       });
+      return projectiles[projectiles.length - 1];
     }
 
     // 相容舊 API：線段是否被擋彈障礙物擋住
@@ -4167,13 +4201,20 @@
         weaponMesh.rotation.x += 0.12;
       }, 55);
 
-      // 從槍口前方發射 (避免在自己身上爆開)
-      const shootDir = new THREE.Vector3();
-      camera.getWorldDirection(shootDir);
-      const shootOrigin = new THREE.Vector3();
-      camera.getWorldPosition(shootOrigin);
-      shootOrigin.addScaledVector(shootDir, 0.7);
-      shootOrigin.y -= 0.12;
+      // 彈道：物理起點 = 鏡頭前 0.25m (保證不在牆內)；方向 = 指向準心命中點 (子彈會穿過準心中心) (#3 #4)
+      const camDir = new THREE.Vector3();
+      camera.getWorldDirection(camDir);
+      const camPos = new THREE.Vector3();
+      camera.getWorldPosition(camPos);
+      const aimFar = camPos.clone().addScaledVector(camDir, 80);
+      const aimHit = segmentHitObstacle(camPos, aimFar);
+      const aimPoint = aimHit ? camPos.clone().lerp(aimFar, Math.max(0.02, aimHit.t - 0.002)) : aimFar;
+      const shootOrigin = camPos.clone().addScaledVector(camDir, 0.25);
+      const shootDir = aimPoint.clone().sub(shootOrigin).normalize();
+      // 視覺起點 = 槍口 (第一人稱槍模上的火光位置)，子彈會在 0.15 秒內從槍口滑入真實彈道
+      const muzzleWorld = new THREE.Vector3();
+      if (muzzleFlashMesh) muzzleFlashMesh.getWorldPosition(muzzleWorld); else muzzleWorld.copy(shootOrigin);
+      const muzzleBlocked = segmentHitObstacle(shootOrigin, muzzleWorld) !== null;
 
       const count = (currentWeapon.type === 'shotgun') ? currentWeapon.pellets : 1;
       for (let p = 0; p < count; p++) {
@@ -4182,7 +4223,8 @@
         spreadDir.x += (Math.random() - 0.5) * spread;
         spreadDir.y += (Math.random() - 0.5) * spread;
         spreadDir.z += (Math.random() - 0.5) * spread;
-        firePaintballBullet(shootOrigin, spreadDir, currentWeapon, true, Net.myId, playerState.name, playerState.paintColor);
+        const pr = firePaintballBullet(shootOrigin, spreadDir, currentWeapon, true, Net.myId, playerState.name, playerState.paintColor);
+        if (pr && !muzzleBlocked) { pr.visualOffset = muzzleWorld.clone().sub(shootOrigin); pr.mesh.position.copy(muzzleWorld); }
       }
       if (Net.sendShotEvent) {
         Net.sendShotEvent({ x: shootOrigin.x, y: shootOrigin.y, z: shootOrigin.z, dx: shootDir.x, dy: shootDir.y, dz: shootDir.z, weapon: currentWeapon.key, paint: playerState.paintColor });
@@ -4298,9 +4340,10 @@
     function updateAmmoUI() {
       const pi = poolInfo(currentWeapon);
       document.getElementById('ammo-clip').innerText = currentWeapon.ammoInClip;
-      document.getElementById('ammo-reserve').innerText = `${pi.mags} 匣 (${pi.pool} 發 ${pi.caliber})`;
+      document.getElementById('ammo-clipsize').innerText = currentWeapon.clipSize;
+      document.getElementById('ammo-reserve').innerText = `${pi.mags} 匣 · ${pi.pool} 發 ${pi.caliber}`;
       document.getElementById('weapon-name').innerText = currentWeapon.name;
-      document.getElementById('weapon-type-badge').innerText = `${currentWeapon.badge} ｜ ${Math.round(60000 / currentWeapon.fireRate)} 發/分 ｜ 射程 ${currentWeapon.maxRange}m ｜ 換彈 ${currentWeapon.reloadTime}s`;
+      document.getElementById('weapon-type-badge').innerText = `${pi.caliber} · ${Math.round(60000 / currentWeapon.fireRate)} RPM · 射程 ${currentWeapon.maxRange}m · 換彈 ${currentWeapon.reloadTime}s`;
       updateWeaponSlotsUI();
     }
 
@@ -4386,7 +4429,7 @@
       let endT = 1;
       const hit = segmentHitObstacle(_lFrom, _lTo);
       if (hit) endT = Math.min(endT, hit.t);
-      const gy = getGroundHeight(_lTo.x, _lTo.z, 100);
+      const gy = getGroundHeight(_lTo.x, _lTo.z, _lFrom.y - 0.5);
       const checkChars = (feet, h) => { for (let t = 0.02; t < endT; t += 0.01) { const px = _lFrom.x + (_lTo.x - _lFrom.x) * t, py = _lFrom.y + (_lTo.y - _lFrom.y) * t, pz = _lFrom.z + (_lTo.z - _lFrom.z) * t; const cy = Math.max(feet.y, Math.min(feet.y + h, py)); if ((px - feet.x) ** 2 + (py - cy) ** 2 + (pz - feet.z) ** 2 < 0.3) { endT = t; return; } } };
       aiEnemies.forEach(ai => { if (ai.state !== 'DEAD') checkChars(ai.mesh.position, ai.bodyHeight); });
       for (const uid in remotePlayers) checkChars(remotePlayers[uid].mesh.position, 1.7);
@@ -4708,18 +4751,38 @@
 
     // ---- 遊戲結束流程 (#4)：先宣布，再結算 ----
     let endBannerTimer = null;
+    let endBannerClicks = 0, endBannerCountdown = null;
     function announceMatchEnd(isWinner, message, winnerTeam) {
       if (isRoundEnded) return;
       isRoundEnded = true;
+      isFiring = false;
+      if (document.exitPointerLock) document.exitPointerLock();
       const banner = document.getElementById('match-end-banner');
-      if (banner) {
-        banner.innerHTML = `<div class="text-3xl font-black">${isWinner ? '🏆 遊戲結束 — 我方獲勝！' : '🏁 遊戲結束 — 敵方獲勝'}</div><div class="text-sm mt-1">${message || ''}</div><div class="text-xs text-slate-300 mt-2">3 秒後顯示結算畫面…</div>`;
-        banner.className = `absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 px-10 py-6 rounded-3xl text-center text-white shadow-2xl border-2 ${isWinner ? 'bg-amber-600/90 border-amber-300' : 'bg-slate-800/95 border-slate-500'}`;
-        banner.classList.remove('hidden');
-      }
+      endBannerClicks = 0;
+      let secs = 20;
+      const render = () => {
+        banner.innerHTML = `
+          <div class="text-[11vw] sm:text-[7vw] leading-none font-black drop-shadow-2xl">${isWinner ? '🏆 我方獲勝' : '🏁 敵方獲勝'}</div>
+          <div class="text-2xl sm:text-4xl font-black mt-4 tracking-widest">遊 戲 結 束</div>
+          <div class="text-base sm:text-xl mt-4 text-white/90">${message || ''}</div>
+          <div class="text-sm sm:text-base mt-10 text-white/70">點擊畫面兩下進入結算 (${endBannerClicks}/2)，或 ${secs} 秒後自動進入</div>`;
+      };
+      banner.className = `absolute inset-0 z-40 flex flex-col items-center justify-center text-center text-white cursor-pointer select-none ${isWinner ? 'bg-gradient-to-b from-amber-500/95 via-orange-600/95 to-rose-700/95' : 'bg-gradient-to-b from-slate-700/95 via-slate-900/95 to-black/95'}`;
+      banner.classList.remove('hidden');
+      render();
       AudioEngine.playCountdownBeep(true);
-      clearTimeout(endBannerTimer);
-      endBannerTimer = setTimeout(() => { if (banner) banner.classList.add('hidden'); isRoundEnded = false; triggerMatchEnd(isWinner, message); }, 3000);
+      if (isWinner) AudioEngine.playVictory();
+      const proceed = () => {
+        clearTimeout(endBannerTimer); clearInterval(endBannerCountdown);
+        banner.onclick = null;
+        banner.classList.add('hidden');
+        isRoundEnded = false;
+        triggerMatchEnd(isWinner, message);
+      };
+      banner.onclick = () => { endBannerClicks++; render(); if (endBannerClicks >= 2) proceed(); };
+      clearTimeout(endBannerTimer); clearInterval(endBannerCountdown);
+      endBannerCountdown = setInterval(() => { secs--; render(); if (secs <= 0) proceed(); }, 1000);
+      endBannerTimer = setTimeout(proceed, 20500);
     }
     function endRoundByTime() {
       const teamKills = [0, 0];
@@ -5100,7 +5163,21 @@
       isRoundEnded = true;
       isGameRunning = false;
 
-      finalMvpName.innerText = playerState.name;
+      // 全員排行：依擊殺排序，第一名獎盃
+      const rows = Object.entries(scoreboard).filter(([n, s]) => s.kills > 0 || s.deaths > 0 || n === playerState.name || Object.values(remotePlayers).some(r => r.name === n)).sort((a, b) => b[1].kills - a[1].kills || a[1].deaths - b[1].deaths);
+      const board = document.getElementById('final-scoreboard');
+      if (board) {
+        board.innerHTML = rows.map(([n, s], i) => `
+          <div class="flex items-center justify-between px-3 py-2 rounded-xl ${i === 0 ? 'bg-amber-500/20 border border-amber-400/60' : 'bg-slate-900 border border-slate-800'}">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="text-lg w-8 text-center">${i === 0 ? '🏆' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : (i + 1) + '.'))}</span>
+              <span class="w-2.5 h-2.5 rounded-sm ${s.team === 0 ? 'bg-sky-400' : 'bg-rose-400'}"></span>
+              <span class="font-black ${i === 0 ? 'text-amber-300 text-base' : 'text-white text-sm'} truncate">${n}${n === playerState.name ? ' (你)' : ''}</span>
+            </div>
+            <div class="font-mono text-sm whitespace-nowrap"><b class="${i === 0 ? 'text-amber-300' : 'text-emerald-400'}">${s.kills}</b> 殺 <span class="text-slate-500">/</span> <span class="text-slate-400">${s.deaths} 死</span></div>
+          </div>`).join('') || '<div class="text-xs text-slate-500">尚無戰績</div>';
+      }
+      finalMvpName.innerText = rows.length ? rows[0][0] + (rows[0][0] === playerState.name ? ' (你)' : '') : playerState.name;
       finalKills.innerText = playerState.kills;
       finalHits.innerText = playerState.totalHits;
       finalArmorAbsorbed.innerText = playerState.armorAbsorbed;
@@ -5866,6 +5943,7 @@
     let netBroadcastTimer = 0;
     let fpsFrames = 0, fpsTimer = 0;
 
+    let gameNow = performance.now();   // 遊戲統一時鐘 (gameLoop 的 now)，AI 與測試都用這個
     let jumpRequested = false;
     let eyeOffsetCurrent = STAND_HEIGHT;
     let lastDamageSource = null;
@@ -5920,6 +5998,7 @@
       if (!window.__manualLoop) requestAnimationFrame(gameLoop);
       const delta = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
+      gameNow = now;
 
       fpsFrames++;
       fpsTimer += delta;
@@ -5985,7 +6064,7 @@
       updateCTF(delta);
 
       // 3. 開火 (滑鼠 / F 鍵 / Enter / 觸控按鈕 #15)；準備階段與無敵時間不能開槍
-      if (weaponSwitchLock > 0) { weaponSwitchLock -= delta; weaponMesh.position.y += (-0.22 - weaponMesh.position.y) * 0.25; }
+      if (weaponSwitchLock > 0) { weaponSwitchLock -= delta; weaponMesh.position.y += (-0.28 - weaponMesh.position.y) * 0.25; }
       else if ((isFiring || keysDown['KeyF'] || keysDown['Enter'] || keysDown['ControlLeft']) && !playerState.isSpectating && !prepActive && !isInvulnerable()) shootWeapon();
 
       // 4. 移動 / 跳躍 / 重力
@@ -6039,10 +6118,10 @@
           camera.position.y = Math.sin(headBobTimer) * 0.06;
           camera.position.x = Math.cos(headBobTimer * 0.5) * 0.03;
           if (now - lastStepSoundTime > (isCrouched ? 460 : 330)) { AudioEngine.playFootstep(currentSurfaceType === 'metal' ? 'metal' : 'ground'); lastStepSoundTime = now; }
-          if (weaponSwitchLock <= 0) { weaponMesh.position.x = 0.24 + Math.sin(now * 0.008) * 0.018; weaponMesh.position.y = -0.22 + Math.abs(Math.sin(now * 0.008)) * 0.018; }
+          if (weaponSwitchLock <= 0) { weaponMesh.position.x = 0.3 + Math.sin(now * 0.008) * 0.018; weaponMesh.position.y = -0.28 + Math.abs(Math.sin(now * 0.008)) * 0.018; }
         } else {
           camera.position.y *= 0.8; camera.position.x *= 0.8;
-          if (!playerGrounded && weaponSwitchLock <= 0) weaponMesh.position.y = -0.22 - Math.min(0.08, Math.abs(playerVelY) * 0.012);
+          if (!playerGrounded && weaponSwitchLock <= 0) weaponMesh.position.y = -0.28 - Math.min(0.08, Math.abs(playerVelY) * 0.012);
         }
       }
 
@@ -6082,8 +6161,13 @@
           done = true;
         }
         if (!done) {
-          const gy = getGroundHeight(proj.pos.x, proj.pos.z, 100);
+          // 只取「子彈下方」最高的表面：屋內子彈不可被二樓樓板當成地面吃掉 (#4 根因)
+          const gy = getGroundHeight(proj.pos.x, proj.pos.z, Math.max(proj.prevPos.y, proj.pos.y) - 0.5);
           if (proj.pos.y <= gy) { spawnPaintSplatter(new THREE.Vector3(proj.pos.x, gy, proj.pos.z), proj.color, null); done = true; }
+        }
+        // 漆彈落在 AI 附近 (2.5m 內) = 被發現了 → AI 轉頭就跑 (#5)
+        if (done && proj.isAlly && !proj.visualOnly && isAIAuthority()) {
+          for (const ai of aiEnemies) { if (ai.state === 'DEAD' || ai.state === 'FLEE') continue; if (ai.mesh.position.distanceTo(proj.pos) < 2.5) { aiOnHit(ai, playerGroup.position, true); } }
         }
         if (!done && (proj.traveledDist >= proj.maxRange * 1.6 || proj.life > 4)) {
           scene.remove(proj.mesh); scene.remove(proj.trail); projectiles.splice(i, 1); continue;
@@ -6140,6 +6224,7 @@
               spawnPaintSplatter(hpt.clone(), proj.color, null);
               showScreenPaint(hex6(proj.color));
               lastDamageSource = { name: proj.shooterName, team: AI_TEAM, weapon: (WEAPONS[proj.shooterWeapon] || {}).name };
+              const shooterAI = aiEnemies.find(a => a.id === proj.shooterId); if (shooterAI) { shooterAI.lastHitTime = now; shooterAI.shotsSinceHit = 0; }
               receiveDamage(proj.damage);
               cameraPitch += (Math.random() - 0.5) * 0.06;
             }
@@ -6147,7 +6232,9 @@
         }
 
         if (done) { scene.remove(proj.mesh); scene.remove(proj.trail); projectiles.splice(i, 1); continue; }
+        // 槍口視覺起點在 0.15s 內滑入真實彈道 (#3)
         proj.mesh.position.copy(proj.pos);
+        if (proj.visualOffset) { const k = Math.max(0, 1 - proj.life / 0.15); if (k > 0) proj.mesh.position.addScaledVector(proj.visualOffset, k); else proj.visualOffset = null; }
         const speed = proj.vel.length();
         _v1.copy(proj.vel).normalize();
         proj.trail.position.copy(proj.pos).addScaledVector(_v1, -0.45);
@@ -6605,6 +6692,52 @@
         teleport(0, 20, 0, 0); frame(2);
         const clearTag = document.getElementById('block-tag').classList.contains('hidden');
         log('T37 準心擋牆指示：面對牆紅色 🧱，開闊處正常', blockedTag && clearTag, `wall=${blockedTag} open=${clearTag}`);
+
+        // T39 子彈從鏡頭安全點出發、方向指向準心；槍口視覺偏移會在 0.15s 內收斂
+        resetLoadout(); currentWeapon.ammoInClip = 15; teleport(0, 20, 0, 0); projectiles.length = 0;
+        shootWeapon(); const pr0 = projectiles[projectiles.length - 1];
+        const camP = new THREE.Vector3(); camera.getWorldPosition(camP);
+        const startDist = pr0.pos.distanceTo(camP); const dirDot = pr0.vel.clone().normalize().dot(new THREE.Vector3(0, 0, -1));
+        const visOff0 = pr0.mesh.position.distanceTo(pr0.pos); frame(12); const visOff1 = pr0.mesh ? pr0.mesh.position.distanceTo(pr0.pos) : 0;
+        log('T39 漆彈物理起點在鏡頭前 0.25m、方向對準準心、視覺從槍口滑入彈道 (#3)', Math.abs(startDist - 0.25) < 0.05 && dirDot > 0.99 && visOff0 > 0.1 && visOff1 < 0.05, `start=${startDist.toFixed(2)} dot=${dirDot.toFixed(3)} visOff ${visOff0.toFixed(2)}→${visOff1.toFixed(2)}`);
+
+        // T40 屋內貼窗射擊：子彈不會被自己身旁的牆吃掉
+        aiEnemies.forEach(e => scene.remove(e.mesh)); aiEnemies.length = 0; aiEnabled = true;
+        const dummy = spawnAIEnemyFromBase(0); dummy.mesh.position.set(-13.6, 0, 12); dummy.lastEngaged = simTime; aiSetState(dummy, 'HIDE', 999); dummy.hp = 100;
+        teleport(-13.6, 3.6, Math.PI, 0);   // 西屋一樓，貼著右側窗台 (牆在 z=4.5)，面向南方 (+z) 窗外
+        cameraPitch = 0.0; frame(3); projectiles.length = 0;
+        isFiring = true; lastFireTime = 0; for (let i = 0; i < 40; i++) frame(1); isFiring = false; frame(60);
+        log('T40 屋內貼窗射擊能打到窗外的人 (#4)', dummy.hp < 100, `dummy.hp=${dummy.hp.toFixed(0)}`);
+
+        // T41 AI 卡住看門狗：卡在角落 3 秒 → 脫困移動
+        aiEnemies.forEach(e => scene.remove(e.mesh)); aiEnemies.length = 0;
+        const stuck = spawnAIEnemyFromBase(0); stuck.mesh.position.set(-21.3, 0, -4.0); // 西屋一樓西北角落
+        stuck.lastEngaged = simTime; stuck.goal = { x: -21.3, z: -4.0 }; aiSetState(stuck, 'ADVANCE', 0); stuck.goal = { x: -40, z: -40 }; // 目標在牆外 → 必卡
+        teleport(0, 25, 0, 0); const sp0 = stuck.mesh.position.clone(); frame(60 * 5);
+        log('T41 AI 卡在角落 3 秒後自動脫困換位 (#5)', stuck.mesh.position.distanceTo(sp0) > 1.0, `moved=${stuck.mesh.position.distanceTo(sp0).toFixed(2)}m state=${stuck.state}`);
+
+        // T42 AI 開 12 槍沒打中 → 換掩體
+        aiEnemies.forEach(e => scene.remove(e.mesh)); aiEnemies.length = 0;
+        const missy = spawnAIEnemyFromBase(0); missy.mesh.position.set(0, 0, -6); missy.lastEngaged = simTime; missy.weaponKey = 'm4a1'; missy.shotsSinceHit = 12; missy.lastHitTime = simTime - 9000; missy.spawnTime = 0; aiSetState(missy, 'PEEK_SHOOT', 5);
+        frame(5);
+        log('T42 AI 連開 12 槍沒打中就換掩體 (#5)', ['ADVANCE', 'HIDE', 'HUNT'].includes(missy.state) && missy.shotsSinceHit === 0 && missy.state !== 'PEEK_SHOOT', `state=${missy.state}`);
+
+        // T43 被發現 (近失彈) → 轉頭就跑
+        aiEnemies.forEach(e => scene.remove(e.mesh)); aiEnemies.length = 0;
+        const runner = spawnAIEnemyFromBase(0); runner.mesh.position.set(0, 0, -6); runner.lastEngaged = simTime; aiSetState(runner, 'PEEK_SHOOT', 5); runner.mesh.lookAt(0, 0, 20);
+        teleport(0, 10, 0, 0); firePaintballBullet(new THREE.Vector3(1.5, 1.2, -4.5), new THREE.Vector3(0, -1, 0), WEAPONS.m4a1, true, Net.myId, playerState.name, playerState.paintColor); frame(5);
+        const fwdR = new THREE.Vector3(0, 0, 1).applyQuaternion(runner.mesh.quaternion);
+        log('T43 漆彈落在 AI 旁邊 → 轉頭背對玩家逃跑 (#5)', ['FLEE', 'HIDE'].includes(runner.state) && fwdR.z < 0, `state=${runner.state} facingZ=${fwdR.z.toFixed(2)}`);
+        aiEnemies.forEach(e => scene.remove(e.mesh)); aiEnemies.length = 0; aiEnabled = false;
+
+        // T44 結束橫幅：全螢幕、點兩下進結算
+        isRoundEnded = false; isGameRunning = true; announceMatchEnd(true, '測試');
+        const bn = document.getElementById('match-end-banner');
+        const fullScreen = bn.className.includes('inset-0') && !bn.classList.contains('hidden');
+        bn.onclick(); const stillBanner = !bn.classList.contains('hidden'); bn.onclick();
+        const modalShown = !gameOverModal.classList.contains('hidden') && document.getElementById('final-scoreboard').innerHTML.includes('🏆');
+        log('T44 全螢幕結束宣告，點兩下進入放大結算 (含全員排行 + 獎盃) (#6 #7)', fullScreen && stillBanner && modalShown, `full=${fullScreen} modal=${modalShown}`);
+        gameOverModal.classList.add('hidden'); isRoundEnded = false; isGameRunning = true; roundRemainingTime = 9999;
 
         const passed = R.filter(Boolean).length;
         console.log(`[AUTOTEST] SUMMARY ${passed}/${R.length} PASSED`);
