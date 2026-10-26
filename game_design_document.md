@@ -660,3 +660,90 @@ sequenceDiagram
    - 移除 `openGuard` 與 `pingInterval: 5000`，確保第一台電腦的 `QFORCE3D_<房號>_HOST` 真正在 PeerJS 註冊成功後才進入等待室。
    - 若遇到 `unavailable-id` 自動重試 6 次（同 `v6.2`）；若遇到瞬時 `network` / `socket-error` 自動重連 3 次。
    - 第二台電腦連上房主時，透過 `startHelloQueryLoop()` + `round_sync` 雙向觸發 `hello_query`，徹底消除 WebRTC DataChannel 剛開啟時的漏包問題 (`T76` 實測通過)。
+
+
+---
+
+## 十六、 v7.2 玩家一起打 AI 雙模式全面支援：「選擇同隊・一起判定勝利」與「選擇不同隊・兩邊都有 AI 隊員」 (`T77`, 87/87 自動測試通過)
+
+### 1. 模式一：玩家選擇同隊一起打 AI（`🤝 與房主同隊` — 全隊合作、一起判定勝利）
+- **多管道自由選隊**：
+  1. **大廳選單 (`#team-pref-select`)**：可選「`⚖️ 自動 (打 AI 時預設同隊一起獲勝)`」或「`🤝 與房主同隊 (一起合作打 AI・共同判定勝利)`」。
+  2. **加入房間選隊視窗 (`#team-select-modal`)**：連上房主時清楚標示「`加入 🟦 藍隊（🤝 同隊打 AI・一起獲勝・建議）`」。
+  3. **房間等待室 (`#waiting-room-modal`)**：新增 **「`🔄 切換我的隊伍 (藍隊 ⇄ 紅隊)`」** 按鈕與即時戰術橫幅 (`#wait-ai-mode-hint`)，開賽前隨時可切換為全員同隊或分隊對抗。
+- **動態敵方 AI 陣營配置 (`getActiveAITeams()`)**：
+  - 當所有人類玩家都在藍隊 (`Team 0`) 時，AI 大軍全數於北側紅隊基地 (`Team 1, z = -27`) 生成出擊；若所有人類玩家都切換到紅隊 (`Team 1`)，AI 大軍則自動改由南側藍隊基地 (`Team 0, z = +27`) 生成出擊！
+- **全隊共享戰果與「一起判定勝利」 (`endRoundByTime` & `checkRoundVictoryCondition`)**：
+  - 同隊所有玩家的擊殺數共同累計於我方陣營總擊殺 (`teamKills[playerState.team]`)。
+  - 當回合時間結束我方總擊殺領先 AI 軍團，或於全滅模式殲滅全數敵方 AI 波次時，房主主機立即計算 `winnerTeam = playerState.team` 並透過 `Net.sendMatchEnd(winnerTeam, msg)` 廣播給房內所有玩家，**所有同隊玩家畫面同步跳出「🏆 我方獲勝 — 🤝 同隊合作勝利！全隊齊心擊退 AI 軍團」**，真正實現一起判定勝利！
+
+### 2. 模式二：玩家選擇不同隊打 AI（`⚔️ 與房主不同隊` — 藍紅兩邊都有 AI 隊員並肩作戰）
+- **雙邊 AI 隊員自動生成 (`getActiveAITeams() === [0, 1]`)**：
+  - 只要房間開啟 AI (`aiEnabled === true`) 且人類玩家選擇了不同隊伍（藍隊 `Team 0` 與紅隊 `Team 1` 都有人類玩家），系統立即啟動 **雙邊 AI 隊員模式**：
+    - **🟦 藍隊 AI 隊員 (`ai.team === 0`)**：由南側藍方基地 (`AI_BASE_GATES_BY_TEAM[0], z = +27`) 出發，身穿藍隊配色、頭頂顯示友善天藍色名牌 (`[藍隊AI]`)，在藍隊玩家的雷達小地圖上顯示為**天藍色友軍點 (`#38bdf8`)**，且不會與藍隊玩家發生友軍誤傷。
+    - **🟥 紅隊 AI 隊員 (`ai.team === 1`)**：由北側紅方基地 (`AI_BASE_GATES_BY_TEAM[1], z = -27`) 出發，身穿紅隊配色、頭頂顯示紅隊名牌 (`[紅隊AI]`)，在紅隊玩家的雷達小地圖上顯示為**天藍色友軍點 (`#38bdf8`)**，且不會與紅隊玩家發生友軍誤傷。
+- **AI 隊員跨陣營索敵與互射 (`aiEnemyCandidates(ai)` & `gameLoop`)**：
+  - 每一名 AI 隊員的索敵清單 (`aiEnemyCandidates(ai)`) 會同時搜尋 **「敵對陣營的人類玩家」** 與 **「敵對陣營的 AI 隊員」**。
+  - 藍隊 AI 隊員會主動推進掩體、幫忙射擊紅隊玩家與紅隊 AI；紅隊 AI 隊員也會主動射擊藍隊玩家與藍隊 AI，且雙方 AI 隊員取得的擊殺都會自動計入各自隊伍的總比分！
+
+---
+
+## 十七、 v7.3 房主與連線客戶端「獲勝隊伍、結算結果與排行榜」100% 權威同步修正 (`T78`, 88/88 自動測試通過)
+
+### 1. 問題根因分析（為何開房間的人看到正確獲勝隊伍，連線進去的人卻看到錯誤結算結果？）
+經分析您提供的實測截圖與 `v7.2` 結算流程程式碼，找出四個導致客戶端（連線進去的人）看到錯誤結算結果的原因：
+1. **原因一：客戶端本地計時器先歸零觸發 `endRoundByTime()`，並以 `isRoundEnded = true` 鎖死，直接忽略了房主傳來的 `match_end_event`**
+   - 在 `gameLoop` 與 `Net.onRoundTick` 中，當客戶端的 `roundRemainingTime <= 0` 時，客戶端會直接執行本地的 `endRoundByTime()`，用客戶端自己不完整的本地 `scoreboard` 計算勝負，並呼叫 `announceMatchEnd` 將 `isRoundEnded` 設為 `true`。
+   - 幾十毫秒後，當房主（開房間的人）送出真正的 `match_end_event` 抵達客戶端時，`announceMatchEnd` 第一行 `if (isRoundEnded) return;` 直接將房主的權威結算結果丟棄！
+2. **原因二：`Net.sendMatchEnd` 未附帶房主的權威戰績表 (`scoreboard` & `roomTotalScoreboard`)，且客戶端擊殺 AI 未回傳個人擊殺數**
+   - 原本 `Net.sendMatchEnd(winnerTeam, message)` 只傳送 `winnerTeam` 與 `message`，沒有傳送房主統計的 `scoreboard`（本局榜）與 `roomTotalScoreboard`（房間累計榜）。
+   - 當客戶端射殺 AI 時，是由房主在 `Net.onPlayerHit` 執行 `killAI`，導致客戶端本地 `playerState.kills` 維持 `0`，且客戶端本地排行榜漏計了房主端結算的擊殺數（如截圖中顯示 `藍隊 0 殺 vs 紅隊 3 殺`、個人擊倒數 `0`）。
+3. **原因三：搶旗模式 (`ctf`) 時間到結算與 4 旗全佔時漏呼叫 `Net.sendMatchEnd`**
+   - `endRoundByTime()` 的 `if (gameModeSetting === 'ctf')` 分支提前 `return`，未呼叫 `if (Net.isHost) Net.sendMatchEnd(...)`。
+4. **原因四：結算大標題只顯示「戰鬥勝利 / 戰術撤退」，未明確標示「哪一隊獲勝（藍隊獲勝 / 紅隊獲勝）」**
+   - 當玩家在等待室切換隊伍或查看結算畫面時，大標題僅顯示個人勝負（`戰鬥勝利` 或 `戰術撤退`），未直接標出「`🏆 紅隊獲勝`」或「`🏆 藍隊獲勝`」。
+
+### 2. v7.3 修復方案（房主權威結算快照 + 比賽中 10Hz 即時戰績同步 + 強制覆寫鎖定 + 明確獲勝隊伍標示）
+1. **房主權威結算封包 (`Net.sendMatchEnd` + `serializeScoreboardSnapshot` + `applyAuthoritativeScoreboard`)**：
+   - 只有房主（`isMatchAuthority()`）負責判定時間到、全滅或 4 旗完勝，並在 `match_end_event`（以及 `round_tick`）中完整附帶：
+     - `winnerTeam`（`0` = 藍隊獲勝、`1` = 紅隊獲勝、`-1` = 平手）
+     - `scoreboard`（房主完整本回合戰績表）與 `roomTotalScoreboard`（房間累計總擊殺榜）
+     - `ctf`（4 面戰旗最終狀態）
+   - 客戶端收到 `Net.onMatchEndEvent` 時，立即執行 `applyAuthoritativeScoreboard(...)` 完整覆寫本地排行榜、同步更新個人擊倒數 (`playerState.kills` 與 `#kills-count` / `#final-kills`)，並以 `forceAuthority = true` 呼叫 `announceMatchEnd`（即使客戶端已開啟橫幅或結算視窗，也會強制刷新為房主的權威結算結果！）。
+2. **客戶端計時歸零不再搶先鎖死本地結算 (`gameLoop` & `checkRoundVictoryCondition`)**：
+   - 客戶端在 `roundRemainingTime <= 0` 時不再自行搶先執行不完整的本地 `endRoundByTime()`，而是等待房主的權威 `match_end_event`（同時房主會於 `0ms`、`350ms`、`1000ms` 與 `round_tick` 多重確保送達）。
+3. **比賽進行中即時同步擊殺與戰績 (`Net.sendAISync` 10Hz + `Net.sendKillEvent` `killId` 去重)**：
+   - 客戶端射擊 AI 統一帶上 `shooterTeam`，房主 `killAI` 廣播含 `killId` 與 `weaponLabel` 的 `kill_event`，客戶端即時累加 `playerState.kills` 並顯示擊殺播報；同時房主每 100ms (`ai_sync`) 與每 3.5s (`round_tick`) 持續同步最新 `scoreboard`。
+4. **結算橫幅與結算畫面大標題明確顯示「獲勝隊伍」**：
+   - 全螢幕橫幅與結算視窗標題直接顯示 **「`🏆 紅隊獲勝・戰鬥勝利！`」** 或 **「`🏆 紅隊獲勝（我方戰術撤退）`」** 以及副標題 **「`🟥 紅隊獲勝 ｜ VICTORY / DEFEATED`」**，開房間的人與連線進去的人看到 100% 完全一致的獲勝隊伍、比分、MVP 與排行榜！
+
+---
+
+## 十八、 v7.4 搶旗模式 (CTF) 電腦 AI 戰術大腦、紅藍黑三色戰旗與 `[G]` 鍵連打 2 倍速升降旗 (`T79`, 89/89 自動測試通過)
+
+### 1. 搶旗模式 (CTF) 電腦 AI 應該要有什麼動作？（四大優先級戰術狀態機 `aiSelectCtfObjective` & `aiUpdateCtfBehavior`）
+在搶旗模式 (`gameModeSetting === 'ctf'`) 下，電腦 AI（包含敵方 AI 與雙邊 AI 隊員）由專屬的 **CTF 四大優先級戰術大腦** 驅動，具備完整的跨樓層（1F ⇄ 2F 外掛階梯）尋路與攻防決策：
+
+| 優先級 | 戰術代號 (`ai.ctfRole`) | 觸發條件 | 電腦 AI 具體動作與走位邏輯 |
+| :--- | :--- | :--- | :--- |
+| **Priority 1 (最高)** | **`RESCUE_HOME_FLAG`**<br>（緊急回防救旗） | 自家大本營戰旗（藍隊 `ctfFlags[2]` 或紅隊 `ctfFlags[3]`）高度 `< 1.0`（正遭敵軍降旗）或顏色已被改為敵隊 | 1. 立即中斷當前巡邏，以 **`1.18x` 衝刺速度** 趕回自家基地旗座（若在二樓則先沿階梯下樓）。<br>2. 途中看到正在偷旗的敵軍時提高開火頻率（`35%` 壓制射擊）優先擊斃奪旗者。<br>3. 站入自家旗座圈內（`d < 2.8m`），先將敵方旗降到底，再重新升滿自家紅／藍旗！ |
+| **Priority 2** | **`CAPTURE_2F_BLACK_FLAG`**<br>（衝上二樓搶中立黑旗） | 中央兩棟房屋二樓屋頂的戰旗（西棟 `ctfFlags[0]` 或東棟 `ctfFlags[1]`）仍為 **沒搶到的黑旗 (`currentColorTeam === -1`)**，或隊友升到一半 | 1. 自動計算同隊 AI 已前往哪一棟二樓並進行**東西分流**，避免全部擠在同一棟屋頂。<br>2. 沿房屋外側 14 階實體階梯精準尋路：樓梯口 (`x=±23.3, z=7.0`) → 樓梯斜坡中段 (`z=1.5, y=1.8`) → 二樓北側平台 (`z=-2.8, y=3.4`) → 繞過二樓軍用擋牆進入屋頂中央旗座圈 (`x=±15.9, z=0, y=3.4`)。<br>3. 站在旗下自動將黑旗降下並升起本隊紅旗／藍旗。 |
+| **Priority 3** | **`RAID_ENEMY_FLAG`**<br>（主動突襲敵方旗座） | 場上已無中立黑旗，且敵隊持有二樓戰旗或敵方大本營戰旗 | 1. 優先奪回敵方佔領的二樓高地戰旗，其次推進突襲敵方大本營戰旗 (`z = ±29`)。<br>2. 進入旗座範圍後開始降下敵方旗幟、換升我方旗幟。 |
+| **Priority 4** | **`CTF_CAPTURING` / `CTF_DEFENDING`**<br>（駐點蹲姿升降旗 & 邊守旗邊開火） | AI 已經踏入目標旗座半徑 `2.8m` 內（且同樓層） | 1. **駐點蹲姿掩護**：自動採取戰術蹲姿 (`scale.y = 0.72`) 降低受彈面積，借助二樓混凝土擋牆掩護持續升降旗。<br>2. **邊升旗邊開火自衛**：升降旗期間絕不輕易離開旗圈；若 `42m` 視線 (`LOS`) 內出現敵人，AI 會在旗圈內直接轉向瞄準敵人開火還擊！<br>3. **升滿後高地駐守**：旗子完全升滿後，AI 於二樓屋頂制高點警戒巡邏，狙擊試圖上樓奪旗的敵人。 |
+
+### 2. 戰旗顏色規範：紅藍隊為「紅旗／藍旗」，沒搶到的是「黑旗」 (`syncCtfFlagVisual`)
+- **🟦 藍隊戰旗 (`currentColorTeam === 0`)**：固定為鮮明皇家藍旗 (`CTF_FLAG_BLUE_HEX = 0x2563eb`，微光 `0x1e3a8a`)，地面光圈同步顯示藍色。
+- **🟥 紅隊戰旗 (`currentColorTeam === 1`)**：固定為鮮明赤紅戰旗 (`CTF_FLAG_RED_HEX = 0xef4444`，微光 `0x7f1d1d`)，地面光圈同步顯示紅色。
+- **⬛ 沒搶到的戰旗 (`currentColorTeam === -1`)**：
+  - 中央兩棟房子二樓的戰旗開局預設為**純黑戰旗 (`CTF_FLAG_BLACK_HEX = 0x111827`)**。
+  - 若某隊在升旗階段（尚未升滿 `1.0`）中途離開或陣亡，旗子緩慢滑落至底部 (`heightRatio <= 0`) 時，會自動恢復為**沒搶到的黑旗 (`currentColorTeam = -1`)**。
+
+### 3. 按 `[G]` 鍵連打加速升降旗至兩倍速 (`2.0x`) 與畫面即時提示 (`triggerCtfGMash`)
+- **基礎自動升降旗 (`1.0x`)**：玩家靠近站入旗座光圈 (`2.8m` 內) 即可自動慢速升降旗（降旗 `12 秒` + 升旗 `12 秒` = `24 秒`）。
+- **`[G]` 鍵連打兩倍速 (`2.0x`)**：
+  - 當玩家站在旗座範圍內時，**連續按壓鍵盤 `[G]` 鍵**（或連點畫面上的搶旗加速按鈕 `#ctf-action-btn`），每次按壓都會啟動／延展 `650ms` 的 **2 倍速渦輪升降旗狀態 (`speedMult = 2.0`)**。
+  - 在 `2.0x` 連打加速狀態下，降旗僅需 **`6 秒`**、升旗僅需 **`6 秒`**，升降旗速度整整提升至 **2 倍**！
+- **醒目玩家提示 UI (`#ctf-action-btn` & `#ctf-bar-text`)**：
+  - 踏入旗座時，畫面下方會立即彈出提示按鈕與進度條說明：
+    - 未連打時：**`🚩 已進入【西側二樓戰旗】(⬛ 沒搶到的黑旗) — 💡 連打 [G] 鍵可加速升降旗到兩倍 (2.0x)！`**
+    - 連打 `[G]` 鍵加速中：**`⚡ [G] 鍵連打 2 倍速加速中 (2.0x)！正在快速升降【西側二樓戰旗】`**，進度條同步顯示 **`🔥 [G] 連打 2.0x 兩倍速！`**。

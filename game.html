@@ -8,7 +8,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="現代突擊3D">
-  <title>Q版特種部隊：現代突擊 3D v7.1 - 跨平台電競對戰</title>
+  <title>Q版特種部隊：現代突擊 3D v7.4 - 跨平台電競對戰</title>
   <!-- Tailwind CSS (支援 Jetski 官方與外部 CDN) -->
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -163,10 +163,14 @@
       </div>
 
       <div class="bg-slate-950/90 border border-slate-800 rounded-2xl p-3.5 mb-3">
-        <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center justify-between gap-2 flex-wrap mb-2">
           <span class="text-xs font-black text-slate-200">👥 已連線隊員名單 (<span id="wait-player-count">1</span> 人)</span>
-          <span class="text-[11px] text-cyan-300 font-semibold" id="wait-broadcast-hint">📡 正在向大廳持續廣播「等待中」狀態…</span>
+          <div class="flex items-center gap-2">
+            <button id="btn-wait-switch-team" class="px-2.5 py-1 rounded-lg bg-indigo-600/80 hover:bg-indigo-500 border border-indigo-400/50 text-[11px] font-black text-white active:scale-95 transition">🔄 切換我的隊伍 (藍隊 ⇄ 紅隊)</button>
+            <span class="text-[11px] text-cyan-300 font-semibold" id="wait-broadcast-hint">📡 正在向大廳持續廣播「等待中」狀態…</span>
+          </div>
         </div>
+        <div id="wait-ai-mode-hint" class="hidden text-[11px] font-bold px-3 py-1.5 rounded-xl mb-2 bg-emerald-500/15 border border-emerald-400/40 text-emerald-300"></div>
         <div id="wait-player-list" class="space-y-1.5 max-h-48 overflow-y-auto custom-scroll"></div>
       </div>
 
@@ -239,7 +243,7 @@
           <span id="hud-fps" class="px-1.5 py-0.5 rounded text-[11px] font-mono text-slate-400 bg-slate-900/80 border border-slate-800">
             60 FPS
           </span>
-          <span id="hud-build" class="px-1.5 py-0.5 rounded text-[10px] font-mono text-amber-300/90 bg-slate-900/80 border border-slate-800">v7.1 · 建置 2026-10-25 15:14 (台北)</span>
+          <span id="hud-build" class="px-1.5 py-0.5 rounded text-[10px] font-mono text-amber-300/90 bg-slate-900/80 border border-slate-800">v7.4 · 建置 2026-10-25 23:35 (台北)</span>
         </div>
         <div class="text-xs text-slate-300 font-semibold bg-slate-900/80 border border-slate-800 px-2.5 py-1 rounded-lg backdrop-blur-sm flex items-center gap-2">
           <span>擊倒: <b id="kills-count" class="text-amber-400">0</b></span>
@@ -348,7 +352,7 @@
   <!-- 搶旗互動按鍵提示與雙階段升降旗進度條 (#4 #8) -->
   <div id="ctf-bar-box" class="hidden absolute bottom-28 left-1/2 -translate-x-1/2 z-30 w-96 max-w-[92vw] flex flex-col items-center gap-1.5 pointer-events-auto">
     <button id="ctf-action-btn" class="hidden px-4 py-2 rounded-2xl bg-gradient-to-r from-amber-400 to-rose-500 text-slate-950 font-black text-xs sm:text-sm shadow-xl border-2 border-white/80 active:scale-95 transition select-none cursor-pointer">
-      🚩 按住 [E] 鍵（或按住此鈕）開始升降旗
+      🚩 站入旗座自動升降旗｜⚡ 連打 [G] 鍵可加速升降旗到兩倍 (2.0x)！
     </button>
     <div class="w-full bg-slate-950/90 border border-slate-700 rounded-2xl px-3.5 py-2 shadow-xl pointer-events-none">
       <div id="ctf-bar-text" class="text-center text-xs font-black text-amber-300 mb-1 drop-shadow"></div>
@@ -432,10 +436,10 @@
         <span>●</span> WebRTC P2P + 本地雙通道零延遲連線架構
       </div>
       <h1 class="text-2xl sm:text-3xl font-black tracking-wider text-white mb-1">
-        Q版特種部隊：現代突擊 3D v7.1
+        Q版特種部隊：現代突擊 3D v7.4
       </h1>
       <p class="text-xs text-slate-400 mb-1 font-medium">支援 iPad 觸控手勢與電腦 PC 鍵鼠同場競技 ｜ 藍天白雲雙層 CQB 戰場</p>
-      <div id="build-stamp" class="inline-block text-[11px] font-mono font-bold text-amber-300 bg-slate-950 border border-amber-400/40 rounded-lg px-2.5 py-1 mb-4">🏷️ 版本 v7.1 · 建置 2026-10-25 15:14 (台北)</div>
+      <div id="build-stamp" class="inline-block text-[11px] font-mono font-bold text-amber-300 bg-slate-950 border border-amber-400/40 rounded-lg px-2.5 py-1 mb-4">🏷️ 版本 v7.4 · 建置 2026-10-25 23:35 (台北)</div>
 
       <details class="text-left text-[11px] text-slate-400 bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2 mb-3">
         <summary class="cursor-pointer font-bold text-slate-300">❓ 房間怎麼運作？(開房 / 看到別人 / 關閉 / 多久消失)</summary>
@@ -540,9 +544,9 @@
           <div>
             <label class="block text-xs font-bold text-slate-300 mb-1">加入時的隊伍</label>
             <select id="team-pref-select" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-emerald-500">
-              <option value="auto">⚖️ 自動 (無 AI 時平均分兩隊，有 AI 時同隊打電腦)</option>
-              <option value="same">🤝 與房主同隊</option>
-              <option value="other">⚔️ 與房主對打 (不同隊)</option>
+              <option value="auto">⚖️ 自動 (打 AI 時預設同隊一起獲勝，無 AI 時平均分隊)</option>
+              <option value="same">🤝 與房主同隊 (一起合作打 AI・共同判定勝利)</option>
+              <option value="other">⚔️ 與房主不同隊 (對抗模式・兩邊都有 AI 隊員)</option>
             </select>
           </div>
           <div>
@@ -1436,6 +1440,15 @@
           case 'hello':        // 新玩家報到 → 主機分配隊伍與漆彈顏色
             if (this.isHost) this.handleHello(data, fromConn);
             break;
+          case 'team_switch':  // 玩家在等待室或遊戲中切換隊伍 (同隊合作 vs 不同隊兩邊都有 AI)
+            if (this.isHost && data.sender && this.roster[data.sender]) {
+              this.roster[data.sender].team = (data.team === 1) ? 1 : 0;
+              this.sendAll({ type: 'roster', roster: this.roster, hostName: playerState.name, hostTeam: playerState.team, hostPaint: playerState.paintColor, hostStyle: playerState.style, hostSpec: playerState.spec, sender: this.myId });
+              if (scoreboard[this.roster[data.sender].name]) scoreboard[this.roster[data.sender].name].team = this.roster[data.sender].team;
+              renderWaitingRoomUI();
+              if (typeof ensureAITeamsSpawned === 'function') ensureAITeamsSpawned();
+            }
+            break;
           case 'pickup_event': // 有人撿走道具 → 全員同步消失 (#1)
             if (this.onPickupEvent) this.onPickupEvent(data);
             break;
@@ -1458,10 +1471,28 @@
               this.onWelcome(data);
             }
             break;
-          case 'roster':
-            this.roster = data.roster || {};
+          case 'roster': {
+            const hostKey = 'QFORCE3D_' + this.roomCode + '_HOST';
+            const prevHost = this.roster ? this.roster[hostKey] : null;
+            this.roster = Object.assign({}, data.roster || {});
+            if (!this.isHost) {
+              if (data.hostName || prevHost) {
+                this.roster[hostKey] = {
+                  name: data.hostName || (prevHost && prevHost.name) || '房主',
+                  team: (data.hostTeam === 0 || data.hostTeam === 1) ? data.hostTeam : ((prevHost && prevHost.team) ?? 0),
+                  paint: data.hostPaint ?? (prevHost && prevHost.paint),
+                  style: data.hostStyle || (prevHost && prevHost.style),
+                  spec: data.hostSpec || (prevHost && prevHost.spec)
+                };
+              }
+              if (this.roster[this.myId] && (this.roster[this.myId].team === 0 || this.roster[this.myId].team === 1)) {
+                playerState.team = this.roster[this.myId].team;
+                if (typeof scoreEntry === 'function') scoreEntry(playerState.name, playerState.team, playerState.spec);
+              }
+            }
             if (this.onRoster) this.onRoster(this.roster);
             break;
+          }
           case 'hit_event':
             if (this.onPlayerHit) this.onPlayerHit(data);
             break;
@@ -1537,10 +1568,11 @@
           try { fromConn.send(payload); } catch (e) {}
         }
         this.sendAll(payload);
-        this.sendAll({ type: 'roster', roster: this.roster, sender: this.myId });
+        this.sendAll({ type: 'roster', roster: this.roster, hostName: playerState.name, hostTeam: playerState.team, hostPaint: playerState.paintColor, hostStyle: playerState.style, hostSpec: playerState.spec, sender: this.myId });
         if (typeof addKillFeed === 'function') addKillFeed(`🟢 ${data.name} 加入了 ${team === 0 ? '藍隊' : '紅隊'}`, '#a3e635');
         RoomRegistry.registerMyRoom(this.roomCode, playerState.name, gameModeSetting, Object.keys(this.roster).length + 1, this.roomStatus);
         renderWaitingRoomUI();
+        if (typeof ensureAITeamsSpawned === 'function') ensureAITeamsSpawned();
       },
 
       sendHello: function(team) {
@@ -1554,8 +1586,41 @@
       sendPickupEvent: function(id, respawnTime) { this.sendAll({ type: 'pickup_event', id, respawnTime }); },
       sendDropEvent: function(data) { this.sendAll({ type: 'drop_event', drop: data }); },
       sendVote: function(tactic) { this.sendAll({ type: 'vote_event', tactic, team: playerState.team, name: playerState.name }); },
-      sendMatchEnd: function(winnerTeam, message) { this.sendAll({ type: 'match_end_event', winnerTeam, message }); },
-      sendRoundTick: function() { this.sendAll({ type: 'round_tick', roundRemaining: roundRemainingTime, roundMode: roundModeSetting, ended: isRoundEnded }); },
+      sendMatchEnd: function(winnerTeam, message, extra) {
+        const snap = (typeof serializeScoreboardSnapshot === 'function') ? serializeScoreboardSnapshot() : {};
+        const ctfSnap = (typeof serializeCtfSnapshot === 'function') ? serializeCtfSnapshot() : null;
+        const payload = {
+          type: 'match_end_event',
+          winnerTeam,
+          message,
+          scoreboard: snap.scoreboard || null,
+          roomTotalScoreboard: snap.roomTotalScoreboard || null,
+          roomRoundCount: snap.roomRoundCount || 1,
+          ctf: ctfSnap,
+          ...(extra || {})
+        };
+        this._lastMatchEndPayload = payload;
+        this.sendAll(payload);
+        if (!window.__manualLoop && !location.search.includes('autotest')) {
+          setTimeout(() => { if (this.isHost && isRoundEnded && this._lastMatchEndPayload === payload) this.sendAll(payload); }, 350);
+          setTimeout(() => { if (this.isHost && isRoundEnded && this._lastMatchEndPayload === payload) this.sendAll(payload); }, 1000);
+        }
+      },
+      sendRoundTick: function() {
+        const snap = (typeof serializeScoreboardSnapshot === 'function') ? serializeScoreboardSnapshot() : {};
+        const ctfSnap = (typeof serializeCtfSnapshot === 'function') ? serializeCtfSnapshot() : null;
+        this.sendAll({
+          type: 'round_tick',
+          roundRemaining: roundRemainingTime,
+          roundMode: roundModeSetting,
+          ended: isRoundEnded,
+          scoreboard: snap.scoreboard || null,
+          roomTotalScoreboard: snap.roomTotalScoreboard || null,
+          roomRoundCount: snap.roomRoundCount || 1,
+          ctf: ctfSnap,
+          matchEndPayload: isRoundEnded ? (this._lastMatchEndPayload || null) : null
+        });
+      },
 
       startHelloQueryLoop: function() {
         clearInterval(this.helloRetryTimer);
@@ -1912,12 +1977,19 @@
       },
 
       broadcastState: function(state) { this.sendAll({ type: 'state_update', ...state }); },
-      sendHitEvent: function(targetUid, damage, shooterName, paint, shooterTeam) { this.sendAll({ type: 'hit_event', targetUid, shooterId: this.myId, shooterName, damage, paint, shooterTeam }); },
-      sendKillEvent: function(victim, killer, victimTeam, killerTeam) { this.sendAll({ type: 'kill_event', victim, killer, victimTeam, killerTeam, victimUid: this.myId }); },
+      sendHitEvent: function(targetUid, damage, shooterName, paint, shooterTeam) { this.sendAll({ type: 'hit_event', targetUid, shooterId: this.myId, shooterName, damage, paint, shooterTeam: (shooterTeam === 0 || shooterTeam === 1) ? shooterTeam : playerState.team }); },
+      sendKillEvent: function(victim, killer, victimTeam, killerTeam, victimUid, weaponLabel) {
+        const killId = this.myId + '_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+        this.sendAll({ type: 'kill_event', killId, victim, killer, victimTeam, killerTeam, victimUid: victimUid || this.myId, weaponLabel: weaponLabel || '漆彈' });
+      },
       sendShotEvent: function(shot) { this.sendAll({ type: 'shot_event', ...shot }); },
       sendBombEvent: function(action, pos) { this.sendAll({ type: 'bomb_event', action, x: pos.x, y: pos.y, z: pos.z }); },
-      sendRematchEvent: function() { this.sendAll({ type: 'rematch_event' }); },
-      sendAISync: function(list) { this.sendAll({ type: 'ai_sync', ai: list }); },
+      sendRematchEvent: function() { this._lastMatchEndPayload = null; this.sendAll({ type: 'rematch_event' }); },
+      sendAISync: function(list) {
+        const snap = (typeof serializeScoreboardSnapshot === 'function') ? serializeScoreboardSnapshot() : {};
+        const ctfSnap = (typeof serializeCtfSnapshot === 'function') ? serializeCtfSnapshot() : null;
+        this.sendAll({ type: 'ai_sync', ai: list, scoreboard: snap.scoreboard || null, ctf: ctfSnap });
+      },
       sendAIToggle: function(enabled) { this.sendAll({ type: 'ai_toggle', enabled }); },
 
       startHeartbeat: function() {
@@ -4388,21 +4460,31 @@
       });
     }
 
-    // AI 敵人分批慢慢從敵方基地出發 (#6, #8)
+    // AI 基地出兵閘門：支援藍隊基地 (南側 z=+27) 與紅隊基地 (北側 z=-27) 雙邊出兵 (#6, #8, v7.2)
     const AI_BASE_GATES = [
       { x: -3.75, z: -27 },
       { x: 3.75, z: -27 },
       { x: -12.5, z: -27 },
       { x: 12.5, z: -27 }
     ];
+    const AI_BASE_GATES_BY_TEAM = {
+      0: [
+        { x: -3.75, z: 27 },
+        { x: 3.75, z: 27 },
+        { x: -12.5, z: 27 },
+        { x: 12.5, z: 27 }
+      ],
+      1: AI_BASE_GATES
+    };
     let aiSpawnIntervalTimer = 0;
-
     let aiSpawnCounter = 0;
+    const aiWaveSpawnedByTeam = { 0: 0, 1: 0 };
+    const AI_COOP_WAVE_LIMIT = 6; // 全滅模式下每波敵方 AI 總兵力上限，全數殲滅即全隊共同獲勝
+
     /* =========================================================================
-       15. AI 戰術大腦 v5 (#9~#13)：主機權威模擬 + 客戶端鏡像同步
-          狀態：ADVANCE(推進到掩體) → HIDE(蹲藏) → PEEK_SHOOT(探頭射擊) ⇄
-                FLEE(中彈後逃往另一個掩體) → HIDE → PEEK_SHOOT(回射)
-                HUNT(久未交戰：沿路徑點進屋 1F 門口 / 2F 屋頂) → CAMP(定點狙擊)
+       15. AI 戰術大腦 v7.2 (#9~#13)：支援「同隊合作打 AI (共同判定勝利)」與「不同隊雙邊 AI 隊員助戰」
+          - 當所有人類玩家選擇同一隊 (例如都在藍隊 0 或都在紅隊 1)：AI 全數生成於對立陣營 (1 - humanTeam)
+          - 當人類玩家選擇不同隊 (藍隊與紅隊皆有人類玩家)：兩邊陣營 (Team 0 與 Team 1) 皆會自動生成 AI 隊員助戰！
        ========================================================================= */
     const AI_TEAM = 1;
     const AI_SPEED = 3.0, AI_FLEE_SPEED = 4.4;
@@ -4412,6 +4494,45 @@
 
     function isAIAuthority() {
       return Net.isHost || !Net.roomCode || ['SOLO', 'AUTOTEST', 'DEMO'].includes(Net.roomCode);
+    }
+
+    // 統計目前房間內人類玩家在藍隊 (0) 與紅隊 (1) 的人數
+    function getHumanTeamCounts() {
+      const counts = [0, 0];
+      const myTeam = (playerState.team === 1) ? 1 : 0;
+      counts[myTeam]++;
+      const hostUid = 'QFORCE3D_' + Net.roomCode + '_HOST';
+      Object.entries(Net.roster || {}).forEach(([uid, r]) => {
+        if (!r || uid === Net.myId) return;
+        const t = (r.team === 1) ? 1 : 0;
+        counts[t]++;
+      });
+      Object.entries(remotePlayers || {}).forEach(([uid, rp]) => {
+        if (!rp || uid === Net.myId || (Net.roster && Net.roster[uid])) return;
+        const t = (rp.team === 1) ? 1 : 0;
+        counts[t]++;
+      });
+      return counts;
+    }
+
+    // 是否為「所有人類玩家同隊合作打 AI」
+    function isCoopSameTeamAgainstAI() {
+      if (!aiEnabled) return false;
+      const counts = getHumanTeamCounts();
+      return !(counts[0] > 0 && counts[1] > 0) && !window.forceBothTeamsAI;
+    }
+
+    // 取得目前應生成 AI 的陣營列表：
+    // - 若玩家選擇不同隊 (藍紅兩隊皆有玩家)：回傳 [0, 1]，兩邊都有 AI 隊員！
+    // - 若玩家選擇同一隊 (同隊合作打 AI)：回傳 [1 - humanTeam]，全部玩家一起合作對抗敵軍 AI！
+    function getActiveAITeams() {
+      if (!aiEnabled) return [];
+      const counts = getHumanTeamCounts();
+      if ((counts[0] > 0 && counts[1] > 0) || window.forceBothTeamsAI) {
+        return [0, 1];
+      }
+      const humanTeam = counts[1] > 0 && counts[0] === 0 ? 1 : 0;
+      return [1 - humanTeam];
     }
 
     // 房屋路徑點 (進屋狙擊 #13)
@@ -4428,18 +4549,30 @@
       return routes;
     })();
 
-    function aiEnemyCandidates() {
+    function aiEnemyCandidates(ai) {
+      const myTeam = (ai && ai.team !== undefined) ? ai.team : AI_TEAM;
       const list = [];
-      if (playerState.team !== AI_TEAM && !playerState.isSpectating && isGameRunning) list.push({ x: playerGroup.position.x, y: playerFeetY, z: playerGroup.position.z, h: eyeOffsetCurrent, uid: Net.myId, name: playerState.name, local: true });
+      if (playerState.team !== myTeam && !playerState.isSpectating && isGameRunning) {
+        list.push({ x: playerGroup.position.x, y: playerFeetY, z: playerGroup.position.z, h: eyeOffsetCurrent, uid: Net.myId, name: playerState.name, team: playerState.team, local: true });
+      }
       for (const uid in remotePlayers) {
         const rp = remotePlayers[uid];
-        if (rp.team !== AI_TEAM && rp.alive !== false) list.push({ x: rp.mesh.position.x, y: rp.mesh.position.y, z: rp.mesh.position.z, h: 1.5, uid, name: rp.name, local: false });
+        if (rp.team !== myTeam && rp.alive !== false && !rp.out) {
+          list.push({ x: rp.mesh.position.x, y: rp.mesh.position.y, z: rp.mesh.position.z, h: 1.5, uid, name: rp.name, team: rp.team, local: false });
+        }
+      }
+      // 當兩邊都有 AI 隊員時，藍隊 AI 與紅隊 AI 也會互相鎖定交火！
+      for (let i = 0; i < aiEnemies.length; i++) {
+        const other = aiEnemies[i];
+        if (other && other !== ai && other.state !== 'DEAD' && other.team !== myTeam) {
+          list.push({ x: other.mesh.position.x, y: other.mesh.position.y, z: other.mesh.position.z, h: other.bodyHeight || 1.6, uid: other.id, name: other.name, team: other.team, local: false, isAI: true, aiRef: other });
+        }
       }
       return list;
     }
 
     function aiPickTarget(ai) {
-      const cands = aiEnemyCandidates();
+      const cands = aiEnemyCandidates(ai);
       let best = null, bestD = 1e9;
       cands.forEach(c => { const d = Math.hypot(c.x - ai.mesh.position.x, c.z - ai.mesh.position.z); if (d < bestD) { bestD = d; best = c; } });
       ai.target = best;
@@ -4559,8 +4692,10 @@
       const dir = ballisticDirection(muzzle, aimPt, wpn.speed);
       const spread = 0.05 + (ai.hitTimer > 0 ? 0.04 : 0);
       dir.x += (Math.random() - 0.5) * spread; dir.y += (Math.random() - 0.5) * spread * 0.6; dir.z += (Math.random() - 0.5) * spread;
-      firePaintballBullet(muzzle, dir, wpn, false, ai.id, ai.name, ai.paint);
-      Net.sendShotEvent({ x: muzzle.x, y: muzzle.y, z: muzzle.z, dx: dir.x, dy: dir.y, dz: dir.z, weapon: ai.weaponKey, paint: ai.paint, ai: true });
+      const isFriendlyAI = (ai.team === playerState.team);
+      const pr = firePaintballBullet(muzzle, dir, wpn, isFriendlyAI, ai.id, ai.name, ai.paint);
+      if (pr) { pr.shooterTeam = ai.team; pr.fromAI = true; pr.shooterWeapon = ai.weaponKey; }
+      Net.sendShotEvent({ x: muzzle.x, y: muzzle.y, z: muzzle.z, dx: dir.x, dy: dir.y, dz: dir.z, weapon: ai.weaponKey, paint: ai.paint, ai: true, team: ai.team });
     }
 
     // 被擊中 / 被發現 (子彈落在附近) 時呼叫 (#10 #12)：轉頭就跑到另一個掩體
@@ -4577,36 +4712,69 @@
       aiSetState(ai, 'FLEE', 4.0);
     }
 
-    function spawnAIEnemyFromBase(gateIndex) {
-      const gate = AI_BASE_GATES[gateIndex % AI_BASE_GATES.length];
+    function spawnAIEnemyFromBase(gateIndex, teamOverride) {
+      const activeTeams = getActiveAITeams();
+      const aiTeam = (teamOverride === 0 || teamOverride === 1) ? teamOverride : (activeTeams.length ? activeTeams[gateIndex % activeTeams.length] : AI_TEAM);
+      const gates = AI_BASE_GATES_BY_TEAM[aiTeam] || AI_BASE_GATES;
+      const gate = gates[Math.abs(gateIndex || 0) % gates.length];
       aiSpawnCounter++;
+      aiWaveSpawnedByTeam[aiTeam] = (aiWaveSpawnedByTeam[aiTeam] || 0) + 1;
       const spec = randomCharacterSpec();
-      const paint = PAINT_PALETTE[(3 + aiSpawnCounter * 2) % PAINT_PALETTE.length];
-      const name = `${spec.emoji} ${spec.animalName}特種兵 #${aiSpawnCounter}`;
-      const chibiAI = createChibiSoldierMesh(false, name, spec.style, spec, { teamIndex: AI_TEAM, paintHex: hex6(paint) });
+      const paint = PAINT_PALETTE[(3 + aiSpawnCounter * 2 + aiTeam) % PAINT_PALETTE.length];
+      const teamPrefix = activeTeams.length > 1 ? (aiTeam === 0 ? '[藍隊AI] ' : '[紅隊AI] ') : '';
+      const name = `${spec.emoji} ${teamPrefix}${spec.animalName}特種兵 #${aiSpawnCounter}`;
+      const isAllyAI = (aiTeam === playerState.team);
+      const chibiAI = createChibiSoldierMesh(isAllyAI, name, spec.style, spec, { teamIndex: aiTeam, paintHex: hex6(paint) });
       chibiAI.mesh.position.set(gate.x + (Math.random() - 0.5) * 1.5, 0, gate.z);
+      const enemyBaseRef = { x: 0, z: aiTeam === 0 ? -30 : 30 };
       const ai = Object.assign(chibiAI, {
         id: 'AI' + (++aiIdCounter),
-        hp: 100, maxHp: 100, team: AI_TEAM, paint,
+        hp: 100, maxHp: 100, team: aiTeam, paint,
         weaponKey: AI_WEAPON_KEYS[Math.floor(Math.random() * AI_WEAPON_KEYS.length)],
         state: 'ADVANCE', stateTimer: 0, stuckTimer: 0, hitTimer: 0,
         lastShoot: gameNow + 800 + Math.random() * 1500,
         lastEngaged: gameNow + Math.random() * 4000,
         noLOSTimer: 0, animTimer: Math.random() * 10, target: null, route: null, spawnTime: gameNow, shotsSinceHit: 0
       });
-      ai.coverTarget = aiChooseCover(ai, { x: 0, z: 30 }, null, 60);
-      ai.goal = aiCoverGoal(ai, ai.coverTarget, { x: 0, z: 30 });
-      scoreEntry(ai.name, AI_TEAM, spec);
+      ai.coverTarget = aiChooseCover(ai, enemyBaseRef, null, 60);
+      ai.goal = aiCoverGoal(ai, ai.coverTarget, enemyBaseRef);
+      scoreEntry(ai.name, aiTeam, spec);
       aiEnemies.push(ai);
       return ai;
+    }
+
+    function ensureAITeamsSpawned() {
+      if (!aiEnabled || !isAIAuthority() || !isGameRunning) return;
+      const activeTeams = getActiveAITeams();
+      // 若為同隊合作打 AI (只有 1 個敵方 AI 隊伍)，移除誤留在人類同隊的 AI
+      if (activeTeams.length === 1) {
+        const enemyTeam = activeTeams[0];
+        for (let i = aiEnemies.length - 1; i >= 0; i--) {
+          if (aiEnemies[i].team !== enemyTeam) {
+            scene.remove(aiEnemies[i].mesh);
+            aiEnemies.splice(i, 1);
+          }
+        }
+      }
+      activeTeams.forEach((t, idx) => {
+        const hasLivingOnTeam = aiEnemies.some(a => a.team === t && a.state !== 'DEAD');
+        if (!hasLivingOnTeam) {
+          spawnAIEnemyFromBase(idx, t);
+        }
+      });
     }
 
     function initEnemies() {
       aiEnemies.forEach(e => scene.remove(e.mesh));
       aiEnemies = [];
       aiSpawnIntervalTimer = 0;
+      aiWaveSpawnedByTeam[0] = 0;
+      aiWaveSpawnedByTeam[1] = 0;
       if (!aiEnabled || !isAIAuthority()) return;
-      spawnAIEnemyFromBase(0);
+      const activeTeams = getActiveAITeams();
+      activeTeams.forEach((t, idx) => {
+        spawnAIEnemyFromBase(idx, t);
+      });
     }
 
     // 屋內找得到視線的射擊點：先試同一層所有窗口/欄杆點，找不到 → 一樓的上二樓、二樓的下樓離開
@@ -4661,7 +4829,7 @@
       ai.awareness = ai.awareness || 0;
       let gain = 0, who = null;
       const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(ai.mesh.quaternion);
-      aiEnemyCandidates().forEach(c => {
+      aiEnemyCandidates(ai).forEach(c => {
         const dx = c.x - ai.mesh.position.x, dz = c.z - ai.mesh.position.z, d = Math.hypot(dx, dz);
         if (d > 6 || d < 0.01) return;
         const behind = (dx * fwd.x + dz * fwd.z) / d < 0.2;
@@ -4709,7 +4877,8 @@
       if (!ai.wdPos) { ai.wdPos = p.clone(); ai.wdTimer = 0; ai.samePosTimer = 0; ai.escapeCount = 0; }
       ai.wdTimer += delta; ai.samePosTimer += delta;
       if (p.distanceTo(ai.wdPos) > 0.4) { ai.wdPos.copy(p); ai.wdTimer = 0; ai.samePosTimer = 0; ai.escapeCount = 0; }
-      const moving = ['ADVANCE', 'HUNT', 'FLEE'].includes(ai.state);
+      if (ai.state === 'CTF_CAPTURING' || ai.state === 'CTF_DEFENDING') { ai.wdTimer = 0; ai.samePosTimer = 0; return; }
+      const moving = ['ADVANCE', 'HUNT', 'FLEE', 'CTF_MOVE'].includes(ai.state);
       // 移動中 3 秒沒前進，或 原地 6 秒且看不到任何目標 (打不到人) → 視為卡住
       if ((moving && ai.wdTimer > 3) || (ai.samePosTimer > 6 && !los && ai.state !== 'FLEE')) {
         ai.samePosTimer = 0;
@@ -4737,12 +4906,224 @@
       }
     }
 
+    /* =========================================================================
+       15b. 搶旗模式 (CTF) 電腦 AI 四大優先級戰術大腦 v7.4
+          Priority 1 (RESCUE_HOME_FLAG): 自家基地旗或已佔領旗被敵人降旗/奪取 → 緊急回防救旗並優先擊殺旗下敵軍
+          Priority 2 (CAPTURE_2F_BLACK_FLAG): 二樓中立黑旗 (currentColorTeam === -1) 尚未被搶 → 沿屋外階梯衝上二樓奪取黑旗
+          Priority 3 (RAID_ENEMY_FLAG): 二樓黑旗已無中立 → 主動推進突襲敵方持有的二樓旗或敵方基地紅/藍旗
+          Priority 4 (GUARD_AND_SHOOT): 站在旗座圈內 (d < CTF_RADIUS) 蹲姿掩護升降旗，視線內有敵人時邊守旗邊開火還擊；升滿後駐守二樓掩體巡邏護旗
+       ========================================================================= */
+    function aiSelectCtfObjective(ai) {
+      if (!Array.isArray(ctfFlags) || ctfFlags.length < 4) return null;
+      const myTeam = (ai.team === 1) ? 1 : 0;
+      const enemyTeam = 1 - myTeam;
+      const homeIdx = myTeam === 0 ? 2 : 3;
+      const enemyBaseIdx = myTeam === 0 ? 3 : 2;
+      const homeFlag = ctfFlags[homeIdx];
+
+      // 優先級 1：緊急回防自家基地旗 (被降旗或已變成敵方顏色或變成黑旗)
+      if (homeFlag && (homeFlag.currentColorTeam !== myTeam || homeFlag.heightRatio < 0.999)) {
+        return { flagIdx: homeIdx, role: 'RESCUE_HOME_FLAG', flag: homeFlag };
+      }
+
+      // 若 AI 目前已經站在某面需要繼續升降的旗下，優先完成手上的升降旗 (隊友接手/持續升滿)
+      for (let i = 0; i < 4; i++) {
+        const f = ctfFlags[i];
+        if (!f) continue;
+        const d = Math.hypot(ai.mesh.position.x - f.x, ai.mesh.position.z - f.z);
+        const sameFloor = Math.abs(ai.mesh.position.y - (f.floorY || 0)) < 1.25;
+        if (d < CTF_RADIUS && sameFloor && (f.currentColorTeam !== myTeam || f.heightRatio < 0.999)) {
+          return { flagIdx: i, role: f.currentColorTeam === -1 ? 'CAPTURE_2F_BLACK_FLAG' : 'HOLD_AND_RAISE_FLAG', flag: f };
+        }
+      }
+
+      // 優先級 2：衝上二樓搶奪尚未被佔領的黑色中立旗 (ctfFlags[0] 西側二樓、ctfFlags[1] 東側二樓)
+      // 或接手隊友升到一半的我方色旗
+      const blackOrPartial2F = [];
+      [0, 1].forEach(idx => {
+        const f = ctfFlags[idx];
+        if (!f) return;
+        if (f.currentColorTeam === -1 || (f.currentColorTeam === myTeam && f.heightRatio < 0.999)) {
+          const dist = Math.hypot(ai.mesh.position.x - f.x, ai.mesh.position.z - f.z);
+          // 計算已有多少同隊 AI 正前往此旗，做分流避免全部擠同一棟二樓
+          const alliesHeading = aiEnemies.filter(other => other !== ai && other.state !== 'DEAD' && other.team === myTeam && other.ctfTargetFlagIdx === idx).length;
+          blackOrPartial2F.push({ idx, f, score: 500 - dist - alliesHeading * 28 });
+        }
+      });
+      if (blackOrPartial2F.length > 0) {
+        blackOrPartial2F.sort((a, b) => b.score - a.score);
+        const pick = blackOrPartial2F[0];
+        return { flagIdx: pick.idx, role: 'CAPTURE_2F_BLACK_FLAG', flag: pick.f };
+      }
+
+      // 優先級 3：突襲敵方佔領的二樓旗或敵方基地旗
+      const raidCandidates = [];
+      [0, 1, enemyBaseIdx].forEach(idx => {
+        const f = ctfFlags[idx];
+        if (!f) return;
+        if (f.currentColorTeam !== myTeam || f.heightRatio < 0.999) {
+          const dist = Math.hypot(ai.mesh.position.x - f.x, ai.mesh.position.z - f.z);
+          const alliesHeading = aiEnemies.filter(other => other !== ai && other.state !== 'DEAD' && other.team === myTeam && other.ctfTargetFlagIdx === idx).length;
+          const bonus = (idx < 2) ? 35 : 0; // 優先奪回二樓高地旗，再突襲敵方大本營
+          raidCandidates.push({ idx, f, score: 300 + bonus - dist - alliesHeading * 22 });
+        }
+      });
+      if (raidCandidates.length > 0) {
+        raidCandidates.sort((a, b) => b.score - a.score);
+        const pick = raidCandidates[0];
+        return { flagIdx: pick.idx, role: 'RAID_ENEMY_FLAG', flag: pick.f };
+      }
+
+      // 優先級 4：四面旗皆為我方佔領 → 駐守最近的二樓戰旗制高點護旗
+      const guardIdx = (ai.mesh.position.x <= 0) ? 0 : 1;
+      return { flagIdx: guardIdx, role: 'DEFEND_CAPTURED_FLAG', flag: ctfFlags[guardIdx] || homeFlag };
+    }
+
+    // 為 CTF 目標旗座建立跨樓層導航路徑點 (支援 1F 爬屋外階梯上 2F 屋頂旗座、或由 2F 下樓前往其他旗座)
+    function aiBuildCtfWaypoints(ai, flagIdx) {
+      const f = ctfFlags[flagIdx];
+      if (!f) return [];
+      const p = ai.mesh.position;
+      const on2F = p.y > 2.1;
+      const curHouseSide = p.x < 0 ? -1 : 1; // -1: 西側屋 (-17), +1: 東側屋 (+17)
+      const pts = [];
+
+      // 若目標在二樓屋頂 (flagIdx === 0 西棟 或 flagIdx === 1 東棟)
+      if (flagIdx === 0 || flagIdx === 1) {
+        const targetSide = (flagIdx === 0) ? -1 : 1;
+        const cx = targetSide * 17;
+        const stairX = cx + targetSide * 6.3; // 西棟 -23.3, 東棟 +23.3
+        const standX = cx - targetSide * 1.1; // 距離旗桿 1.1m (< CTF_RADIUS 2.8m)，避開中央旗桿碰撞盒
+
+        // 若目前在另一棟的 2F，先從目前那棟下樓梯回到 1F
+        if (on2F && curHouseSide !== targetSide) {
+          const curCx = curHouseSide * 17;
+          const curStairX = curCx + curHouseSide * 6.3;
+          pts.push({ x: curCx - curHouseSide * 1.0, z: -2.8, y: 3.4 });
+          pts.push({ x: curStairX, z: -2.8, y: 3.4 });
+          pts.push({ x: curStairX, z: 7.0, y: 0 });
+        }
+
+        // 若尚未在目標棟 2F，加入爬樓梯路徑：樓梯底 -> 樓梯中段 -> 二樓頂部平台 -> 屋頂入口 -> 旗座圈內
+        if (!on2F || curHouseSide !== targetSide) {
+          pts.push({ x: stairX, z: 7.0, y: 0 });
+          pts.push({ x: stairX, z: 1.5, y: 1.8 });
+          pts.push({ x: stairX, z: -2.8, y: 3.4 });
+          pts.push({ x: cx - targetSide * 1.0, z: -2.8, y: 3.4 });
+        }
+        pts.push({ x: standX, z: 0, y: 3.4 });
+        return pts;
+      }
+
+      // 若目標在一樓基地旗 (flagIdx === 2 藍方基地 z=29 或 flagIdx === 3 紅方基地 z=-29)
+      if (on2F) {
+        const curCx = curHouseSide * 17;
+        const curStairX = curCx + curHouseSide * 6.3;
+        pts.push({ x: curCx - curHouseSide * 1.0, z: -2.8, y: 3.4 });
+        pts.push({ x: curStairX, z: -2.8, y: 3.4 });
+        pts.push({ x: curStairX, z: 7.0, y: 0 });
+      }
+      // 繞過中央房屋前往基地旗座旁 1.1m (避開 x=0,z=±29 的旗桿本體碰撞盒)
+      const laneX = (p.x < 0) ? -7.5 : 7.5;
+      if (Math.abs(p.z - f.z) > 14) {
+        pts.push({ x: laneX, z: f.z > 0 ? 18 : -18, y: 0 });
+      }
+      pts.push({ x: (ai.id && ai.id.charCodeAt(ai.id.length - 1) % 2 === 0) ? 1.15 : -1.15, z: f.z, y: 0 });
+      return pts;
+    }
+
+    // 執行 CTF 專屬 AI 戰術行為；回傳 true 代表已由 CTF 大腦接管本幀決策
+    function aiUpdateCtfBehavior(ai, delta, now, target, los) {
+      if (gameModeSetting !== 'ctf') return false;
+      const obj = aiSelectCtfObjective(ai);
+      if (!obj || !obj.flag) return false;
+
+      const f = obj.flag;
+      ai.ctfRole = obj.role;
+      const flagChanged = (ai.ctfTargetFlagIdx !== obj.flagIdx);
+      ai.ctfTargetFlagIdx = obj.flagIdx;
+
+      const distToFlag = Math.hypot(ai.mesh.position.x - f.x, ai.mesh.position.z - f.z);
+      const sameFloor = Math.abs(ai.mesh.position.y - (f.floorY || 0)) < 1.25;
+      const inFlagZone = (distToFlag < CTF_RADIUS - 0.25) && sameFloor;
+      const needsCapture = (f.currentColorTeam !== ai.team) || (f.heightRatio < 0.999);
+
+      // 情況 A：AI 已經站在目標旗座圈內，且旗子需要降旗或升旗 → 駐點蹲姿升降旗 + 邊升旗邊開火自衛！
+      if (inFlagZone && needsCapture) {
+        ai.state = 'CTF_CAPTURING';
+        ai.mesh.scale.y = 0.72; // 戰術蹲姿降低受彈面
+        ai.legL.rotation.x = 0;
+        ai.legR.rotation.x = 0;
+        // 微微繞旗桿小幅移動避免完全死站，但保持在 CTF_RADIUS 內
+        if (target) {
+          ai.mesh.lookAt(target.x, ai.mesh.position.y, target.z);
+          ai.armR.rotation.x = -0.95 + Math.sin(now * 0.005) * 0.04;
+          if (los && ai.targetDist < 42) {
+            aiFire(ai, target, now);
+            ai.lastEngaged = now;
+          }
+        }
+        return true;
+      }
+
+      // 情況 B：旗子已完全升滿我方顏色且 AI 在旗座旁 (DEFEND_CAPTURED_FLAG) → 在旗座周圍掩體巡邏警戒並射擊來犯敵軍
+      if (inFlagZone && !needsCapture) {
+        ai.state = 'CTF_DEFENDING';
+        ai.mesh.scale.y = (los && target) ? 1.0 : 0.72;
+        if (target) {
+          ai.mesh.lookAt(target.x, ai.mesh.position.y, target.z);
+          ai.armR.rotation.x = -0.95;
+          if (los && ai.targetDist < 48) {
+            aiFire(ai, target, now);
+            ai.lastEngaged = now;
+          }
+        }
+        return true;
+      }
+
+      // 情況 C：尚未抵達目標旗座 → 依跨樓層路徑點推進至旗座 (途中有視線敵人則邊跑邊開火壓制)
+      if (flagChanged || !ai.ctfWaypoints || ai.ctfWaypoints.length === 0 || ai.stuckTimer > 2.2) {
+        ai.ctfWaypoints = aiBuildCtfWaypoints(ai, obj.flagIdx);
+        ai.ctfWpIdx = 0;
+        ai.stuckTimer = 0;
+      }
+
+      ai.state = 'CTF_MOVE';
+      ai.mesh.scale.y = 1.0;
+      const wp = ai.ctfWaypoints[ai.ctfWpIdx] || { x: f.x, z: f.z, y: f.floorY || 0 };
+      const moveSpeed = (obj.role === 'RESCUE_HOME_FLAG') ? AI_SPEED * 1.18 : AI_SPEED * 1.08;
+      const d = aiMoveTowards(ai, wp.x, wp.z, moveSpeed, delta);
+      if (d < 0.75 && ai.ctfWpIdx < ai.ctfWaypoints.length - 1) {
+        ai.ctfWpIdx++;
+      }
+
+      // 行進途中若發現敵人，邊推進邊開火（若是緊急回防救旗且敵人就在旗下，提高開火頻率）
+      if (los && target && ai.targetDist < 34) {
+        const fireChance = (obj.role === 'RESCUE_HOME_FLAG') ? 0.35 : 0.14;
+        if (Math.random() < fireChance) {
+          aiFire(ai, target, now);
+          ai.lastEngaged = now;
+        }
+      }
+      return true;
+    }
+
     function updateAIBrains(delta, now) {
       if (!isAIAuthority()) return;
       if (aiEnabled) {
         aiSpawnIntervalTimer += delta;
-        const living = aiEnemies.filter(a => a.state !== 'DEAD').length;
-        if (aiSpawnIntervalTimer >= 4.5 && living < 4) { aiSpawnIntervalTimer = 0; spawnAIEnemyFromBase(Math.floor(Math.random() * AI_BASE_GATES.length)); }
+        const activeTeams = getActiveAITeams();
+        const maxPerTeam = activeTeams.length > 1 ? 3 : 4;
+        if (aiSpawnIntervalTimer >= 4.5) {
+          aiSpawnIntervalTimer = 0;
+          activeTeams.forEach(t => {
+            const livingOnTeam = aiEnemies.filter(a => a.state !== 'DEAD' && a.team === t).length;
+            const waveCapped = (roundModeSetting === 'elimination' && activeTeams.length === 1 && (aiWaveSpawnedByTeam[t] || 0) >= AI_COOP_WAVE_LIMIT);
+            if (livingOnTeam < maxPerTeam && !waveCapped) {
+              spawnAIEnemyFromBase(Math.floor(Math.random() * 4), t);
+            }
+          });
+        }
       }
       for (let j = aiEnemies.length - 1; j >= 0; j--) {
         const ai = aiEnemies[j];
@@ -4773,6 +5154,13 @@
           ai.hitTimer -= delta;
           ai.mesh.rotation.x = -0.25 * Math.max(0, ai.hitTimer / 0.3);
         } else ai.mesh.rotation.x = 0;
+
+        // 搶旗模式 (CTF) 專屬 AI 戰術大腦優先接管：搶二樓黑旗、回防救旗、突襲敵旗、駐點邊升旗邊開火
+        if (gameModeSetting === 'ctf' && aiUpdateCtfBehavior(ai, delta, now, target, los)) {
+          const gyCtf = getGroundHeight(ai.mesh.position.x, ai.mesh.position.z, ai.mesh.position.y);
+          ai.mesh.position.y += (gyCtf - ai.mesh.position.y) * 0.45;
+          continue;
+        }
 
         switch (ai.state) {
           case 'ADVANCE': {
@@ -4858,26 +5246,32 @@
       if (aiSyncTimer > 0.1 && Net.isHost) {
         aiSyncTimer = 0;
         Net.sendAISync(aiEnemies.map(a => ({
-          id: a.id, nm: a.name, x: +a.mesh.position.x.toFixed(2), y: +a.mesh.position.y.toFixed(2), z: +a.mesh.position.z.toFixed(2),
+          id: a.id, nm: a.name, tm: a.team, x: +a.mesh.position.x.toFixed(2), y: +a.mesh.position.y.toFixed(2), z: +a.mesh.position.z.toFixed(2),
           ry: +a.mesh.rotation.y.toFixed(2), rx: +a.mesh.rotation.x.toFixed(2), st: a.state, hp: a.hp, cr: a.mesh.scale.y < 1 ? 1 : 0,
           arm: +a.armR.rotation.x.toFixed(2), pc: a.paint, sp: { style: a.spec.style, animal: a.spec.animal, skin: a.spec.skin, accent: a.spec.accent, eyeColor: a.spec.eyeColor, expression: a.spec.expression }
         })));
       }
     }
 
-    // 客戶端：套用主機的 AI 狀態
+    // 客戶端：套用主機的 AI 狀態 (支援雙邊 AI 隊友與敵軍配色)
     function applyAISync(list) {
       const seen = {};
       list.forEach(s => {
         seen[s.id] = true;
+        const sTeam = (s.tm === 0 || s.tm === 1) ? s.tm : AI_TEAM;
         let ai = aiEnemies.find(a => a.id === s.id);
+        if (ai && ai.team !== sTeam) {
+          scene.remove(ai.mesh);
+          aiEnemies.splice(aiEnemies.indexOf(ai), 1);
+          ai = null;
+        }
         if (!ai) {
           const spec = Object.assign(randomCharacterSpec(s.sp && s.sp.style), s.sp || {});
-          const m = createChibiSoldierMesh(false, s.nm, spec.style, spec, { teamIndex: AI_TEAM, paintHex: hex6(s.pc) });
-          ai = Object.assign(m, { id: s.id, hp: s.hp, maxHp: 100, team: AI_TEAM, paint: s.pc, state: s.st, mirrored: true, hitTimer: 0, animTimer: 0 });
+          const m = createChibiSoldierMesh(sTeam === playerState.team, s.nm, spec.style, spec, { teamIndex: sTeam, paintHex: hex6(s.pc) });
+          ai = Object.assign(m, { id: s.id, hp: s.hp, maxHp: 100, team: sTeam, paint: s.pc, state: s.st, mirrored: true, hitTimer: 0, animTimer: 0 });
           ai.mesh.position.set(s.x, s.y, s.z);
           aiEnemies.push(ai);
-          scoreEntry(ai.name, AI_TEAM, spec);
+          scoreEntry(ai.name, sTeam, spec);
         }
         ai.syncTarget = s;
         ai.hp = s.hp;
@@ -4943,6 +5337,7 @@
         traveledDist: 0,
         damage: weapon.damage,
         isAlly: isAlly,
+        shooterTeam: isAlly ? playerState.team : (1 - playerState.team),
         color: bulletColor,
         shooterId: shooterId,
         shooterName: shooterName,
@@ -5191,11 +5586,11 @@
       const maxR = currentWeapon.maxRange || 14;
       const shooterTeam = playerState.team;
       let hitAny = false;
-      // A. 檢測範圍內的 AI 敵軍
-      if (shooterTeam !== AI_TEAM) {
+      // A. 檢測範圍內的敵方 AI (同隊 AI 隊友不誤傷)
+      {
         for (let j = aiEnemies.length - 1; j >= 0; j--) {
           const ai = aiEnemies[j];
-          if (ai.state === 'DEAD') continue;
+          if (ai.state === 'DEAD' || ai.team === shooterTeam) continue;
           const targetCenter = ai.mesh.position.clone().add(new THREE.Vector3(0, ai.bodyHeight * 0.5, 0));
           const toTarget = targetCenter.clone().sub(shootOrigin);
           const along = toTarget.dot(shootDir);
@@ -5680,6 +6075,86 @@
       Object.keys(scoreboard).forEach(k => delete scoreboard[k]);
       roomRoundCount = 1;
     }
+    function isMatchAuthority() {
+      return Net.isHost || !Net.roomCode || ['SOLO', 'AUTOTEST', 'DEMO'].includes(Net.roomCode);
+    }
+    function serializeScoreboardSnapshot() {
+      const sb = {};
+      Object.entries(scoreboard).forEach(([name, s]) => {
+        if (!s) return;
+        sb[name] = {
+          team: (s.team === 0 || s.team === 1) ? s.team : 0,
+          kills: s.kills || 0,
+          deaths: s.deaths || 0,
+          inCurrentRound: s.inCurrentRound !== false,
+          spec: s.spec ? { style: s.spec.style, animal: s.spec.animal, skin: s.spec.skin, accent: s.spec.accent, eyeColor: s.spec.eyeColor, expression: s.spec.expression } : null
+        };
+      });
+      const cum = {};
+      Object.entries(roomTotalScoreboard).forEach(([name, cs]) => {
+        if (!cs) return;
+        cum[name] = {
+          team: (cs.team === 0 || cs.team === 1) ? cs.team : 0,
+          totalKills: cs.totalKills || 0,
+          totalDeaths: cs.totalDeaths || 0,
+          spec: cs.spec ? { style: cs.spec.style, animal: cs.spec.animal, skin: cs.spec.skin, accent: cs.spec.accent, eyeColor: cs.spec.eyeColor, expression: cs.spec.expression } : null
+        };
+      });
+      return { scoreboard: sb, roomTotalScoreboard: cum, roomRoundCount };
+    }
+    function applyAuthoritativeScoreboard(sbData, cumData, roundCnt) {
+      if (typeof roundCnt === 'number' && roundCnt >= 1) roomRoundCount = roundCnt;
+      if (sbData && typeof sbData === 'object') {
+        Object.entries(sbData).forEach(([name, s]) => {
+          if (!s) return;
+          const teamVal = (name === playerState.name) ? playerState.team : ((s.team === 0 || s.team === 1) ? s.team : 0);
+          const entry = scoreEntry(name, teamVal, s.spec || undefined);
+          entry.kills = Math.max(0, Number(s.kills) || 0);
+          entry.deaths = Math.max(0, Number(s.deaths) || 0);
+          entry.inCurrentRound = (s.inCurrentRound !== false);
+        });
+        Object.keys(scoreboard).forEach(name => {
+          if (!sbData[name] && name !== playerState.name) {
+            scoreboard[name].inCurrentRound = false;
+          }
+        });
+        if (scoreboard[playerState.name] && typeof scoreboard[playerState.name].kills === 'number') {
+          playerState.kills = scoreboard[playerState.name].kills;
+          const kc = document.getElementById('kills-count');
+          if (kc) kc.innerText = playerState.kills;
+          const fk = document.getElementById('final-kills');
+          if (fk) fk.innerText = playerState.kills;
+        }
+      }
+      if (cumData && typeof cumData === 'object') {
+        Object.entries(cumData).forEach(([name, cs]) => {
+          if (!cs) return;
+          if (!roomTotalScoreboard[name]) {
+            roomTotalScoreboard[name] = { team: cs.team ?? 0, totalKills: 0, totalDeaths: 0, spec: cs.spec || null };
+          }
+          roomTotalScoreboard[name].team = (cs.team === 0 || cs.team === 1) ? cs.team : roomTotalScoreboard[name].team;
+          roomTotalScoreboard[name].totalKills = Math.max(0, Number(cs.totalKills) || 0);
+          roomTotalScoreboard[name].totalDeaths = Math.max(0, Number(cs.totalDeaths) || 0);
+          if (cs.spec) roomTotalScoreboard[name].spec = cs.spec;
+        });
+      }
+      renderScoreboard();
+    }
+    function serializeCtfSnapshot() {
+      if (typeof ctfFlags === 'undefined' || !Array.isArray(ctfFlags)) return null;
+      return ctfFlags.map(f => f ? { c: f.currentColorTeam, h: +(f.heightRatio ?? 1).toFixed(3) } : null);
+    }
+    function applyCtfSnapshot(ctfArr) {
+      if (!Array.isArray(ctfArr) || typeof ctfFlags === 'undefined') return;
+      ctfArr.forEach((s, i) => {
+        if (s && ctfFlags[i]) {
+          ctfFlags[i].currentColorTeam = s.c;
+          ctfFlags[i].heightRatio = s.h;
+          if (typeof syncCtfFlagVisual === 'function') syncCtfFlagVisual(ctfFlags[i]);
+        }
+      });
+      if (typeof updateRuleTag === 'function') updateRuleTag();
+    }
     function addKillFeed(text, color) {
       const feed = document.getElementById('kill-feed');
       if (!feed) return;
@@ -5834,7 +6309,7 @@
       const onlyTwo = !info.aiEnabled && players.length === 1;   // 純 PvP 且目前只有房主 → 只能選另一隊
       const defaultTeam = info.aiEnabled ? hostTeam : (onlyTwo ? 1 - hostTeam : (counts[0] <= counts[1] ? 0 : 1));
       document.getElementById('team-select-info').innerText = info.aiEnabled
-        ? '🤖 此房間為「玩家合作打 AI」：預設與房主同隊，也可選對方隊伍互打。'
+        ? '🤖 房間已開啟 AI：選「與房主同隊」可全隊合作打 AI 並一起判定勝利；選「不同隊」則藍紅兩邊都會有 AI 隊員助戰！'
         : (onlyTwo ? '⚔️ 目前只有房主一人，兩人對戰只能選另一隊。' : '⚖️ 純 PvP：請選擇要加入的隊伍（建議人少的一隊）。');
       [0, 1].forEach(t => {
         const list = document.getElementById(`team-list-${t}`);
@@ -5845,7 +6320,15 @@
         btn.className = disabled
           ? 'w-full py-2 rounded-xl text-xs font-black bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
           : (t === 0 ? 'w-full py-2 rounded-xl text-xs font-black bg-sky-600 hover:bg-sky-500 text-white' : 'w-full py-2 rounded-xl text-xs font-black bg-rose-600 hover:bg-rose-500 text-white');
-        btn.innerText = disabled ? `${teamLabel(t)}（房主隊伍，只能對戰）` : `加入 ${teamLabel(t)}${t === defaultTeam ? '（建議）' : ''}`;
+        if (disabled) {
+          btn.innerText = `${teamLabel(t)}（房主隊伍，只能對戰）`;
+        } else if (info.aiEnabled) {
+          btn.innerText = (t === hostTeam)
+            ? `加入 ${teamLabel(t)}（🤝 同隊打 AI・一起獲勝・建議）`
+            : `加入 ${teamLabel(t)}（⚔️ 不同隊・兩邊都有 AI 隊員）`;
+        } else {
+          btn.innerText = `加入 ${teamLabel(t)}${t === defaultTeam ? '（建議）' : ''}`;
+        }
         btn.onclick = () => { modal.classList.add('hidden'); onPick(t); };
       });
       modal.classList.remove('hidden');
@@ -6122,36 +6605,59 @@
       for (const uid in remotePlayers) { const rp = remotePlayers[uid]; if (rp.alive !== false) rp.mesh.visible = rp.inv ? (Math.floor(now / 150) % 2 === 0) : true; }
     }
 
-    // ---- 遊戲結束流程 (#4)：先宣布，再結算 ----
+    // ---- 遊戲結束流程 (#4, v7.3 房主權威結算同步)：先宣布獲勝隊伍，再進入一致的結算畫面 ----
     let endBannerTimer = null;
     let endBannerClicks = 0, endBannerCountdown = null;
-    function announceMatchEnd(isWinner, message, winnerTeam) {
-      if (isRoundEnded) return;
+    let lastMatchEndState = { isWinner: false, message: '', winnerTeam: -1 };
+    function formatWinnerTeamHeadline(winnerTeam, isWinner) {
+      if (winnerTeam === -1) return '⚖️ 雙方平手';
+      if (winnerTeam === 0) return `🏆 藍隊獲勝！（${isWinner ? '我方獲勝' : '敵方獲勝'}）`;
+      if (winnerTeam === 1) return `🏆 紅隊獲勝！（${isWinner ? '我方獲勝' : '敵方獲勝'}）`;
+      return isWinner ? '🏆 我方獲勝' : '🏁 敵方獲勝';
+    }
+    function announceMatchEnd(isWinner, message, winnerTeam, forceAuthority) {
+      if (isRoundEnded && !forceAuthority) return;
+      if (window.__clientEndFallbackTimer) { clearTimeout(window.__clientEndFallbackTimer); window.__clientEndFallbackTimer = null; }
+      const resolvedWinnerTeam = (winnerTeam === 0 || winnerTeam === 1 || winnerTeam === -1)
+        ? winnerTeam
+        : (isWinner ? playerState.team : -1);
+      const resolvedIsWinner = (resolvedWinnerTeam === 0 || resolvedWinnerTeam === 1)
+        ? (resolvedWinnerTeam === playerState.team)
+        : !!isWinner;
+      lastMatchEndState = { isWinner: resolvedIsWinner, message: message || '', winnerTeam: resolvedWinnerTeam };
       isRoundEnded = true;
       isFiring = false;
       if (document.exitPointerLock) document.exitPointerLock();
+
+      // 若結算視窗 (#game-over-modal) 已經打開且收到房主權威結算結果，直接刷新結算視窗！
+      if (forceAuthority && gameOverModal && !gameOverModal.classList.contains('hidden')) {
+        triggerMatchEnd(resolvedIsWinner, message, resolvedWinnerTeam);
+        return;
+      }
+
       const banner = document.getElementById('match-end-banner');
-      endBannerClicks = 0;
+      if (!forceAuthority) endBannerClicks = 0;
       let secs = 20;
-      const isTie = (winnerTeam === -1);
       const render = () => {
+        const headline = formatWinnerTeamHeadline(lastMatchEndState.winnerTeam, lastMatchEndState.isWinner);
+        const myTeamBadge = playerState.team === 0 ? '🟦 你的隊伍：藍隊' : '🟥 你的隊伍：紅隊';
         banner.innerHTML = `
-          <div class="text-[11vw] sm:text-[7vw] leading-none font-black drop-shadow-2xl">${isTie ? '⚖️ 雙方平手' : (isWinner ? '🏆 我方獲勝' : '🏁 敵方獲勝')}</div>
-          <div class="text-2xl sm:text-4xl font-black mt-4 tracking-widest">遊 戲 結 束</div>
-          <div class="text-base sm:text-xl mt-4 text-white/90">${message || ''}</div>
+          <div class="text-sm sm:text-lg font-black px-4 py-1 rounded-full bg-black/40 border border-white/25 mb-3">${myTeamBadge}</div>
+          <div class="text-[9vw] sm:text-[5.8vw] leading-tight font-black drop-shadow-2xl px-4">${headline}</div>
+          <div class="text-2xl sm:text-4xl font-black mt-3 tracking-widest">遊 戲 結 束</div>
+          <div class="text-base sm:text-xl mt-4 text-white/95 font-bold px-4">${lastMatchEndState.message || ''}</div>
           <div class="text-sm sm:text-base mt-10 px-4 py-2 rounded-xl bg-black/35 border border-white/20 text-amber-200 font-bold">⌨️ 按兩下 [空白鍵 / Enter]（或點擊畫面兩下）進入結算 (${endBannerClicks}/2)，或 ${secs} 秒後自動進入</div>`;
       };
-      banner.className = `absolute inset-0 z-40 flex flex-col items-center justify-center text-center text-white cursor-pointer select-none ${isWinner ? 'bg-gradient-to-b from-amber-500/95 via-orange-600/95 to-rose-700/95' : 'bg-gradient-to-b from-slate-700/95 via-slate-900/95 to-black/95'}`;
+      banner.className = `absolute inset-0 z-40 flex flex-col items-center justify-center text-center text-white cursor-pointer select-none ${resolvedIsWinner ? 'bg-gradient-to-b from-amber-500/95 via-orange-600/95 to-rose-700/95' : 'bg-gradient-to-b from-slate-700/95 via-slate-900/95 to-black/95'}`;
       banner.classList.remove('hidden');
       render();
       AudioEngine.playCountdownBeep(true);
-      if (isWinner) AudioEngine.playVictory();
+      if (resolvedIsWinner) AudioEngine.playVictory();
       const proceed = () => {
         clearTimeout(endBannerTimer); clearInterval(endBannerCountdown);
         banner.onclick = null;
         banner.classList.add('hidden');
-        isRoundEnded = false;
-        triggerMatchEnd(isWinner, message, winnerTeam);
+        triggerMatchEnd(lastMatchEndState.isWinner, lastMatchEndState.message, lastMatchEndState.winnerTeam);
       };
       banner.onclick = () => { endBannerClicks++; render(); if (endBannerClicks >= 2) proceed(); };
       clearTimeout(endBannerTimer); clearInterval(endBannerCountdown);
@@ -6161,21 +6667,36 @@
     function endRoundByTime() {
       if (gameModeSetting === 'ctf') {
         const counts = getCtfFlagCounts();
-        const myFlags = counts[playerState.team] || 0;
-        const enemyFlags = counts[1 - playerState.team] || 0;
         if (counts[0] === counts[1]) {
-          announceMatchEnd(false, `⚖️ 搶旗時間到平手！藍隊 ${counts[0]} 面旗 vs 紅隊 ${counts[1]} 面旗（黑旗 ${counts.black} 面）`, -1);
+          const msg = `⚖️ 搶旗時間到平手！藍隊 ${counts[0]} 面旗 vs 紅隊 ${counts[1]} 面旗（黑旗 ${counts.black} 面）`;
+          if (Net.isHost) Net.sendMatchEnd(-1, msg);
+          announceMatchEnd(false, msg, -1);
         } else {
           const winTeam = counts[0] > counts[1] ? 0 : 1;
-          announceMatchEnd(winTeam === playerState.team, `🚩 搶旗時間到！藍隊 ${counts[0]} 面旗 vs 紅隊 ${counts[1]} 面旗（黑旗 ${counts.black} 面）`, winTeam);
+          const winTeamLabel = winTeam === 0 ? '藍隊獲勝' : '紅隊獲勝';
+          const msg = `🚩 搶旗時間到・${winTeamLabel}！藍隊 ${counts[0]} 面旗 vs 紅隊 ${counts[1]} 面旗（黑旗 ${counts.black} 面）`;
+          if (Net.isHost) Net.sendMatchEnd(winTeam, msg);
+          announceMatchEnd(winTeam === playerState.team, msg, winTeam);
         }
         return;
       }
       const teamKills = [0, 0];
-      Object.values(scoreboard).forEach(s => { if (s.team === 0 || s.team === 1) teamKills[s.team] += s.kills; });
+      Object.values(scoreboard).forEach(s => { if (s && (s.team === 0 || s.team === 1)) teamKills[s.team] += (s.kills || 0); });
       const my = scoreEntry(playerState.name, playerState.team).kills;
-      const win = teamKills[playerState.team] > teamKills[1 - playerState.team] || (teamKills[0] === teamKills[1] && my > 0);
-      announceMatchEnd(win, `⏰ 回合時間到！藍隊 ${teamKills[0]} 殺 vs 紅隊 ${teamKills[1]} 殺`);
+      let winnerTeam = -1;
+      if (teamKills[0] > teamKills[1]) winnerTeam = 0;
+      else if (teamKills[1] > teamKills[0]) winnerTeam = 1;
+      else if (my > 0 && isCoopSameTeamAgainstAI()) winnerTeam = playerState.team;
+      const win = (winnerTeam === playerState.team);
+      const coopSame = isCoopSameTeamAgainstAI();
+      const winTeamPrefix = winnerTeam === 0 ? '🏆 藍隊獲勝！' : (winnerTeam === 1 ? '🏆 紅隊獲勝！' : '⚖️ 雙方平手！');
+      const msg = coopSame
+        ? (win
+            ? `🤝 同隊合作勝利（${winnerTeam === 0 ? '藍隊' : '紅隊'}獲勝）！全隊齊心擊退 AI 軍團（藍隊 ${teamKills[0]} 殺 vs 紅隊 ${teamKills[1]} 殺）`
+            : `⏰ 回合時間到・${winTeamPrefix}（藍隊 ${teamKills[0]} 殺 vs 紅隊 ${teamKills[1]} 殺）`)
+        : `⏰ 回合時間到・${winTeamPrefix}（藍隊 ${teamKills[0]} 殺 vs 紅隊 ${teamKills[1]} 殺）`;
+      if (Net.isHost) Net.sendMatchEnd(winnerTeam, msg);
+      announceMatchEnd(win, msg, winnerTeam);
     }
 
     // ---- 準備階段 10 秒 + 戰術投票 (支援 W/S 或 ↑/↓ 鍵選擇、空白鍵或 Enter 選定 #5) ----
@@ -6259,13 +6780,40 @@
     // 4. 離開旗座時：若在降旗階段 (phase === 'lowering') 則停在原高度；若在升旗階段 (phase === 'raising' 且尚未升滿) 則慢慢下降 (16秒)。
     // 5. 遊戲時間結束時，統計 4 面旗子誰佔領比較多決定勝利、平手或失敗；若任一隊將全部 4 面旗子都升滿同色則提前完勝！
     const CTF_STAGE_TIME = 12.0, CTF_TIME = 24.0, CTF_RADIUS = 2.8, CTF_DECAY_TIME = 16.0;
-    const ctfState = { progress: 0, enemyProgressSeen: 0, buttonHeld: false, activeFlagIdx: -1 };
+    // 嚴格固定紅藍黑三色戰旗：藍隊 = 藍旗 (0x2563eb)、紅隊 = 紅旗 (0xef4444)、沒搶到/未佔領 = 黑旗 (0x111827)
+    const CTF_FLAG_BLUE_HEX = 0x2563eb;
+    const CTF_FLAG_RED_HEX = 0xef4444;
+    const CTF_FLAG_BLACK_HEX = 0x111827;
+    const ctfState = { progress: 0, enemyProgressSeen: 0, buttonHeld: false, activeFlagIdx: -1, gMashBoostUntil: 0, gMashTapCount: 0, currentSpeedMult: 1.0 };
+
+    // 按 [G] 鍵連打加速升降旗至 2 倍速 (2.0x)
+    function triggerCtfGMash() {
+      const nowMs = Math.max(performance.now(), typeof gameNow === 'number' ? gameNow : 0);
+      ctfState.gMashBoostUntil = nowMs + 650;
+      ctfState.gMashTapCount = (ctfState.gMashTapCount || 0) + 1;
+      ctfState.currentSpeedMult = 2.0;
+      return ctfState.currentSpeedMult;
+    }
+
+    function isCtfGMashActive() {
+      const nowMs = Math.max(performance.now(), typeof gameNow === 'number' ? gameNow : 0);
+      return (nowMs < (ctfState.gMashBoostUntil || 0)) || !!window.__forceGMash2x;
+    }
+
+    function getCtfCaptureSpeedMultiplier(actorIsLocal) {
+      if (actorIsLocal && isCtfGMashActive()) {
+        ctfState.currentSpeedMult = 2.0;
+        return 2.0;
+      }
+      ctfState.currentSpeedMult = 1.0;
+      return 1.0;
+    }
 
     function defaultHomeTeamForFlag(flagObj) {
       if (!flagObj) return -1;
       if (flagObj === ctfFlags[2]) return 0;
       if (flagObj === ctfFlags[3]) return 1;
-      return -1; // 兩棟房子二樓預設為中立黑旗 (-1)
+      return -1; // 兩棟房子二樓預設為沒搶到的中立黑旗 (-1)
     }
 
     function ensureCtfFlagState(flagObj, fallbackHome) {
@@ -6292,6 +6840,8 @@
       }
       ctfState.progress = 0;
       ctfState.activeFlagIdx = -1;
+      ctfState.gMashBoostUntil = 0;
+      ctfState.currentSpeedMult = 1.0;
     }
 
     function syncCtfFlagVisual(flagObj) {
@@ -6299,11 +6849,16 @@
       ensureCtfFlagState(flagObj);
       const span = flagObj.spanY || 3.0;
       flagObj.mesh.position.y = (flagObj.baseY - span) + flagObj.heightRatio * span;
-      const team = TEAM_COLORS[currentTeamColorKey] || TEAM_COLORS.blue_red;
-      let colHex = 0x111827; // 預設黑色中立旗
-      if (flagObj.currentColorTeam === 0) colHex = team.allyColor;
-      else if (flagObj.currentColorTeam === 1) colHex = team.enemyColor;
+      // 紅藍隊的旗子顏色固定為紅旗 (0xef4444) 與藍旗 (0x2563eb)，沒搶到的中立旗固定為黑旗 (0x111827)
+      let colHex = CTF_FLAG_BLACK_HEX;
+      if (flagObj.currentColorTeam === 0) colHex = CTF_FLAG_BLUE_HEX;
+      else if (flagObj.currentColorTeam === 1) colHex = CTF_FLAG_RED_HEX;
+      flagObj.color = colHex;
       flagObj.mesh.material.color.setHex(colHex);
+      if (flagObj.mesh.material.emissive) {
+        flagObj.mesh.material.emissive.setHex(flagObj.currentColorTeam === 0 ? 0x1e3a8a : (flagObj.currentColorTeam === 1 ? 0x7f1d1d : 0x000000));
+        flagObj.mesh.material.emissiveIntensity = flagObj.currentColorTeam === -1 ? 0.0 : 0.22;
+      }
       if (flagObj.ring && flagObj.ring.material) {
         flagObj.ring.material.color.setHex(flagObj.currentColorTeam === -1 ? 0x94a3b8 : colHex);
       }
@@ -6331,27 +6886,29 @@
       return res;
     }
 
-    // 單一旗座狀態推進：actorTeam 為目前站在旗下的隊伍 (0, 1, 或 null 代表無人站在旗下)
-    function stepFlagCapture(flagObj, actorTeam, delta) {
+    // 單一旗座狀態推進：actorTeam 為目前站在旗下的隊伍 (0, 1, 或 null 代表無人站在旗下)，speedMult 為升降旗倍率 (預設 1.0x，連打 G 鍵時為 2.0x 兩倍速)
+    function stepFlagCapture(flagObj, actorTeam, delta, speedMult) {
       if (!flagObj) return false;
       ensureCtfFlagState(flagObj);
+      const mult = (typeof speedMult === 'number' && speedMult > 0) ? speedMult : 1.0;
+      const effDelta = delta * mult;
       if (actorTeam !== null && actorTeam !== undefined) {
         if (flagObj.currentColorTeam !== actorTeam) {
-          // 階段一：降旗階段 (速度減半：12 秒降到底)
+          // 階段一：降旗階段 (基礎 12 秒降到底；連打 G 鍵 2 倍速時僅需 6 秒！)
           flagObj.phase = 'lowering';
-          flagObj.heightRatio -= delta / CTF_STAGE_TIME;
+          flagObj.heightRatio -= effDelta / CTF_STAGE_TIME;
           if (flagObj.heightRatio <= 0) {
             const leftover = -flagObj.heightRatio * CTF_STAGE_TIME;
             flagObj.heightRatio = 0;
-            flagObj.currentColorTeam = actorTeam; // 降到底部，切換為佔領方隊伍顏色！
+            flagObj.currentColorTeam = actorTeam; // 降到底部，切換為佔領方隊伍顏色 (藍旗 0 或 紅旗 1)！
             flagObj.phase = 'raising';
             if (leftover > 0) flagObj.heightRatio = Math.min(1.0, leftover / CTF_STAGE_TIME);
           }
         } else {
-          // 階段二：升旗階段 (速度減半：12 秒升到頂)
+          // 階段二：升旗階段 (基礎 12 秒升到頂；連打 G 鍵 2 倍速時僅需 6 秒！)
           if (flagObj.heightRatio < 1.0) {
             flagObj.phase = 'raising';
-            flagObj.heightRatio = Math.min(1.0, flagObj.heightRatio + delta / CTF_STAGE_TIME);
+            flagObj.heightRatio = Math.min(1.0, flagObj.heightRatio + effDelta / CTF_STAGE_TIME);
           }
           if (flagObj.heightRatio >= 0.9999) {
             flagObj.heightRatio = 1.0;
@@ -6363,10 +6920,15 @@
       } else {
         // 無人站在旗下時：
         // 若在降旗階段 (phase === 'lowering') → 停住在原高度！
-        // 若在升旗階段 (phase === 'raising' 或 'decaying'，且旗子尚未升滿 1.0) → 慢慢下降！
+        // 若在升旗階段 (phase === 'raising' 或 'decaying'，且旗子尚未升滿 1.0) → 慢慢下降！若完全掉回 0 則恢復為沒搶到的黑旗 (-1)
         if ((flagObj.phase === 'raising' || flagObj.phase === 'decaying') && flagObj.heightRatio > 0 && flagObj.heightRatio < 1.0) {
           flagObj.phase = 'decaying';
           flagObj.heightRatio = Math.max(0, flagObj.heightRatio - delta / CTF_DECAY_TIME);
+          if (flagObj.heightRatio <= 0.0001) {
+            flagObj.currentColorTeam = -1;
+            flagObj.heightRatio = 1.0;
+            flagObj.phase = 'neutral_top';
+          }
         } else if (flagObj.phase === 'lowering' && flagObj.heightRatio < 1.0) {
           flagObj.phase = 'paused';
         }
@@ -6402,12 +6964,13 @@
         const d = Math.hypot(playerGroup.position.x - f.x, playerGroup.position.z - f.z);
         const sameFloor = Math.abs(playerFeetY - (f.floorY || 0)) < 0.85;
         const needsAction = (f.currentColorTeam !== playerState.team) || (f.heightRatio < 0.999);
-        if (!playerState.isSpectating && d < CTF_RADIUS && sameFloor && needsAction) {
+        const localOnFlag = (!playerState.isSpectating && d < CTF_RADIUS && sameFloor && needsAction);
+        if (localOnFlag) {
           nearIdx = i;
         }
-        // 判定哪一隊站在這面旗下 (靠近站著就自動升降旗，支援隊友接手)
+        // 判定哪一隊站在這面旗下 (支援本機玩家、遠端玩家、以及電腦 AI 隊員/對手自動升降旗與接手)
         let actor = null;
-        if (!playerState.isSpectating && d < CTF_RADIUS && sameFloor && needsAction) {
+        if (localOnFlag) {
           actor = playerState.team;
         }
         if (actor === null) {
@@ -6420,7 +6983,18 @@
             }
           }
         }
-        stepFlagCapture(f, actor, delta);
+        if (actor === null && aiEnabled) {
+          for (let aIdx = 0; aIdx < aiEnemies.length; aIdx++) {
+            const ai = aiEnemies[aIdx];
+            if (ai && ai.state !== 'DEAD' && Math.hypot(ai.mesh.position.x - f.x, ai.mesh.position.z - f.z) < CTF_RADIUS && Math.abs(ai.mesh.position.y - (f.floorY || 0)) < 1.25) {
+              if (f.currentColorTeam !== ai.team || f.heightRatio < 0.999) {
+                actor = ai.team; break;
+              }
+            }
+          }
+        }
+        const speedMult = getCtfCaptureSpeedMultiplier(localOnFlag);
+        stepFlagCapture(f, actor, delta, speedMult);
       }
 
       // 更新 ctfState.progress (相容測試與 HUD：優先取玩家正在站的旗子，否則取 ctfFlags[1])
@@ -6434,12 +7008,17 @@
       if (box) {
         const anyActive = nearIdx >= 0 || ctfFlags.some(f => f && f.heightRatio < 0.999);
         box.classList.toggle('hidden', !anyActive);
+        const speedMultNow = getCtfCaptureSpeedMultiplier(nearIdx >= 0);
         if (btn) {
           btn.classList.toggle('hidden', nearIdx < 0);
           if (nearIdx >= 0) {
             const nf = ctfFlags[nearIdx];
-            const colorLabel = nf.currentColorTeam === -1 ? '⬛ 中立黑旗' : (nf.currentColorTeam === playerState.team ? '🟦 我方旗幟' : '🟥 敵方旗幟');
-            btn.innerText = `🚩 已進入【${nf.label || '戰旗'}】範圍（目前：${colorLabel}）— 站著自動慢速升降旗中...`;
+            const colorLabel = nf.currentColorTeam === -1 ? '⬛ 沒搶到的黑旗' : (nf.currentColorTeam === 0 ? '🟦 藍隊藍旗' : '🟥 紅隊紅旗');
+            if (speedMultNow > 1.05) {
+              btn.innerText = `⚡ [G] 鍵連打 2 倍速加速中 (2.0x)！正在快速升降【${nf.label || '戰旗'}】(${colorLabel})`;
+            } else {
+              btn.innerText = `🚩 已進入【${nf.label || '戰旗'}】(${colorLabel}) — 💡 連打 [G] 鍵可加速升降旗到兩倍 (2.0x)！`;
+            }
           }
         }
         if (refFlag) {
@@ -6447,23 +7026,24 @@
           const pct = Math.min(100, (prog / CTF_TIME) * 100);
           document.getElementById('ctf-bar-fill').style.width = `${pct}%`;
           const stageText = refFlag.currentColorTeam !== playerState.team
-            ? `階段 1/2：自動降旗 (${((1 - refFlag.heightRatio) * CTF_STAGE_TIME).toFixed(1)} / ${CTF_STAGE_TIME}s)`
-            : `階段 2/2：自動升起我方旗 (${(refFlag.heightRatio * CTF_STAGE_TIME).toFixed(1)} / ${CTF_STAGE_TIME}s)`;
-          document.getElementById('ctf-bar-text').innerText = `🚩 ${refFlag.label || '戰旗'}｜${stageText}｜戰局：藍 ${counts[0]} 旗 vs 紅 ${counts[1]} 旗 (黑 ${counts.black})`;
+            ? `階段 1/2：降旗 (${((1 - refFlag.heightRatio) * CTF_STAGE_TIME).toFixed(1)} / ${CTF_STAGE_TIME}s)`
+            : `階段 2/2：升旗 (${(refFlag.heightRatio * CTF_STAGE_TIME).toFixed(1)} / ${CTF_STAGE_TIME}s)`;
+          const gHint = speedMultNow > 1.05 ? '🔥 [G] 連打 2.0x 兩倍速！' : '💡 連打 [G] 鍵加速至 2 倍速 (1.0x)';
+          document.getElementById('ctf-bar-text').innerText = `🚩 ${refFlag.label || '戰旗'}｜${stageText}｜${gHint}｜藍 ${counts[0]} 旗 vs 紅 ${counts[1]} 旗 (黑旗 ${counts.black})`;
         }
       }
 
-      // 若任一隊將全部 4 面戰旗 (2座二樓中立旗 + 2座基地旗) 全數升滿 (heightRatio >= 0.999)，立即完勝！
-      for (const t of [0, 1]) {
-        const allFourCaptured = [0, 1, 2, 3].every(i => ctfFlags[i] && ctfFlags[i].currentColorTeam === t && ctfFlags[i].heightRatio >= 0.999);
-        if (allFourCaptured) {
-          if (t === playerState.team) {
-            Net.sendMatchEnd(t, `🚩 ${playerState.name} 小隊將全場 4 面戰旗全數升起，完勝奪旗！`);
-            announceMatchEnd(true, `🚩 四面戰旗全數佔領，完勝！`, t);
-          } else {
-            announceMatchEnd(false, `🚩 全場 4 面戰旗被敵軍全數佔領！`, t);
+      // 若任一隊將全部 4 面戰旗 (2座二樓中立旗 + 2座基地旗) 全數升滿 (heightRatio >= 0.999)，立即完勝！(由房主權威判定並廣播)
+      if (isMatchAuthority() && !isRoundEnded) {
+        for (const t of [0, 1]) {
+          const allFourCaptured = [0, 1, 2, 3].every(i => ctfFlags[i] && ctfFlags[i].currentColorTeam === t && ctfFlags[i].heightRatio >= 0.999);
+          if (allFourCaptured) {
+            const winTeamLabel = t === 0 ? '藍隊' : '紅隊';
+            const msg = `🚩 ${winTeamLabel}將全場 4 面戰旗全數升起，${winTeamLabel}完勝奪旗！`;
+            if (Net.isHost) Net.sendMatchEnd(t, msg);
+            announceMatchEnd(t === playerState.team, msg, t);
+            break;
           }
-          break;
         }
       }
     }
@@ -6698,13 +7278,32 @@
 
     function checkRoundVictoryCondition() {
       if (isRoundEnded) return;
-      // 生命制：我方全員生命用盡 → 戰敗；敵方全員用盡 (且無 AI) → 勝利
+      if (!isMatchAuthority()) return;
       const rps = Object.values(remotePlayers);
       const myTeamAlive = (!playerState.out) || rps.some(r => r.team === playerState.team && !r.out);
-      const enemies = rps.filter(r => r.team !== playerState.team);
-      const enemyAlive = enemies.some(r => !r.out) || (aiEnabled && aiEnemies.some(a => a.state !== 'DEAD'));
-      if (!myTeamAlive) announceMatchEnd(false, "我方全員生命用盡，防線失守！");
-      else if (enemies.length > 0 && !enemyAlive) announceMatchEnd(true, "敵方全員生命用盡，戰鬥勝利！");
+      const enemyHumans = rps.filter(r => r.team !== playerState.team);
+      const enemyHumansAlive = enemyHumans.some(r => !r.out);
+      const enemyTeam = 1 - playerState.team;
+      const enemyAIsAlive = aiEnabled && aiEnemies.some(a => a.team === enemyTeam && a.state !== 'DEAD');
+      const coopSame = isCoopSameTeamAgainstAI();
+      const coopWaveCleared = coopSame && !enemyAIsAlive && (
+        (roundModeSetting === 'elimination' && (aiWaveSpawnedByTeam[enemyTeam] || 0) >= AI_COOP_WAVE_LIMIT) ||
+        window.__coopForceWaveCleared === true
+      );
+
+      if (!myTeamAlive) {
+        const msg = coopSame ? '💀 我方同隊全員生命用盡，防線失守！' : '我方全員生命用盡，防線失守！';
+        if (Net.isHost) Net.sendMatchEnd(enemyTeam, msg);
+        announceMatchEnd(false, msg, enemyTeam);
+      } else if (coopWaveCleared) {
+        const msg = '🏆 全隊同心協力殲滅全數 AI 敵軍，全體同隊玩家一起獲勝！';
+        if (Net.isHost) Net.sendMatchEnd(playerState.team, msg);
+        announceMatchEnd(true, msg, playerState.team);
+      } else if (enemyHumans.length > 0 && !enemyHumansAlive && !enemyAIsAlive) {
+        const msg = aiEnabled ? '🏆 敵方玩家與敵隊 AI 全數殲滅，我方全隊共同獲勝！' : '敵方全員生命用盡，戰鬥勝利！';
+        if (Net.isHost) Net.sendMatchEnd(playerState.team, msg);
+        announceMatchEnd(true, msg, playerState.team);
+      }
     }
 
     document.getElementById('btn-force-end').addEventListener('click', () => {
@@ -6822,31 +7421,39 @@
       finalHits.innerText = playerState.totalHits;
       finalArmorAbsorbed.innerText = playerState.armorAbsorbed;
 
+      const resolvedWinnerTeam = (winnerTeam === 0 || winnerTeam === 1 || winnerTeam === -1)
+        ? winnerTeam
+        : (isWinner ? playerState.team : -1);
+      const resolvedIsWinner = (resolvedWinnerTeam === 0 || resolvedWinnerTeam === 1)
+        ? (resolvedWinnerTeam === playerState.team)
+        : !!isWinner;
+      const winTeamLabel = resolvedWinnerTeam === 0 ? '🟦 藍隊獲勝' : (resolvedWinnerTeam === 1 ? '🟥 紅隊獲勝' : '⚖️ 雙方平手');
+      const myTeamLabel = playerState.team === 0 ? '藍隊' : '紅隊';
       const baseGridClass = "max-w-4xl w-full max-h-[94vh] bg-slate-900 border-2 rounded-3xl p-4 sm:p-6 shadow-2xl grid grid-cols-1 md:grid-cols-12 gap-4 items-stretch overflow-y-auto custom-scroll ";
-      if (winnerTeam === -1) {
+      if (resolvedWinnerTeam === -1) {
         gameOverBox.className = baseGridClass + "border-indigo-400 shadow-indigo-500/20";
         gameOverIcon.innerHTML = "⚖️";
-        gameOverTitle.innerText = "旗鼓相當・平手！";
+        gameOverTitle.innerText = "旗鼓相當・雙方平手！";
         gameOverTitle.className = "text-2xl sm:text-3xl font-black tracking-wider text-indigo-300 leading-tight";
-        gameOverDesc.innerText = message || "雙方佔領相同數量的戰旗，平分秋色！";
-        finalResultTag.innerText = "DRAW 平手";
+        gameOverDesc.innerText = message || "雙方戰績平分秋色，不分軒輊！";
+        finalResultTag.innerText = "DRAW 平手 ｜ 雙方平分秋色";
         finalResultTag.className = "text-xs font-black text-indigo-300";
-      } else if (isWinner) {
+      } else if (resolvedIsWinner) {
         AudioEngine.playVictory();
         gameOverBox.className = baseGridClass + "border-amber-400 shadow-amber-500/20";
         gameOverIcon.innerHTML = "🏆";
-        gameOverTitle.innerText = "戰鬥勝利！";
+        gameOverTitle.innerText = `${resolvedWinnerTeam === 0 ? '藍隊獲勝' : '紅隊獲勝'}・戰鬥勝利！`;
         gameOverTitle.className = "text-2xl sm:text-3xl font-black tracking-wider text-amber-400 leading-tight";
-        gameOverDesc.innerText = message || "太棒了！你的小隊成功壓制全場，贏得榮譽！";
-        finalResultTag.innerText = "VICTORY 獲勝";
+        gameOverDesc.innerText = message || `太棒了！你所在的${myTeamLabel}成功壓制全場，贏得榮譽！`;
+        finalResultTag.innerText = `${winTeamLabel} ｜ VICTORY 我方（${myTeamLabel}）獲勝`;
         finalResultTag.className = "text-xs font-black text-amber-400";
       } else {
         gameOverBox.className = baseGridClass + "border-cyan-500 shadow-cyan-500/20";
         gameOverIcon.innerHTML = "🛡️";
-        gameOverTitle.innerText = "戰術撤退";
-        gameOverTitle.className = "text-2xl sm:text-3xl font-black tracking-wider text-cyan-400 leading-tight";
-        gameOverDesc.innerText = message || "防線失守！整裝再戰，下一回合討回來！";
-        finalResultTag.innerText = "DEFEATED 戰敗";
+        gameOverTitle.innerText = `${resolvedWinnerTeam === 0 ? '藍隊獲勝' : '紅隊獲勝'}（我方戰術撤退）`;
+        gameOverTitle.className = "text-xl sm:text-2xl font-black tracking-wider text-cyan-400 leading-tight";
+        gameOverDesc.innerText = message || `本局由${resolvedWinnerTeam === 0 ? '藍隊' : '紅隊'}獲勝！整裝再戰，下一局討回來！`;
+        finalResultTag.innerText = `${winTeamLabel} ｜ DEFEATED 我方（${myTeamLabel}）戰敗`;
         finalResultTag.className = "text-xs font-black text-cyan-400";
       }
 
@@ -7191,7 +7798,11 @@
       }
       if (e.code === 'KeyQ') togglePeek(-1);
       if (e.code === 'KeyE') togglePeek(1);
-      if (e.code === 'KeyG' || e.code === 'Digit6') plantBomb();
+      if (e.code === 'KeyG') {
+        if (!e.repeat) triggerCtfGMash();
+        if (gameModeSetting !== 'ctf' || ctfState.activeFlagIdx < 0) plantBomb();
+      }
+      if (e.code === 'Digit6') plantBomb();
       if (e.code === 'KeyB') toggleAIEnemies();
       if (e.code === 'Tab') { e.preventDefault(); toggleScoreboard(true); }
       if (e.code === 'KeyF' || e.code === 'Enter' || e.code === 'ControlLeft') e.preventDefault();
@@ -7309,10 +7920,11 @@
     btnAds.addEventListener('click', () => toggleADS());
     const ctfActionBtn = document.getElementById('ctf-action-btn');
     if (ctfActionBtn) {
-      const startHold = (e) => { if (e && e.preventDefault) e.preventDefault(); ctfState.buttonHeld = true; };
+      const startHold = (e) => { if (e && e.preventDefault) e.preventDefault(); ctfState.buttonHeld = true; triggerCtfGMash(); };
       const endHold = () => { ctfState.buttonHeld = false; };
       ctfActionBtn.addEventListener('mousedown', startHold);
       ctfActionBtn.addEventListener('touchstart', startHold);
+      ctfActionBtn.addEventListener('click', () => triggerCtfGMash());
       window.addEventListener('mouseup', endHold);
       window.addEventListener('touchend', endHold);
     }
@@ -7420,7 +8032,7 @@
     const allTabs = [tabPvp, tabCoop, tabSolo, tabCtf];
     tabCtf.addEventListener('click', () => {
       gameModeSetting = 'ctf';
-      aiEnabled = false;
+      aiEnabled = true; // 搶旗模式預設開啟電腦 AI 進行搶黑旗、救旗、突襲與護旗
       allTabs.forEach(t => t.className = "flex-1 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition");
       tabCtf.className = "flex-1 py-2 rounded-xl text-xs font-black transition bg-emerald-500 text-slate-950 shadow";
     });
@@ -7433,7 +8045,9 @@
       resetPlayerForNewMatch();
       resetLoadout();   // 起始只有手槍；確保不是開鏡狀態 (#10 #11)
       playerState.lives = maxLives; playerState.out = false; updateRuleTag();
-      scoreEntry(playerState.name, playerState.team);
+      Object.keys(scoreboard).forEach(k => delete scoreboard[k]);
+      scoreEntry(playerState.name, playerState.team, playerState.spec);
+      Object.values(Net.roster || {}).forEach(r => { if (r && r.name) scoreEntry(r.name, r.team, r.spec); });
       spawnAtOwnBase();
       document.getElementById('hud-team-tag').innerText = teamLabel(playerState.team) + ' ｜ 漆色 ' + (PAINT_NAMES[playerState.paintColor] || '');
       document.getElementById('hud-team-tag').style.color = hex6(playerState.paintColor);
@@ -7496,6 +8110,24 @@
       });
 
       document.getElementById('wait-player-count').innerText = list.length;
+      const aiHintEl = document.getElementById('wait-ai-mode-hint');
+      if (aiHintEl) {
+        if (aiEnabled || gameModeSetting === 'coop') {
+          aiHintEl.classList.remove('hidden');
+          const hasBlue = list.some(p => p.team === 0);
+          const hasRed = list.some(p => p.team === 1);
+          if (hasBlue && hasRed) {
+            aiHintEl.className = 'text-[11px] font-bold px-3 py-1.5 rounded-xl mb-2 bg-amber-500/15 border border-amber-400/40 text-amber-200';
+            aiHintEl.innerText = '⚔️ 目前玩家選擇【不同隊】：開戰後藍隊與紅隊【兩邊都會有 AI 隊員】並肩作戰！';
+          } else {
+            const teamName = hasRed && !hasBlue ? '紅隊' : '藍隊';
+            aiHintEl.className = 'text-[11px] font-bold px-3 py-1.5 rounded-xl mb-2 bg-emerald-500/15 border border-emerald-400/40 text-emerald-300';
+            aiHintEl.innerText = `🤝 目前玩家選擇【同隊 (${teamName}) 一起打 AI】：全體玩家共享戰果並【一起判定勝利】！（可點右上切換隊伍）`;
+          }
+        } else {
+          aiHintEl.classList.add('hidden');
+        }
+      }
       const box = document.getElementById('wait-player-list');
       if (box) {
         box.innerHTML = list.map(p => `
@@ -7522,7 +8154,21 @@
       document.getElementById('waiting-room-modal').classList.add('hidden');
       Net.roomStatus = 'starting';
       RoomRegistry.registerMyRoom(Net.roomCode, playerState.name, gameModeSetting, Object.keys(Net.roster).length + 1, 'starting');
-      Net.sendAll({ type: 'match_start', status: 'playing', allowMidJoin: !!allowMidJoin, roundRemaining: roundRemainingTime, roundMode: roundModeSetting, gameMode: gameModeSetting, combatMode: combatModeSetting, respawnMode: respawnModeSetting, maxLives: maxLives });
+      Net.sendAll({
+        type: 'match_start',
+        status: 'playing',
+        allowMidJoin: !!allowMidJoin,
+        roundRemaining: roundRemainingTime,
+        roundMode: roundModeSetting,
+        gameMode: gameModeSetting,
+        combatMode: combatModeSetting,
+        respawnMode: respawnModeSetting,
+        maxLives: maxLives,
+        aiEnabled: aiEnabled,
+        hostName: playerState.name,
+        hostTeam: playerState.team,
+        roster: Net.roster
+      });
       setTimeout(() => {
         Net.roomStatus = 'playing';
         RoomRegistry.registerMyRoom(Net.roomCode, playerState.name, gameModeSetting, Object.keys(Net.roster).length + 1, 'playing');
@@ -7530,6 +8176,23 @@
       enterWorld();
     }
 
+    const btnWaitSwitchTeam = document.getElementById('btn-wait-switch-team');
+    if (btnWaitSwitchTeam) {
+      btnWaitSwitchTeam.addEventListener('click', () => {
+        playerState.team = 1 - playerState.team;
+        scoreEntry(playerState.name, playerState.team, playerState.spec);
+        if (Net.isHost) {
+          const hostUid = 'QFORCE3D_' + Net.roomCode + '_HOST';
+          if (Net.roster[hostUid]) Net.roster[hostUid].team = playerState.team;
+          Net.sendAll({ type: 'roster', roster: Net.roster, hostName: playerState.name, hostTeam: playerState.team, hostPaint: playerState.paintColor, hostStyle: playerState.style, hostSpec: playerState.spec, sender: Net.myId });
+          renderWaitingRoomUI();
+        } else {
+          if (Net.roster[Net.myId]) Net.roster[Net.myId].team = playerState.team;
+          Net.sendAll({ type: 'team_switch', sender: Net.myId, team: playerState.team });
+          renderWaitingRoomUI();
+        }
+      });
+    }
     document.getElementById('btn-wait-start').addEventListener('click', () => hostStartMatchNow(false));
     document.getElementById('btn-wait-start-open').addEventListener('click', () => hostStartMatchNow(true));
     document.getElementById('btn-wait-cancel').addEventListener('click', () => {
@@ -7622,6 +8285,7 @@
         remotePlayers[data.sender] = rp;
         document.getElementById('friends-count').innerText = Object.keys(remotePlayers).length;
         scoreEntry(data.name, team);
+        if (typeof ensureAITeamsSpawned === 'function') ensureAITeamsSpawned();
       }
       rp.alive = data.alive !== false;
       rp.out = !!data.out;
@@ -7646,10 +8310,10 @@
       if (data.targetUid === Net.myId) {
         showScreenPaint(data.paint !== undefined ? hex6(data.paint) : '#ef4444');
         const r = Net.roster[data.shooterId];
-        lastDamageSource = { name: data.shooterName, team: data.shooterTeam ?? (r ? r.team : (data.shooterId && data.shooterId.endsWith('_HOST') ? 0 : 1 - playerState.team)) };
+        lastDamageSource = { name: data.shooterName, team: (data.shooterTeam === 0 || data.shooterTeam === 1) ? data.shooterTeam : (r ? r.team : (data.shooterId && data.shooterId.endsWith('_HOST') ? 0 : 1 - playerState.team)) };
         receiveDamage(data.damage);
       } else if (Net.isHost && typeof data.targetUid === 'string' && data.targetUid.startsWith('AI')) {
-        // 客戶端打中 AI → 主機結算
+        // 客戶端打中 AI → 主機結算並同步擊殺給全場
         const ai = aiEnemies.find(a => a.id === data.targetUid);
         if (ai && ai.state !== 'DEAD') {
           ai.hp = Math.max(0, ai.hp - data.damage);
@@ -7658,7 +8322,8 @@
           const shooter = remotePlayers[data.shooterId];
           aiOnHit(ai, shooter ? shooter.mesh.position : null);
           const r = Net.roster[data.shooterId];
-          if (ai.hp <= 0) killAI(ai, data.shooterName, r ? r.team : 0, '漆彈');
+          const killerTeam = (data.shooterTeam === 0 || data.shooterTeam === 1) ? data.shooterTeam : (r ? r.team : (1 - (ai.team ?? AI_TEAM)));
+          if (ai.hp <= 0) killAI(ai, data.shooterName, killerTeam, '漆彈');
         }
       }
     };
@@ -7701,6 +8366,21 @@
       Net.roomStatus = 'playing';
       if (data && data.combatMode) { combatModeSetting = data.combatMode; syncCombatModeUI(); }
       if (data && data.gameMode) { gameModeSetting = data.gameMode; }
+      if (data && typeof data.aiEnabled === 'boolean') { aiEnabled = data.aiEnabled; }
+      if (data && typeof data.roundRemaining === 'number') { roundRemainingTime = data.roundRemaining; }
+      if (data && data.roundMode) { roundModeSetting = data.roundMode; }
+      if (data && data.respawnMode) { respawnModeSetting = data.respawnMode; }
+      if (data && data.maxLives) { maxLives = data.maxLives; }
+      if (data && data.roster && !Net.isHost) {
+        const hostKey = 'QFORCE3D_' + Net.roomCode + '_HOST';
+        Net.roster = Object.assign({}, data.roster);
+        if (data.hostName) {
+          Net.roster[hostKey] = { name: data.hostName, team: (data.hostTeam === 0 || data.hostTeam === 1) ? data.hostTeam : 0 };
+        }
+        if (Net.roster[Net.myId] && (Net.roster[Net.myId].team === 0 || Net.roster[Net.myId].team === 1)) {
+          playerState.team = Net.roster[Net.myId].team;
+        }
+      }
       document.getElementById('waiting-room-modal').classList.add('hidden');
       if (!isGameRunning) enterWorld();
       addKillFeed('🚀 房主已啟動對戰！全軍出擊！', '#34d399');
@@ -7710,7 +8390,19 @@
       if (it && it.isAvailable) { it.respawnTime = (data.respawnTime !== undefined) ? data.respawnTime : it.respawnTime; consumePickup(it, false); }
     };
     Net.onDropEvent = (data) => { if (data.drop) spawnDroppedItem(data.drop, false); };
-    Net.onRoundTick = (data) => { if (data.ended && !isRoundEnded && isGameRunning && roundModeSetting !== 'elimination' && roundRemainingTime < 8) { roundRemainingTime = 0; endRoundByTime(); } if (data.roundMode) roundModeSetting = data.roundMode; if (typeof data.roundRemaining === 'number' && Math.abs(roundRemainingTime - data.roundRemaining) > 1.5) roundRemainingTime = data.roundRemaining; };
+    Net.onRoundTick = (data) => {
+      if (!data) return;
+      if (data.scoreboard && !isMatchAuthority()) applyAuthoritativeScoreboard(data.scoreboard, data.roomTotalScoreboard || null, data.roomRoundCount || null);
+      if (data.ctf && !isMatchAuthority()) applyCtfSnapshot(data.ctf);
+      if (data.roundMode) roundModeSetting = data.roundMode;
+      if (typeof data.roundRemaining === 'number' && Math.abs(roundRemainingTime - data.roundRemaining) > 1.5) roundRemainingTime = data.roundRemaining;
+      if (data.ended) {
+        roundRemainingTime = 0;
+        if (data.matchEndPayload) {
+          Net.onMatchEndEvent(data.matchEndPayload);
+        }
+      }
+    };
     Net.onRoundSync = (data) => { if (data.combatMode) { combatModeSetting = data.combatMode; syncCombatModeUI(); } if (data.respawnMode) respawnModeSetting = data.respawnMode; if (data.maxLives) maxLives = data.maxLives; playerState.lives = maxLives; updateRuleTag(); if (data.roundMode) roundModeSetting = data.roundMode; if (typeof data.roundRemaining === 'number') roundRemainingTime = data.roundRemaining; if (data.teamColorKey) currentTeamColorKey = data.teamColorKey; if (data.gameMode) gameModeSetting = data.gameMode; };
     Net.onRoomInfo = (info) => {
       clearTimeout(window.__roomInfoTimeout);
@@ -7722,18 +8414,46 @@
       });
     };
     Net.onVoteEvent = (data) => { tacticVotes[data.team] = tacticVotes[data.team] || {}; tacticVotes[data.team][data.name] = data.tactic; renderVotes(); };
-    Net.onMatchEndEvent = (data) => { announceMatchEnd(data.winnerTeam === playerState.team, data.message, data.winnerTeam); };
-    Net.onRoster = (roster) => { Object.values(roster).forEach(r => scoreEntry(r.name, r.team, r.spec)); renderScoreboard(); renderWaitingRoomUI(); };
-    Net.onKillEvent = (data) => { if (data.victimUid !== Net.myId) recordKill(data.killer, data.killerTeam, data.victim, data.victimTeam); };
+    Net.onMatchEndEvent = (data) => {
+      if (!data) return;
+      if (data.scoreboard) applyAuthoritativeScoreboard(data.scoreboard, data.roomTotalScoreboard || null, data.roomRoundCount || null);
+      if (data.ctf) applyCtfSnapshot(data.ctf);
+      const winTeam = (data.winnerTeam === 0 || data.winnerTeam === 1 || data.winnerTeam === -1) ? data.winnerTeam : -1;
+      const isWinner = (winTeam === 0 || winTeam === 1) ? (winTeam === playerState.team) : false;
+      announceMatchEnd(isWinner, data.message, winTeam, true);
+    };
+    Net.onRoster = (roster) => { Object.values(roster).forEach(r => { if (r && r.name) scoreEntry(r.name, r.team, r.spec); }); renderScoreboard(); renderWaitingRoomUI(); };
+    const _processedKillIds = new Set();
+    Net.onKillEvent = (data) => {
+      if (!data) return;
+      if (data.killId) {
+        if (_processedKillIds.has(data.killId)) return;
+        _processedKillIds.add(data.killId);
+      }
+      if (data.sender && data.sender === Net.myId) return;
+      if (!data.killId && data.victimUid === Net.myId) return;
+      if (data.killer === playerState.name) {
+        playerState.kills++;
+        const kc = document.getElementById('kills-count');
+        if (kc) kc.innerText = playerState.kills;
+      }
+      recordKill(data.killer, data.killerTeam, data.victim, data.victimTeam, data.weaponLabel);
+    };
     Net.onShotEvent = (data) => {
       // 其他玩家 / 主機 AI 的子彈：本機只做視覺呈現 (傷害由射擊方或主機結算)
       if (data.ai && isAIAuthority()) return;
       const wpn = WEAPONS[data.weapon] || WEAPONS.m4a1;
-      firePaintballBullet(new THREE.Vector3(data.x, data.y, data.z), new THREE.Vector3(data.dx, data.dy, data.dz), wpn, false, data.sender, '', data.paint, true);
+      const isFriendlyShot = (data.team !== undefined) ? (data.team === playerState.team) : false;
+      const pr = firePaintballBullet(new THREE.Vector3(data.x, data.y, data.z), new THREE.Vector3(data.dx, data.dy, data.dz), wpn, isFriendlyShot, data.sender, '', data.paint, true);
+      if (pr && data.team !== undefined) pr.shooterTeam = data.team;
       const d = Math.hypot(data.x - playerGroup.position.x, data.z - playerGroup.position.z);
       AudioEngine.playGunshot(wpn.type, d);
     };
-    Net.onAISync = (data) => applyAISync(data.ai || []);
+    Net.onAISync = (data) => {
+      if (data && data.scoreboard && !isMatchAuthority()) applyAuthoritativeScoreboard(data.scoreboard, null, null);
+      if (data && data.ctf && !isMatchAuthority()) applyCtfSnapshot(data.ctf);
+      applyAISync((data && data.ai) || []);
+    };
     Net.onAIToggle = (data) => { aiEnabled = !!data.enabled; if (!aiEnabled) { aiEnemies.forEach(a => scene.remove(a.mesh)); aiEnemies.length = 0; } document.getElementById('hud-mode-text').innerText = aiEnabled ? 'PvP + AI' : '純 PvP 對決'; addKillFeed(aiEnabled ? '🤖 房主開啟了 AI 對手' : '🤖 房主關閉了 AI 對手', '#a78bfa'); };
     Net.onRoomClosed = (data) => { returnToLobby('🚪 ' + (data.reason || '房間已關閉')); };
 
@@ -7800,12 +8520,13 @@
         minimapCtx.stroke();
       }
 
-      // AI 敵人紅點
+      // AI 單位雷達點：同隊 AI 隊友顯示天藍點 (#38bdf8)，敵隊 AI 顯示紅點 (#ef4444)
       if (aiEnabled) {
         aiEnemies.forEach(ai => {
+          if (ai.state === 'DEAD') return;
           const ax = cx + (ai.mesh.position.x - playerGroup.position.x) * scale;
           const ay = cy + (ai.mesh.position.z - playerGroup.position.z) * scale;
-          minimapCtx.fillStyle = '#ef4444';
+          minimapCtx.fillStyle = (ai.team === playerState.team) ? '#38bdf8' : '#ef4444';
           minimapCtx.beginPath();
           minimapCtx.arc(ax, ay, 3.5, 0, Math.PI * 2);
           minimapCtx.fill();
@@ -7883,15 +8604,20 @@
     }
 
     function killAI(ai, killerName, killerTeam, weaponLabel) {
+      if (ai.state === 'DEAD') return;
       ai.state = 'DEAD';
       ai.deadTimer = 1.3;
       ai.mesh.scale.y = 1;
+      const victimTeam = (ai.team === 0 || ai.team === 1) ? ai.team : AI_TEAM;
+      const kTeam = (killerTeam === 0 || killerTeam === 1) ? killerTeam : (1 - victimTeam);
       if (isAIAuthority() && weaponLabel !== 'C4 爆炸') dropDeathLoot(ai.mesh.position.x, ai.mesh.position.y, ai.mesh.position.z, WEAPONS[ai.weaponKey], 50, true);   // #8
       if (killerName === playerState.name) {
         playerState.kills++;
         document.getElementById('kills-count').innerText = playerState.kills;
       }
-      recordKill(killerName, killerTeam, ai.name, AI_TEAM, weaponLabel);
+      recordKill(killerName, kTeam, ai.name, victimTeam, weaponLabel);
+      if (Net.isHost) Net.sendKillEvent(ai.name, killerName, victimTeam, kTeam, ai.id);
+      checkRoundVictoryCondition();
     }
 
     let coverButtonShown = false;
@@ -7930,15 +8656,25 @@
 
       // 1. 回合計時器 + 30 秒倒數 (#21)
       if (roundModeSetting === 'elimination') document.getElementById('round-timer').innerText = '∞ 全滅';
-      // 準備階段不偷跑時間，且頂部時間與倒數提醒共用同一個整數秒 getSyncedRoundSeconds 完全同步 (#9)
+      // 準備階段不偷跑時間，且頂部時間與倒數提醒共用同一個整數秒 getSyncedRoundSeconds 完全同步 (#9, v7.3 房主權威結算)
       if (roundModeSetting !== 'elimination' && !isRoundEnded) {
-        if (!prepActive) roundRemainingTime -= delta;
+        if (!prepActive) roundRemainingTime = Math.max(0, roundRemainingTime - delta);
         const totalSec = getSyncedRoundSeconds();
         const mins = Math.floor(totalSec / 60);
         const secs = totalSec % 60;
         document.getElementById('round-timer').innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         updateRoundCountdown();
-        if (roundRemainingTime <= 0) endRoundByTime();
+        if (roundRemainingTime <= 0) {
+          if (isMatchAuthority()) {
+            endRoundByTime();
+          } else if (!window.__clientEndFallbackTimer) {
+            // 客戶端等待房主送達權威 match_end_event（含完整排行榜與獲勝隊伍），僅在 3 秒逾時未收到時才以本地備援結算
+            window.__clientEndFallbackTimer = setTimeout(() => {
+              window.__clientEndFallbackTimer = null;
+              if (!isRoundEnded && isGameRunning) endRoundByTime();
+            }, 3000);
+          }
+        }
       }
 
       // 2. C4 倒數 (#16)
@@ -8109,16 +8845,16 @@
         }
 
         if (!done && !proj.visualOnly) {
-          const shooterTeam = proj.isAlly ? playerState.team : AI_TEAM;
-          // A. 命中 AI (只有非 AI 隊伍的子彈、且本機為 AI 權威或鏡像皆可視覺化，但傷害只在權威端結算)
-          if (shooterTeam !== AI_TEAM) {
+          const shooterTeam = (proj.shooterTeam !== undefined) ? proj.shooterTeam : (proj.isAlly ? playerState.team : AI_TEAM);
+          // A. 命中敵方 AI (支援玩家射擊敵隊 AI，以及藍紅雙邊 AI 隊員互相交火；同隊 AI 隊友不誤傷)
+          {
             for (let j = aiEnemies.length - 1; j >= 0 && !done; j--) {
               const ai = aiEnemies[j];
-              if (ai.state === 'DEAD') continue;
+              if (ai.state === 'DEAD' || ai.team === shooterTeam) continue;
               const hpt = segmentHitsCapsule(proj.prevPos, proj.pos, ai.mesh.position, ai.bodyHeight * ai.mesh.scale.y, 0.5);
               if (hpt) {
                 done = true;
-                triggerHitFeedback();
+                if (proj.shooterId === Net.myId) triggerHitFeedback();
                 spawnPaintSplatter(hpt.clone(), proj.color, _v2.copy(proj.vel).normalize().negate());
                 applyPaintToCharacter(ai, hpt, proj.color);
                 if (proj.isBlackPaint || proj.color === 0x111111) {
@@ -8128,14 +8864,18 @@
                 const isHeadAI = hpt.y > ai.mesh.position.y + ai.bodyHeight * ai.mesh.scale.y * 0.75;
                 const hitZoneMultAI = isHeadAI ? HEAD_DAMAGE_MULT : BODY_DAMAGE_MULT;
                 if (isAIAuthority()) {
-                  wallBlockedStreak = 0;
+                  if (proj.shooterId === Net.myId) wallBlockedStreak = 0;
+                  const shooterAI = aiEnemies.find(a => a.id === proj.shooterId);
+                  if (shooterAI) { shooterAI.lastHitTime = now; shooterAI.shotsSinceHit = 0; }
                   const dmg = Math.round(proj.damage * hitZoneMultAI * getCombatDamageMultiplier());
                   ai.hp = Math.max(0, ai.hp - dmg);
                   ai.hpMesh.scale.x = Math.max(0.001, ai.hp / ai.maxHp);
                   ai.hitTimer = 0.3;
-                  aiOnHit(ai, playerGroup.position);
-                  if (ai.hp <= 0) killAI(ai, playerState.name, playerState.team, currentWeapon.name + (isHeadAI ? ' (爆頭!)' : ''));
-                } else {
+                  aiOnHit(ai, shooterAI ? shooterAI.mesh.position : playerGroup.position);
+                  const kName = proj.shooterName || playerState.name;
+                  const wName = proj.fromAI ? ((WEAPONS[proj.shooterWeapon] || {}).name || '步槍') : (currentWeapon.name + (isHeadAI ? ' (爆頭!)' : ''));
+                  if (ai.hp <= 0) killAI(ai, kName, shooterTeam, wName);
+                } else if (proj.shooterId === Net.myId) {
                   Net.sendHitEvent(ai.id, Math.round(proj.damage * hitZoneMultAI), playerState.name, proj.color);   // 交給主機結算
                 }
               }
@@ -8155,14 +8895,14 @@
                 const hitDmg = Math.round(proj.damage * hitZoneMultRP);
                 spawnPaintSplatter(hpt.clone(), proj.color, _v2.copy(proj.vel).normalize().negate());
                 applyPaintToCharacter(rp, hpt, proj.color);
-                if (proj.isAlly) { triggerHitFeedback(); Net.sendHitEvent(uid, hitDmg, playerState.name, proj.color); }
-                else if (isAIAuthority()) Net.sendHitEvent(uid, hitDmg, proj.shooterName, proj.color, AI_TEAM);
+                if (proj.shooterId === Net.myId) { triggerHitFeedback(); Net.sendHitEvent(uid, hitDmg, playerState.name, proj.color); }
+                else if (isAIAuthority()) Net.sendHitEvent(uid, hitDmg, proj.shooterName, proj.color, shooterTeam);
                 break;
               }
             }
           }
-          // C. 命中本機玩家 (AI 子彈，含身體/頭部倍率、趴地縮小碰撞盒 #8、正面黑彈 5 秒視覺擾亂 #6)
-          if (!done && !proj.isAlly && playerState.team !== AI_TEAM) {
+          // C. 命中本機玩家 (敵隊 AI 子彈，含身體/頭部倍率、趴地縮小碰撞盒 #8、正面黑彈 5 秒視覺擾亂 #6)
+          if (!done && shooterTeam !== playerState.team) {
             const feet = _v2.set(playerGroup.position.x, playerFeetY, playerGroup.position.z);
             const myH = isProne ? (PRONE_HEIGHT + 0.18) : (eyeOffsetCurrent + 0.25);
             const myR = isProne ? 0.34 : 0.48;
@@ -8179,7 +8919,7 @@
                   triggerBlackInkBlindness(5.0);
                 }
               }
-              lastDamageSource = { name: proj.shooterName, team: AI_TEAM, weapon: (WEAPONS[proj.shooterWeapon] || {}).name };
+              lastDamageSource = { name: proj.shooterName, team: shooterTeam, weapon: (WEAPONS[proj.shooterWeapon] || {}).name };
               const shooterAI = aiEnemies.find(a => a.id === proj.shooterId); if (shooterAI) { shooterAI.lastHitTime = now; shooterAI.shotsSinceHit = 0; }
               receiveDamage(Math.round(proj.damage * hitZoneMultMe));
               cameraPitch += (Math.random() - 0.5) * 0.06;
@@ -8311,7 +9051,7 @@
     /* =========================================================================
        18. 自動化物理/戰鬥驗證模式：開啟 game.html?autotest=1 於 Console 輸出 [AUTOTEST] 結果
        ========================================================================= */
-    const BUILD_STAMP = 'v7.1 · 建置 2026-10-25 15:14 (台北)';
+    const BUILD_STAMP = 'v7.4 · 建置 2026-10-25 23:35 (台北)';
     console.log('現代突擊 3D ' + BUILD_STAMP);
     window.__manualLoop = new URLSearchParams(location.search).has('autotest');
     if (new URLSearchParams(location.search).has('demo')) {
@@ -9126,6 +9866,235 @@
             'T76 雙電腦 PeerJS P2P 房間目錄廣播、直連房號探測 (room_probe) 與加入握手全流程 (#10)',
             probeListedOK && gotRoomInfo && gotWelcome && rosterHasPC2 && gotPingAck,
             `probeListed=${probeListedOK} roomInfo=${gotRoomInfo} welcome=${gotWelcome} roster=${rosterHasPC2} pingAck=${gotPingAck}`
+          );
+        }
+
+        // ---- T77: v7.2 玩家打 AI「同隊合作一起判定勝利」與「不同隊兩邊都有 AI 隊員」雙模式驗證 ----
+        {
+          const savedHost = Net.isHost;
+          const savedCode = Net.roomCode;
+          const savedRoster = { ...Net.roster };
+          const savedAIEnabled = aiEnabled;
+          const savedTeam = playerState.team;
+
+          // (A) 玩家選擇同隊 (例如都在藍隊 0) 打 AI：AI 只生成於紅隊 (1)，且勝利時全隊一起獲勝並廣播 match_end_event
+          Net.isHost = true;
+          Net.roomCode = '8888';
+          playerState.team = 0;
+          Net.roster = {
+            'ALLY_CLIENT_1': { name: '同隊夥伴A', team: 0, paint: 0x38bdf8 }
+          };
+          aiEnabled = true;
+          const sameTeamActiveAI = getActiveAITeams();
+          const sameTeamIsCoop = isCoopSameTeamAgainstAI();
+          initEnemies();
+          const onlyEnemyTeamSpawned = (sameTeamActiveAI.length === 1 && sameTeamActiveAI[0] === 1 && aiEnemies.length >= 1 && aiEnemies.every(a => a.team === 1));
+
+          // 模擬同隊擊殺敵方 AI 後時間到結算，驗證主機廣播 winnerTeam=0 讓所有同隊隊員一起判定獲勝
+          let broadcastMatchEndMsg = null;
+          const origSendMatchEnd = Net.sendMatchEnd;
+          Net.sendMatchEnd = function(wt, msg) { broadcastMatchEndMsg = { winnerTeam: wt, message: msg }; };
+          scoreEntry(playerState.name, 0).kills = 5;
+          scoreEntry('同隊夥伴A', 0).kills = 4;
+          isRoundEnded = false;
+          endRoundByTime();
+          const bannerTextSameTeam = (document.getElementById('match-end-banner') || {}).innerText || '';
+          const coopSharedVictoryOK = !!(broadcastMatchEndMsg && broadcastMatchEndMsg.winnerTeam === 0 && bannerTextSameTeam.includes('我方獲勝'));
+          // 清理結算橫幅
+          clearTimeout(endBannerTimer); clearInterval(endBannerCountdown);
+          document.getElementById('match-end-banner').classList.add('hidden');
+          isRoundEnded = false; isGameRunning = true;
+          Net.sendMatchEnd = origSendMatchEnd;
+
+          // (B) 玩家選擇不同隊 (房主在藍隊 0，另一位玩家選紅隊 1)：藍紅兩邊就都有 AI 隊員 ([0, 1])！
+          Net.roster = {
+            'RIVAL_CLIENT_2': { name: '對抗玩家B', team: 1, paint: 0xf43f5e }
+          };
+          const diffTeamActiveAI = getActiveAITeams();
+          initEnemies();
+          const hasBlueAITeammate = aiEnemies.some(a => a.team === 0 && a.state !== 'DEAD');
+          const hasRedAITeammate = aiEnemies.some(a => a.team === 1 && a.state !== 'DEAD');
+          const blueAI = aiEnemies.find(a => a.team === 0);
+          const redAI = aiEnemies.find(a => a.team === 1);
+          // 驗證藍隊 AI 會鎖定紅隊目標、紅隊 AI 會鎖定藍隊目標
+          const blueTarget = blueAI ? aiPickTarget(blueAI) : null;
+          const redTarget = redAI ? aiPickTarget(redAI) : null;
+          const dualAITargetingOK = !!(blueTarget && blueTarget.team === 1 && redTarget && redTarget.team === 0);
+
+          // 還原狀態
+          Net.isHost = savedHost;
+          Net.roomCode = savedCode;
+          Net.roster = savedRoster;
+          aiEnabled = savedAIEnabled;
+          playerState.team = savedTeam;
+          initEnemies();
+
+          log(
+            'T77 玩家打 AI 支援「選擇同隊一起判定勝利」與「選擇不同隊兩邊都有 AI 隊員」 (#10)',
+            sameTeamIsCoop && onlyEnemyTeamSpawned && coopSharedVictoryOK && diffTeamActiveAI.length === 2 && hasBlueAITeammate && hasRedAITeammate && dualAITargetingOK,
+            `coop=${sameTeamIsCoop} enemyOnly=${onlyEnemyTeamSpawned} sharedWin=${coopSharedVictoryOK} activeAI=[${diffTeamActiveAI}] blueAI=${hasBlueAITeammate} redAI=${hasRedAITeammate} targeting=${dualAITargetingOK}`
+          );
+        }
+
+        // ---- T78: v7.3 房主與連線客戶端結算結果、獲勝隊伍與排行榜 100% 權威同步驗證 ----
+        {
+          const savedHost = Net.isHost;
+          const savedCode = Net.roomCode;
+          const savedTeam = playerState.team;
+          const savedName = playerState.name;
+          const savedKills = playerState.kills;
+
+          // Step 1: 模擬房主端 (Host) 產生完整戰績並判定「紅隊獲勝 (winnerTeam=1)」
+          Net.isHost = true;
+          Net.roomCode = '8888';
+          playerState.name = '房主隊長';
+          playerState.team = 0; // 房主在藍隊
+          Object.keys(scoreboard).forEach(k => delete scoreboard[k]);
+          Object.keys(roomTotalScoreboard).forEach(k => delete roomTotalScoreboard[k]);
+          scoreEntry('房主隊長', 0).kills = 2;
+          scoreEntry('連線紅隊玩家', 1).kills = 6;
+          scoreEntry('🐱 [紅隊AI] 黑貓特種兵 #1', 1).kills = 3;
+          roomTotalScoreboard['連線紅隊玩家'].totalKills = 6;
+          roomTotalScoreboard['🐱 [紅隊AI] 黑貓特種兵 #1'].totalKills = 3;
+          roomTotalScoreboard['房主隊長'].totalKills = 2;
+
+          let capturedMatchEndPayload = null;
+          const origSendAll = Net.sendAll;
+          Net.sendAll = function(p) {
+            if (p && p.type === 'match_end_event') capturedMatchEndPayload = JSON.parse(JSON.stringify(p));
+          };
+          isRoundEnded = false;
+          endRoundByTime();
+          Net.sendAll = origSendAll;
+
+          const hostWinnerIsRed = !!(capturedMatchEndPayload && capturedMatchEndPayload.winnerTeam === 1 && capturedMatchEndPayload.scoreboard && capturedMatchEndPayload.scoreboard['連線紅隊玩家'].kills === 6);
+
+          // 清理房主端橫幅
+          clearTimeout(endBannerTimer); clearInterval(endBannerCountdown);
+          document.getElementById('match-end-banner').classList.add('hidden');
+          isRoundEnded = false;
+
+          // Step 2: 模擬連線進去的人 (Client，在紅隊 team=1)，原本本地戰績殘缺且甚至已誤觸舊結算
+          Net.isHost = false;
+          Net.roomCode = '8888';
+          playerState.name = '連線紅隊玩家';
+          playerState.team = 1; // 連線玩家在紅隊
+          playerState.kills = 0; // 本地原本漏計擊殺
+          Object.keys(scoreboard).forEach(k => delete scoreboard[k]);
+          scoreEntry('連線紅隊玩家', 1).kills = 0;
+          scoreEntry('🐻 小熊特種兵 #9', 0).kills = 3; // 假設本地有錯誤的不同步紀錄
+
+          // 即使客戶端本地先誤開了結算視窗，收到房主的 match_end_event 時也必須強制覆寫為正確的「紅隊獲勝」與完整排行榜！
+          triggerMatchEnd(false, '錯誤的本地結算', 0);
+          Net.onMatchEndEvent(capturedMatchEndPayload);
+
+          const clientTitle = (document.getElementById('game-over-title') || {}).innerText || '';
+          const clientTag = (document.getElementById('final-result-tag') || {}).innerText || '';
+          const clientDesc = (document.getElementById('game-over-desc') || {}).innerText || '';
+          const clientMvp = (document.getElementById('final-mvp-name') || {}).innerText || '';
+          const clientKillsText = (document.getElementById('final-kills') || {}).innerText || '';
+
+          const clientSawRedWin = clientTitle.includes('紅隊獲勝') && clientTag.includes('紅隊獲勝') && clientTag.includes('VICTORY');
+          const clientSyncedMvpAndKills = clientMvp.includes('連線紅隊玩家') && playerState.kills === 6 && clientKillsText === '6' && clientDesc.includes('藍隊 2 殺 vs 紅隊 9 殺');
+
+          // 清理並還原狀態
+          document.getElementById('game-over-modal').classList.add('hidden');
+          clearTimeout(endBannerTimer); clearInterval(endBannerCountdown);
+          document.getElementById('match-end-banner').classList.add('hidden');
+          isRoundEnded = false;
+          isGameRunning = true;
+          Net.isHost = savedHost;
+          Net.roomCode = savedCode;
+          playerState.team = savedTeam;
+          playerState.name = savedName;
+          playerState.kills = savedKills;
+
+          log(
+            'T78 房主與連線客戶端結算畫面、獲勝隊伍與排行榜 100% 權威同步驗證 (#10)',
+            hostWinnerIsRed && clientSawRedWin && clientSyncedMvpAndKills,
+            `hostRedWin=${hostWinnerIsRed} clientRedWin=${clientSawRedWin} syncedMvpKills=${clientSyncedMvpAndKills} title="${clientTitle}" tag="${clientTag}" mvp="${clientMvp}" kills=${clientKillsText}`
+          );
+        }
+
+        // T79 搶旗模式 (CTF) 電腦 AI 戰術動作 (搶二樓黑旗/回防救旗/突襲敵旗/駐點護旗)、紅藍黑三色旗驗證、以及連打 [G] 鍵 2 倍速升降旗與 UI 提示驗證
+        {
+          const savedMode = gameModeSetting;
+          const savedAI = aiEnabled;
+          const savedTeam = playerState.team;
+          const savedSpect = playerState.isSpectating;
+
+          // 1. 驗證紅藍隊的旗子顏色是紅旗 (0xef4444) 與藍旗 (0x2563eb)，沒搶到的是黑旗 (0x111827)
+          resetAllCtfFlags();
+          const fWest2F = ctfFlags[0]; // 預設沒搶到 (-1) -> 黑旗
+          const fEast2F = ctfFlags[1]; // 預設沒搶到 (-1) -> 黑旗
+          const fBlueBase = ctfFlags[2]; // 預設藍隊 (0) -> 藍旗
+          const fRedBase = ctfFlags[3]; // 預設紅隊 (1) -> 紅旗
+          const blackHexOk = fWest2F.mesh.material.color.getHex() === 0x111827 && fEast2F.mesh.material.color.getHex() === 0x111827;
+          const blueHexOk = fBlueBase.mesh.material.color.getHex() === 0x2563eb;
+          const redHexOk = fRedBase.mesh.material.color.getHex() === 0xef4444;
+
+          // 2. 驗證連打 [G] 鍵加速升降旗至 2 倍速 (2.0x) 與畫面提示文字
+          gameModeSetting = 'ctf';
+          aiEnabled = false;
+          playerState.team = 0;
+          playerState.isSpectating = false;
+          teleport(fWest2F.x + 1.0, fWest2F.z, 0, fWest2F.floorY);
+          ctfState.gMashBoostUntil = 0;
+          updateCTF(1.0); // 未按 G 鍵 (1.0x)：站 1 秒降旗 1/12
+          const hAfterNormal1s = fWest2F.heightRatio; // 約 11/12 = 0.9167
+          const btnNormalTxt = (document.getElementById('ctf-action-btn') || {}).innerText || '';
+          const barNormalTxt = (document.getElementById('ctf-bar-text') || {}).innerText || '';
+          const promptShowsGKey = btnNormalTxt.includes('連打 [G] 鍵') && btnNormalTxt.includes('兩倍') && barNormalTxt.includes('[G]');
+
+          // 模擬玩家連打 [G] 鍵：觸發 KeyG keydown 事件並推進 3.0 秒 (2.0x 兩倍速下，3 秒等於 6 秒進度 = 降旗 0.50！)
+          window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyG' }));
+          const multDuringGMash = getCtfCaptureSpeedMultiplier(true);
+          updateCTF(3.0);
+          const hAfterGMash3s = fWest2F.heightRatio; // 0.9167 - (3.0 * 2.0 / 12.0) = 0.4167 (精準下降 0.50)
+          const btnBoostTxt = (document.getElementById('ctf-action-btn') || {}).innerText || '';
+          const gMashSpeed2xOk = (multDuringGMash === 2.0) && Math.abs((hAfterNormal1s - hAfterGMash3s) - 0.50) < 0.02 && btnBoostTxt.includes('2.0x');
+
+          // 3. 驗證電腦 AI 在搶旗模式的四大戰術動作：
+          //    (a) 優先選擇二樓沒搶到的黑旗 (CAPTURE_2F_BLACK_FLAG) 並規劃上二樓路徑
+          //    (b) 當自家基地旗被敵人降旗時，立即切換為緊急回防救旗 (RESCUE_HOME_FLAG)
+          //    (c) AI 站在二樓黑旗下可自動將黑旗降下並升起自己隊伍顏色的紅/藍旗
+          resetAllCtfFlags();
+          teleport(0, 25, 0, 0); // 玩家移開旗座
+          aiEnabled = true;
+          initEnemies();
+          const testAI = aiEnemies[0] || spawnAIEnemyFromBase(0, 1);
+          testAI.team = 1; // 紅隊 AI
+          testAI.mesh.position.set(17, 0, 10); // 一樓靠近東側二樓房
+          const obj1 = aiSelectCtfObjective(testAI);
+          const wps1 = aiBuildCtfWaypoints(testAI, obj1.flagIdx);
+          const aiPicksBlackFlag = !!(obj1 && obj1.role === 'CAPTURE_2F_BLACK_FLAG' && (obj1.flagIdx === 0 || obj1.flagIdx === 1) && wps1.length >= 3);
+
+          // 模擬紅隊基地旗 (ctfFlags[3]) 遭藍隊偷襲降旗 -> AI 應立即切換為 RESCUE_HOME_FLAG
+          ctfFlags[3].heightRatio = 0.6;
+          const objRescue = aiSelectCtfObjective(testAI);
+          const aiRescuesHome = !!(objRescue && objRescue.role === 'RESCUE_HOME_FLAG' && objRescue.flagIdx === 3);
+          ctfFlags[3].heightRatio = 1.0;
+
+          // 將紅隊 AI 放上東側二樓黑旗圈內 (x=15.9, y=3.4, z=0)，推進 updateAIBrains 與 updateCTF 驗證 AI 自動奪下黑旗變紅旗 (0xef4444)
+          testAI.mesh.position.set(15.9, 3.4, 0);
+          aiUpdateCtfBehavior(testAI, 0.1, gameNow, null, false);
+          const aiStateCapturing = (testAI.state === 'CTF_CAPTURING');
+          updateCTF(12.0); // AI 站 12 秒將黑旗降到底變紅旗
+          updateCTF(12.0); // AI 再站 12 秒將紅旗升到頂 (1.0)
+          const aiCapturedToRed = (ctfFlags[1].currentColorTeam === 1 && ctfFlags[1].heightRatio >= 0.999 && ctfFlags[1].mesh.material.color.getHex() === 0xef4444);
+
+          // 還原測試環境
+          resetAllCtfFlags();
+          gameModeSetting = savedMode;
+          aiEnabled = savedAI;
+          playerState.team = savedTeam;
+          playerState.isSpectating = savedSpect;
+          initEnemies();
+
+          log(
+            'T79 搶旗模式 AI 戰術邏輯 (搶二樓黑旗/救旗/突襲/護旗)、紅藍黑三色旗與 [G] 鍵連打 2 倍速升降旗驗證',
+            blackHexOk && blueHexOk && redHexOk && promptShowsGKey && gMashSpeed2xOk && aiPicksBlackFlag && aiRescuesHome && aiStateCapturing && aiCapturedToRed,
+            `colors(B/Bl/R)=${blackHexOk}/${blueHexOk}/${redHexOk} gPrompt=${promptShowsGKey} g2x=${gMashSpeed2xOk} aiBlack=${aiPicksBlackFlag} aiRescue=${aiRescuesHome} aiCapRed=${aiCapturedToRed}`
           );
         }
 
