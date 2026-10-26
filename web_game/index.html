@@ -24,6 +24,22 @@
 </head>
 <body class="bg-slate-950 text-slate-100 antialiased p-4 sm:p-8 min-h-screen radar-grid font-sans selection:bg-emerald-500 selection:text-slate-950">
 
+  <!-- v7.6 一鍵直接進入連線遊戲 (手機 / 平板 / 筆電皆可) -->
+  <div id="play-now-bar" class="max-w-6xl mx-auto mb-4 p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 border-2 border-emerald-300/70 shadow-2xl shadow-emerald-500/30 flex flex-col md:flex-row items-center justify-between gap-4">
+    <div class="text-center md:text-left">
+      <div class="text-xs font-black text-emerald-100 tracking-widest uppercase mb-1">▶ Play Now · 免下載免安裝</div>
+      <div class="text-xl sm:text-2xl font-black text-white leading-tight">直接進入連線遊戲：開房間或加入朋友的房間</div>
+      <div class="text-xs text-emerald-50/90 mt-1">📱 iPhone / iPad 雙手拇指觸控版 ｜ 💻 筆電 PC 鍵鼠版 ｜ 同一房間可混合對戰</div>
+    </div>
+    <div class="flex flex-col sm:flex-row items-stretch gap-2 w-full md:w-auto">
+      <a id="btn-play-now" href="game.html" class="flex-1 md:flex-none text-center px-6 py-3.5 rounded-2xl bg-white text-emerald-700 font-black text-base shadow-xl hover:bg-emerald-50 active:scale-95 transition whitespace-nowrap">🚀 直接進入連線遊戲</a>
+      <form id="quick-join-form" class="flex items-stretch gap-1.5" onsubmit="event.preventDefault(); const c=(document.getElementById('quick-room').value||'').replace(/[^0-9A-Za-z]/g,'').slice(0,8); location.href = c ? ('game.html?room=' + encodeURIComponent(c) + '&join=1') : 'game.html';">
+        <input id="quick-room" type="text" inputmode="numeric" maxlength="8" placeholder="房號 8888" class="w-28 px-3 rounded-2xl bg-slate-950/70 border border-emerald-200/50 text-amber-300 font-mono font-black text-base text-center focus:outline-none focus:border-white" style="font-size:16px;">
+        <button type="submit" class="px-4 py-3 rounded-2xl bg-slate-950/80 hover:bg-slate-900 border border-emerald-200/50 text-white font-black text-sm active:scale-95 transition whitespace-nowrap">🔍 輸入房號加入</button>
+      </form>
+    </div>
+  </div>
+
   <!-- 頂部導航列 -->
     <!-- 頂部提示橫幅 -->
   <div class="max-w-6xl mx-auto mb-6 p-4 rounded-2xl bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-cyan-500/20 border border-emerald-400/40 text-xs flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
@@ -50,14 +66,15 @@
           <span class="text-xs font-black tracking-wider px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
             CHIBI TACTICAL
           </span>
-          <span class="text-xs text-slate-400 font-mono">v2.4 Final</span>
+          <span class="text-xs text-slate-400 font-mono">v7.6 iPhone/iPad 觸控版</span>
         </div>
         <h1 class="text-xl font-black text-white tracking-wide">Q版特種部隊：現代突擊 3D</h1>
       </div>
     </div>
 
     <!-- 快捷按鈕 -->
-    <div class="flex items-center gap-2.5">
+    <div class="flex items-center gap-2.5 flex-wrap justify-center">
+      <a href="game.html" class="px-5 py-2.5 rounded-xl bg-white text-emerald-700 font-black text-xs shadow-lg hover:bg-emerald-50 active:scale-95 transition">🚀 直接進入連線遊戲</a>
       <button id="btn-download-promo-game" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/25 active:scale-95 transition flex items-center gap-1.5">
         <span>📥 一鍵下載完整遊戲檔 (index.html)</span>
       </button>
@@ -106,7 +123,10 @@
           </div>
           <div class="font-black text-white text-base">柴犬隊長領軍</div>
           <div class="text-xs text-emerald-400 font-semibold mt-1">「汪！準備好突擊了嗎？」</div>
-          <button id="btn-download-promo-game-2" class="mt-4 w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow transition text-center block">
+          <a href="game.html" class="mt-4 w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-sm shadow transition text-center block">
+            🚀 直接進入連線遊戲
+          </a>
+          <button id="btn-download-promo-game-2" class="mt-2 w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 font-black text-xs shadow transition text-center block">
             📥 下載遊戲檔案至電腦
           </button>
         </div>
