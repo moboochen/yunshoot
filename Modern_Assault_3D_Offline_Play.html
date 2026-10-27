@@ -8,7 +8,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="現代突擊3D">
-  <title>Q版特種部隊：現代突擊 3D v8.1 - 跨平台電競對戰</title>
+  <title>Q版特種部隊：現代突擊 3D v8.2 - 跨平台電競對戰</title>
   <!-- Tailwind CSS (支援 Jetski 官方與外部 CDN) -->
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -337,7 +337,7 @@
           <span id="hud-fps" class="px-1.5 py-0.5 rounded text-[11px] font-mono text-slate-400 bg-slate-900/80 border border-slate-800">
             60 FPS
           </span>
-          <span id="hud-build" class="px-1.5 py-0.5 rounded text-[10px] font-mono text-amber-300/90 bg-slate-900/80 border border-slate-800">v8.1</span>
+          <span id="hud-build" class="px-1.5 py-0.5 rounded text-[10px] font-mono text-amber-300/90 bg-slate-900/80 border border-slate-800">v8.2</span>
         </div>
         <div class="text-xs text-slate-300 font-semibold bg-slate-900/80 border border-slate-800 px-2.5 py-1 rounded-lg backdrop-blur-sm flex items-center gap-2">
           <span>擊倒: <b id="kills-count" class="text-amber-400">0</b></span>
@@ -475,6 +475,10 @@
       <div id="tips-text" class="text-[11px] font-bold text-white leading-relaxed"></div>
     </div>
   </div>
+  <!-- 桌機滑鼠未鎖定提示 (v8.2)：點一下畫面鎖定滑鼠，ESC 釋放；鎖定前點擊不會開槍 -->
+  <div id="click-to-lock" class="hidden absolute inset-0 z-[35] flex items-end justify-center pb-24 pointer-events-auto cursor-pointer" onclick="try{document.body.requestPointerLock();}catch(e){}">
+    <div class="px-5 py-2.5 rounded-2xl bg-slate-950/85 border-2 border-cyan-400 text-cyan-100 text-sm font-black shadow-2xl animate-pulse">🖱️ 點一下畫面鎖定滑鼠開始瞄準（ESC 可釋放滑鼠；鎖定前的點擊不會開槍）</div>
+  </div>
   <!-- 射線被牆擋住提示 -->
   <div id="block-tag" class="hidden absolute top-[calc(50%+30px)] left-1/2 -translate-x-1/2 z-20 text-xs font-black text-red-300 bg-black/70 px-2.5 py-1 rounded-lg pointer-events-none">🧱 射線被牆擋住 — 子彈射不出去</div>
   <!-- 重生無敵提示 (#2) -->
@@ -551,7 +555,7 @@
             <!-- 底部：輪流各國與各宗教傳統軍隊出發呼號 -->
             <div class="mt-3 pt-2.5 border-t-2 border-dashed border-slate-300">
               <div class="flex items-center justify-between gap-2 mb-1">
-                <span class="text-[11px] font-black text-rose-700">🎺 本局軍隊出發呼號（各國／各宗教傳統出征語）：</span>
+                <span class="text-[11px] font-black text-rose-700">🎺 本次作戰呼號</span>
                 <button id="btn-next-battle-cry" type="button" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 text-[10px] font-black transition cursor-pointer">🔄 換一句呼號</button>
               </div>
               <div id="prep-battle-cry" class="px-3 py-2 rounded-xl bg-slate-900 text-amber-300 font-black text-xs sm:text-sm tracking-wide shadow">
@@ -647,10 +651,10 @@
         <span>●</span> WebRTC P2P + 本地雙通道零延遲連線架構
       </div>
       <h1 class="text-2xl sm:text-3xl font-black tracking-wider text-white mb-1">
-        Q版特種部隊：現代突擊 3D v8.1
+        Q版特種部隊：現代突擊 3D v8.2
       </h1>
       <p class="text-xs text-slate-400 mb-1 font-medium">iPhone / iPad 雙手拇指熱區觸控版 ＋ 筆電 PC 鍵鼠同場競技 ｜ 藍天白雲雙層 CQB 戰場</p>
-      <div id="build-stamp" class="inline-block text-[11px] font-mono font-bold text-amber-300 bg-slate-950 border border-amber-400/40 rounded-lg px-2.5 py-1 mb-4">🏷️ 版本 v8.1 · 建置 2026-10-27 08:00 (台北)</div>
+      <div id="build-stamp" class="inline-block text-[11px] font-mono font-bold text-amber-300 bg-slate-950 border border-amber-400/40 rounded-lg px-2.5 py-1 mb-4">🏷️ 版本 v8.2 · 建置 2026-10-27 10:00 (台北)</div>
 
       <details class="text-left text-[11px] text-slate-400 bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2 mb-3">
         <summary class="cursor-pointer font-bold text-slate-300">❓ 房間怎麼運作？(開房 / 看到別人 / 關閉 / 多久消失)</summary>
@@ -3237,22 +3241,30 @@
         // 麻布沙包工事：兩層交錯堆疊，留出三個出入閘門 (#6 #8 AI 由閘門出發)
         const sandbagZ = isAlly ? (cz - 6) : (cz + 6);
         const buildSandbagWall = (x, z, len) => {
+          // v8.2：四層加高 (1.36m，站立仍可越過射擊) + 弧形排列 (兩端向基地彎、中央前凸)
           const g = new THREE.Group();
-          const bagW = 0.78, bagH = 0.36, bagD = 0.5;
-          for (let row = 0; row < 3; row++) {
-            const count = Math.floor(len / bagW);
+          const bagW = 0.78, bagH = 0.36, bagD = 0.5, rows = 4;
+          const toward = (z > 0) ? 1 : -1;   // 弧的凹面朝基地
+          const count = Math.floor(len / bagW);
+          const arcDepth = 0.9;
+          const arcOffsetAt = (u) => toward * arcDepth * (u * u);   // u ∈ [-1,1]：中央 0、兩端往基地內縮
+          for (let row = 0; row < rows; row++) {
             for (let i = 0; i < count; i++) {
               const bag = new THREE.Mesh(new THREE.BoxGeometry(bagW - 0.05, bagH, bagD), burlap);
               const offset = (row % 2) * bagW * 0.5;
-              bag.position.set(-len / 2 + bagW / 2 + i * bagW + offset, bagH / 2 + row * (bagH - 0.02), 0);
-              bag.rotation.y = (Math.random() - 0.5) * 0.12;
+              const lx = -len / 2 + bagW / 2 + i * bagW + offset;
+              const u = lx / (len / 2);
+              bag.position.set(lx, bagH / 2 + row * (bagH - 0.02), arcOffsetAt(u));
+              bag.rotation.y = -u * 0.35 + (Math.random() - 0.5) * 0.1;
               bag.rotation.z = (Math.random() - 0.5) * 0.06;
               g.add(bag);
             }
           }
           g.position.set(x, 0, z);
           scene.add(g);
-          addBox(x - len / 2, x + len / 2, 0, bagH * 3, z - bagD / 2 - 0.1, z + bagD / 2 + 0.1);
+          // 碰撞：以三段近似弧 (中央段 + 兩端內縮段)
+          const segs = [[-1, -0.5], [-0.5, 0.5], [0.5, 1]];
+          segs.forEach(([u1, u2]) => { const zc = arcOffsetAt((u1 + u2) / 2); addBox(x + u1 * len / 2, x + u2 * len / 2, 0, bagH * rows, z + zc - bagD / 2 - 0.1, z + zc + bagD / 2 + 0.1, { isSandbagArc: true }); });
           coverBoxes.push({ x: x, z: z, radius: 2.3, label: isAlly ? '我方基地沙包' : '敵方基地沙包' });
         };
         buildSandbagWall(-7.5, sandbagZ, 5.5);
@@ -3842,7 +3854,14 @@
     }
 
     // 道具標籤 Sprite
+    function shortItemLabel(text) {
+      let t = String(text || '').replace(/\s*[（(][^（）()]*[）)]/g, '').replace(/\s+/g, ' ').trim();
+      if (t.length > 11) t = t.slice(0, 11) + '…';
+      return t;
+    }
+    window.shortItemLabel = shortItemLabel;
     function createItemLabelSprite(text, colorHex) {
+      text = shortItemLabel(text);
       const c = document.createElement('canvas');
       c.width = 512; c.height = 128;
       const ctx = c.getContext('2d');
@@ -3853,7 +3872,7 @@
       ctx.fillStyle = '#fff';
       ctx.font = 'bold 40px sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(text, 256, 64);
+      ctx.fillText(text, 256, 64, 400);
       const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthTest: false }));
       sp.scale.set(2.0, 0.5, 1);
       return sp;
@@ -4111,71 +4130,84 @@
     function spawnGroundPickups() {
       const itemsConfig = [
         // 槍枝 (#11 起始只有手槍，其餘場上撿)
-        { id: 'm4_w', type: 'weapon', weaponKey: 'm4a1', x: -13.5, z: 7.5, label: 'M4A1 突擊步槍', respawnTime: 40 },
-        { id: 'm4_e', type: 'weapon', weaponKey: 'm4a1', x: 13.5, z: -7.5, label: 'M4A1 突擊步槍', respawnTime: 40 },
-        { id: 'awp_w', type: 'weapon', weaponKey: 'awp', x: -17, z: 2, label: 'AWP 狙擊步槍', respawnTime: 60 },
+        { id: 'm4_w', type: 'weapon', weaponKey: 'm4a1', x: -13.5, z: 7.5, label: 'M4A1 步槍', respawnTime: 40 },
+        { id: 'm4_e', type: 'weapon', weaponKey: 'm4a1', x: 13.5, z: -7.5, label: 'M4A1 步槍', respawnTime: 40 },
+        { id: 'awp_w', type: 'weapon', weaponKey: 'awp', x: -17, z: 2, label: 'AWP 狙擊槍', respawnTime: 60 },
         { id: 'shotgun_e', type: 'weapon', weaponKey: 'shotgun', x: 17, z: -2, label: '防暴散彈槍', respawnTime: 45 },
         { id: 'p90_c', type: 'weapon', weaponKey: 'p90', x: 0, z: 8, label: 'P90 衝鋒槍', respawnTime: 40 },
-        { id: 'ak_n', type: 'weapon', weaponKey: 'ak47', x: -6, z: -14, label: 'AK-47 突擊步槍', respawnTime: 45 },
+        { id: 'ak_n', type: 'weapon', weaponKey: 'ak47', x: -6, z: -14, label: 'AK-47 步槍', respawnTime: 45 },
         { id: 'mp5_s', type: 'weapon', weaponKey: 'mp5', x: 6, z: 14, label: 'MP5 衝鋒槍', respawnTime: 40 },
         // 彈藥 (#14 兩種口徑)
-        { id: 'ar_1', type: 'ammo_rifle', x: 0, z: -8, label: '5.56 NATO 步槍彈 (+60)', respawnTime: 25 },
-        { id: 'ar_2', type: 'ammo_rifle', x: -15, z: 7, label: '5.56 NATO 步槍彈 (+60)', respawnTime: 25 },
-        { id: 'ar_3', type: 'ammo_rifle', x: 15, z: -7, label: '5.56 NATO 步槍彈 (+60)', respawnTime: 25 },
-        { id: 'ar_4', type: 'ammo_rifle', x: -9, z: -12, label: '5.56 NATO 步槍彈 (+60)', respawnTime: 25 },
-        { id: 'ar_5', type: 'ammo_rifle', x: 9, z: 12, label: '5.56 NATO 步槍彈 (+60)', respawnTime: 25 },
-        { id: 'ar_6', type: 'ammo_rifle', x: -17, z: 2, y: 3.4, label: '5.56 NATO 步槍彈 (+60)', respawnTime: 25 },
-        { id: 'ap_1', type: 'ammo_pistol', x: 3, z: 2, label: '9mm 手槍彈 (+30)', respawnTime: 20 },
-        { id: 'ap_2', type: 'ammo_pistol', x: -3, z: -2, label: '9mm 手槍彈 (+30)', respawnTime: 20 },
-        { id: 'ap_3', type: 'ammo_pistol', x: -12, z: 12, label: '9mm 手槍彈 (+30)', respawnTime: 20 },
-        { id: 'ap_4', type: 'ammo_pistol', x: 12, z: -12, label: '9mm 手槍彈 (+30)', respawnTime: 20 },
-        { id: 'ap_5', type: 'ammo_pistol', x: -17, z: -6, label: '9mm 手槍彈 (+30)', respawnTime: 20 },
-        { id: 'ap_6', type: 'ammo_pistol', x: 17, z: 6, label: '9mm 手槍彈 (+30)', respawnTime: 20 },
+        { id: 'ar_1', type: 'ammo_rifle', x: 0, z: -8, label: '5.56 步槍彈', respawnTime: 25 },
+        { id: 'ar_2', type: 'ammo_rifle', x: -15, z: 7, label: '5.56 步槍彈', respawnTime: 25 },
+        { id: 'ar_3', type: 'ammo_rifle', x: 15, z: -7, label: '5.56 步槍彈', respawnTime: 25 },
+        { id: 'ar_4', type: 'ammo_rifle', x: -9, z: -12, label: '5.56 步槍彈', respawnTime: 25 },
+        { id: 'ar_5', type: 'ammo_rifle', x: 9, z: 12, label: '5.56 步槍彈', respawnTime: 25 },
+        { id: 'ar_6', type: 'ammo_rifle', x: -17, z: 2, y: 3.4, label: '5.56 步槍彈', respawnTime: 25 },
+        { id: 'ap_1', type: 'ammo_pistol', x: 3, z: 2, label: '9mm 手槍彈', respawnTime: 20 },
+        { id: 'ap_2', type: 'ammo_pistol', x: -3, z: -2, label: '9mm 手槍彈', respawnTime: 20 },
+        { id: 'ap_3', type: 'ammo_pistol', x: -12, z: 12, label: '9mm 手槍彈', respawnTime: 20 },
+        { id: 'ap_4', type: 'ammo_pistol', x: 12, z: -12, label: '9mm 手槍彈', respawnTime: 20 },
+        { id: 'ap_5', type: 'ammo_pistol', x: -17, z: -6, label: '9mm 手槍彈', respawnTime: 20 },
+        { id: 'ap_6', type: 'ammo_pistol', x: 17, z: 6, label: '9mm 手槍彈', respawnTime: 20 },
         // AK-47 專用 7.62mm 重型彈藥箱 (數量較稀有，補償 AK-47 高達 1.2 倍殺傷力)
-        { id: 'ak_ammo_1', type: 'ammo_ak', x: -6.5, z: -12.5, label: '7.62mm AK專用彈 (+30)', respawnTime: 30 },
-        { id: 'ak_ammo_2', type: 'ammo_ak', x: 17, z: -2, y: 3.4, label: '7.62mm AK專用彈 (+30)', respawnTime: 30 },
-        { id: 'ak_ammo_3', type: 'ammo_ak', x: -24, z: 12, label: '7.62mm AK專用彈 (+30)', respawnTime: 30 },
-        { id: 'edge_ak_1', type: 'ammo_ak', x: 26, z: -15, label: '7.62mm AK專用彈 (+30)', respawnTime: 30 },
+        { id: 'ak_ammo_1', type: 'ammo_ak', x: -6.5, z: -12.5, label: '7.62 AK彈', respawnTime: 30 },
+        { id: 'ak_ammo_2', type: 'ammo_ak', x: 17, z: -2, y: 3.4, label: '7.62 AK彈', respawnTime: 30 },
+        { id: 'ak_ammo_3', type: 'ammo_ak', x: -24, z: 12, label: '7.62 AK彈', respawnTime: 30 },
+        { id: 'edge_ak_1', type: 'ammo_ak', x: 26, z: -15, label: '7.62 AK彈', respawnTime: 30 },
         // 基地補給箱 (#16 旗幟旁，12 秒重生，含三種彈藥)
-        { id: 'supply_blue', type: 'supply', x: -3, z: 31, label: '基地彈藥補給箱 (5.56 / 9mm / 7.62mm)', respawnTime: 12 },
-        { id: 'supply_red', type: 'supply', x: 3, z: -31, label: '基地彈藥補給箱 (5.56 / 9mm / 7.62mm)', respawnTime: 12 },
+        { id: 'supply_blue', type: 'supply', x: -3, z: 31, label: '基地補給箱', respawnTime: 12 },
+        { id: 'supply_red', type: 'supply', x: 3, z: -31, label: '基地補給箱', respawnTime: 12 },
         // 補血與護甲 (#7 放在房子裡 / 沙包後，重生慢)
-        { id: 'medkit_1', type: 'medkit', x: -17, z: -2.5, label: '手提急救箱 (+40 HP)', respawnTime: 45 },
-        { id: 'medkit_2', type: 'medkit', x: 17, z: 2.5, label: '手提急救箱 (+40 HP)', respawnTime: 45 },
-        { id: 'medkit_3', type: 'medkit', x: -14, z: 3, y: 3.4, label: '二樓急救箱 (+40 HP)', respawnTime: 50 },
-        { id: 'medkit_4', type: 'medkit', x: 7.5, z: 24.6, label: '沙包後急救箱 (+40 HP)', respawnTime: 50 },
-        { id: 'medkit_5', type: 'medkit', x: -7.5, z: -24.6, label: '沙包後急救箱 (+40 HP)', respawnTime: 50 },
-        { id: 'armor_1', type: 'armor', x: -7.5, z: 24.6, armorValue: 50, label: '防彈鋼板護甲 (+50 AP)', respawnTime: 60 },
-        { id: 'armor_2', type: 'armor', x: 7.5, z: -24.6, armorValue: 50, label: '防彈鋼板護甲 (+50 AP)', respawnTime: 60 },
-        { id: 'armor_3', type: 'armor', x: 14, z: -3, y: 3.4, armorValue: 50, label: '二樓防彈鋼板 (+50 AP)', respawnTime: 60 },
-        { id: 'armor_4', type: 'armor', x: -15.2, z: 0, armorValue: 50, label: '屋內防彈鋼板 (+50 AP)', respawnTime: 60 },
-        { id: 'c4_bomb', type: 'bomb', x: 0, z: 0, label: 'C4 戰術定時炸彈', respawnTime: 40 },
+        { id: 'medkit_1', type: 'medkit', x: -17, z: -2.5, label: '急救箱', respawnTime: 45 },
+        { id: 'medkit_2', type: 'medkit', x: 17, z: 2.5, label: '急救箱', respawnTime: 45 },
+        { id: 'medkit_3', type: 'medkit', x: -14, z: 3, y: 3.4, label: '急救箱', respawnTime: 50 },
+        { id: 'medkit_4', type: 'medkit', x: 7.5, z: 24.6, label: '急救箱', respawnTime: 50 },
+        { id: 'medkit_5', type: 'medkit', x: -7.5, z: -24.6, label: '急救箱', respawnTime: 50 },
+        { id: 'armor_1', type: 'armor', x: -7.5, z: 24.6, armorValue: 50, label: '防彈鋼板', respawnTime: 60 },
+        { id: 'armor_2', type: 'armor', x: 7.5, z: -24.6, armorValue: 50, label: '防彈鋼板', respawnTime: 60 },
+        { id: 'armor_3', type: 'armor', x: 14, z: -3, y: 3.4, armorValue: 50, label: '防彈鋼板', respawnTime: 60 },
+        { id: 'armor_4', type: 'armor', x: -15.2, z: 0, armorValue: 50, label: '防彈鋼板', respawnTime: 60 },
+        { id: 'c4_bomb', type: 'bomb', x: 0, z: 0, label: 'C4 炸彈', respawnTime: 40 },
         // 戰場邊緣物資 (#邊緣)：吉普 / 戰車旁與外圍角落
-        { id: 'edge_ar_1', type: 'ammo_rifle', x: -30, z: 10, label: '5.56 NATO 步槍彈 (+60)', respawnTime: 25 },
-        { id: 'edge_ar_2', type: 'ammo_rifle', x: 30, z: -10, label: '5.56 NATO 步槍彈 (+60)', respawnTime: 25 },
-        { id: 'edge_ap_1', type: 'ammo_pistol', x: -30, z: -14, label: '9mm 手槍彈 (+30)', respawnTime: 20 },
-        { id: 'edge_ap_2', type: 'ammo_pistol', x: 30, z: 14, label: '9mm 手槍彈 (+30)', respawnTime: 20 },
-        { id: 'edge_med_1', type: 'medkit', x: -33, z: -2, label: '邊緣急救箱 (+40 HP)', respawnTime: 45 },
-        { id: 'edge_med_2', type: 'medkit', x: 33, z: 2, label: '邊緣急救箱 (+40 HP)', respawnTime: 45 },
-        { id: 'edge_armor_1', type: 'armor', x: -15.5, z: -20.5, armorValue: 50, label: '戰車旁防彈板 (+50 AP)', respawnTime: 60 },
-        { id: 'edge_armor_2', type: 'armor', x: 15.5, z: 20.5, armorValue: 50, label: '戰車旁防彈板 (+50 AP)', respawnTime: 60 },
+        { id: 'edge_ar_1', type: 'ammo_rifle', x: -30, z: 10, label: '5.56 步槍彈', respawnTime: 25 },
+        { id: 'edge_ar_2', type: 'ammo_rifle', x: 30, z: -10, label: '5.56 步槍彈', respawnTime: 25 },
+        { id: 'edge_ap_1', type: 'ammo_pistol', x: -30, z: -14, label: '9mm 手槍彈', respawnTime: 20 },
+        { id: 'edge_ap_2', type: 'ammo_pistol', x: 30, z: 14, label: '9mm 手槍彈', respawnTime: 20 },
+        { id: 'edge_med_1', type: 'medkit', x: -33, z: -2, label: '急救箱', respawnTime: 45 },
+        { id: 'edge_med_2', type: 'medkit', x: 33, z: 2, label: '急救箱', respawnTime: 45 },
+        { id: 'edge_armor_1', type: 'armor', x: -15.5, z: -20.5, armorValue: 50, label: '防彈鋼板', respawnTime: 60 },
+        { id: 'edge_armor_2', type: 'armor', x: 15.5, z: 20.5, armorValue: 50, label: '防彈鋼板', respawnTime: 60 },
         { id: 'edge_gun_1', type: 'weapon', weaponKey: 'mp5', x: -28, z: 17, label: 'MP5 衝鋒槍', respawnTime: 40 },
-        { id: 'edge_gun_2', type: 'weapon', weaponKey: 'ak47', x: 28, z: -17, label: 'AK-47 突擊步槍', respawnTime: 45 },
-        { id: 'laser_w', type: 'laser', x: -15, z: -2, y: 3.4, label: '雷射瞄準器 (紅線瞄準)', respawnTime: 60 },
-        { id: 'laser_e', type: 'laser', x: 15, z: 2, y: 3.4, label: '雷射瞄準器 (紅線瞄準)', respawnTime: 60 },
+        { id: 'edge_gun_2', type: 'weapon', weaponKey: 'ak47', x: 28, z: -17, label: 'AK-47 步槍', respawnTime: 45 },
+        { id: 'laser_w', type: 'laser', x: -15, z: -2, y: 3.4, label: '雷射瞄準器', respawnTime: 60 },
+        { id: 'laser_e', type: 'laser', x: 15, z: 2, y: 3.4, label: '雷射瞄準器', respawnTime: 60 },
         // 戰術瞄準鏡 (#4：可在雙方基地、房子內、以及道路上撿到)
-        { id: 'scope_base_blue', type: 'scope', x: 10.5, z: 32.5, label: '戰術瞄準鏡 (基地)', respawnTime: 30 },
-        { id: 'scope_base_red',  type: 'scope', x: -10.5, z: -32.5, label: '戰術瞄準鏡 (基地)', respawnTime: 30 },
-        { id: 'scope_house_w',   type: 'scope', x: -18.5, z: 1.5, y: 0, label: '戰術瞄準鏡 (西屋一樓)', respawnTime: 30 },
-        { id: 'scope_house_e',   type: 'scope', x: 18.5, z: -1.5, y: 3.4, label: '戰術瞄準鏡 (東屋二樓)', respawnTime: 30 },
-        { id: 'scope_road_1',    type: 'scope', x: -8.5, z: 9.5, label: '戰術瞄準鏡 (西側道路)', respawnTime: 30 },
-        { id: 'scope_road_2',    type: 'scope', x: 8.5, z: -9.5, label: '戰術瞄準鏡 (東側道路)', respawnTime: 30 },
+        { id: 'scope_base_blue', type: 'scope', x: 10.5, z: 32.5, label: '戰術瞄準鏡', respawnTime: 30 },
+        { id: 'scope_base_red',  type: 'scope', x: -10.5, z: -32.5, label: '戰術瞄準鏡', respawnTime: 30 },
+        { id: 'scope_house_w',   type: 'scope', x: -18.5, z: 1.5, y: 0, label: '戰術瞄準鏡', respawnTime: 30 },
+        { id: 'scope_house_e',   type: 'scope', x: 18.5, z: -1.5, y: 3.4, label: '戰術瞄準鏡', respawnTime: 30 },
+        { id: 'scope_road_1',    type: 'scope', x: -8.5, z: 9.5, label: '戰術瞄準鏡', respawnTime: 30 },
+        { id: 'scope_road_2',    type: 'scope', x: 8.5, z: -9.5, label: '戰術瞄準鏡', respawnTime: 30 },
         // 黑色漆彈噴罐 (#6：20秒內發射黑色漆彈，命中敵人正面擾亂視覺 5 秒)
-        { id: 'black_can_1', type: 'black_paint', x: -4.5, z: 11, label: '黑色漆彈噴罐 (20s 黑彈致盲)', respawnTime: 35 },
-        { id: 'black_can_2', type: 'black_paint', x: 4.5, z: -11, label: '黑色漆彈噴罐 (20s 黑彈致盲)', respawnTime: 35 },
-        { id: 'black_can_3', type: 'black_paint', x: -15.5, z: 2.2, y: 0, label: '黑色漆彈噴罐 (20s 黑彈致盲)', respawnTime: 35 },
-        { id: 'black_can_4', type: 'black_paint', x: 15.5, z: -2.2, y: 0, label: '黑色漆彈噴罐 (20s 黑彈致盲)', respawnTime: 35 }
+        { id: 'black_can_1', type: 'black_paint', x: -4.5, z: 11, label: '黑漆噴罐', respawnTime: 35 },
+        { id: 'black_can_2', type: 'black_paint', x: 4.5, z: -11, label: '黑漆噴罐', respawnTime: 35 },
+        { id: 'black_can_3', type: 'black_paint', x: -15.5, z: 2.2, y: 0, label: '黑漆噴罐', respawnTime: 35 },
+        { id: 'black_can_4', type: 'black_paint', x: 15.5, z: -2.2, y: 0, label: '黑漆噴罐', respawnTime: 35 }
       ];
+
+      // v8.2 野外隨機槍枝：12 個遠離房子的開闊點，每局 (房號 + 局數 為種子) 抽 7 個放步槍/衝鋒槍/散彈/AWP，死後重生不必衝進房子也拿得到槍
+      const FIELD_GUN_SPOTS = [[-27, 5], [27, -5], [-24, -8], [24, 8], [0, 16], [0, -16], [-8, 23.5], [8, -23.5], [-24.5, -19], [24.5, 19], [-30, 0], [30, 0]];
+      const FIELD_GUN_POOL = ['m4a1', 'ak47', 'mp5', 'p90', 'shotgun', 'awp', 'm4a1', 'ak47'];
+      const seedStr = String(Net.roomCode || 'SOLO') + ':' + String(typeof roomRoundCount === 'number' ? roomRoundCount : 1);
+      let seed = 0; for (let i = 0; i < seedStr.length; i++) seed = (seed * 31 + seedStr.charCodeAt(i)) >>> 0;
+      const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+      const spots = FIELD_GUN_SPOTS.slice().sort(() => rnd() - 0.5).slice(0, 7);
+      spots.forEach(([fx, fz], i) => {
+        const key = FIELD_GUN_POOL[Math.floor(rnd() * FIELD_GUN_POOL.length)];
+        itemsConfig.push({ id: `field_gun_${i}`, type: 'weapon', weaponKey: key, x: fx + (rnd() - 0.5) * 2, z: fz + (rnd() - 0.5) * 2, label: WEAPONS[key].name, respawnTime: 35, fieldGun: true });
+      });
+      window.__fieldGunSpots = spots;
 
       itemsConfig.forEach(cfg => {
         const group = buildPickupModel(cfg);
@@ -4200,7 +4232,8 @@
           baseY: baseY,
           respawnTime: cfg.respawnTime,
           isAvailable: true,
-          respawnTimer: 0
+          respawnTimer: 0,
+          fieldGun: !!cfg.fieldGun
         });
       });
     }
@@ -4951,6 +4984,7 @@
         if (d > (maxDist || 18)) return;
         let score = -d;
         if (!allowRetreat) {
+          if (ai.laneBias !== undefined) score -= Math.abs(cb.x - ai.laneBias) * 0.45;   // 依本次路線計畫偏好該側掩體
           if ((cb.z - ai.mesh.position.z) * fwd < -3) score -= 30;          // 比目前位置更靠後方 (退回自家) 的掩體扣分
           if (Math.abs(cb.z) > 20 && Math.sign(cb.z) === -fwd) score -= 25;   // 自家基地沙包區再扣分 → 盡量往前推進
         }
@@ -5167,12 +5201,13 @@
       const aiTeam = (teamOverride === 0 || teamOverride === 1) ? teamOverride : (activeTeams.length ? activeTeams[gateIndex % activeTeams.length] : AI_TEAM);
       const gates = AI_BASE_GATES_BY_TEAM[aiTeam] || AI_BASE_GATES;
       const gate = gates[Math.abs(gateIndex || 0) % gates.length];
-      aiSpawnCounter++;
+      const slot = acquireAISlot(aiTeam);
+      if (!slot.name) aiSpawnCounter++;
       aiWaveSpawnedByTeam[aiTeam] = (aiWaveSpawnedByTeam[aiTeam] || 0) + 1;
-      const spec = randomCharacterSpec();
+      const spec = slot.spec;
       const paint = PAINT_PALETTE[(3 + aiSpawnCounter * 2 + aiTeam) % PAINT_PALETTE.length];
       const teamPrefix = activeTeams.length > 1 ? (aiTeam === 0 ? '[藍隊AI] ' : '[紅隊AI] ') : '';
-      const name = `${spec.emoji} ${teamPrefix}${spec.animalName}特種兵 #${aiSpawnCounter}`;
+      const name = slot.name || (slot.name = `${spec.emoji} ${teamPrefix}${spec.animalName}特種兵 #${aiSpawnCounter}`);
       const isAllyAI = (aiTeam === playerState.team);
       const chibiAI = createChibiSoldierMesh(isAllyAI, name, spec.style, spec, { teamIndex: aiTeam, paintHex: hex6(paint) });
       chibiAI.mesh.position.set(gate.x + (Math.random() - 0.5) * 1.5, 0, gate.z);
@@ -5187,8 +5222,9 @@
         lastEngaged: gameNow + Math.random() * 4000,
         noLOSTimer: 0, animTimer: Math.random() * 10, target: null, route: null, spawnTime: gameNow, shotsSinceHit: 0,
         idNum: aiIdCounter, squadRole: null, lookSectorOffset: 0, preferSneakRaid: false, sneakLane: null, dodgeTimer: 0, dodgeVelY: 0, calloutText: '',
-        persona: rollAIPersona()
+        persona: slot.persona, slot
       });
+      aiApplyRoutePlan(ai, aiChooseRoutePlan(ai));
       if (ai.persona.quirk === 'hesitant') ai.lastShoot += 900;
       if (ai.persona.key === 'wanderer') ai.preferSneakRaid = Math.random() < 0.6;
       ai.coverTarget = aiChooseCover(ai, enemyBaseRef, null, 60);
@@ -5640,6 +5676,56 @@
     window.rollAIPersona = rollAIPersona;
     function aiP(ai) { return ai.persona || (ai.persona = rollAIPersona()); }
 
+    // 固定身分槽：每隊的 AI 角色 (名字 / 造型 / 個性) 整局不變，死亡重生時沿用同一槽，只有「這次採用的路線」會重新決定
+    const aiRosterSlots = { 0: [], 1: [] };
+    function acquireAISlot(team) {
+      const pool = aiRosterSlots[team];
+      let slot = pool.find(s => !aiEnemies.some(a => a.slot === s && a.state !== 'DEAD'));
+      if (!slot) { slot = { id: pool.length, team, persona: rollAIPersona(), spec: randomCharacterSpec(), name: null, lastPlan: null, plans: [], deaths: 0 }; pool.push(slot); }
+      return slot;
+    }
+    window.aiRosterSlots = aiRosterSlots;
+    // 三條路線的敵方火力 (近 8 秒射擊數)
+    function laneHeat(team) {
+      const heat = { west: 0, center: 0, east: 0 }; const now = performance.now();
+      (typeof Caster !== 'undefined' ? Caster.shotLog : []).forEach(s => { if (now - s.t > 8000 || s.team === team) return; heat[s.x < -10 ? 'west' : (s.x > 10 ? 'east' : 'center')]++; });
+      return heat;
+    }
+    const AI_ROUTE_PLANS = ['lane_west', 'lane_center', 'lane_east', 'house_1f', 'house_2f'];
+    // 依「上次路線 (40% 重複)」、「戰場火力 (膽小避開熱區、積極撲向熱區)」、「個性 (蹲點王愛房子、散步哥隨機)」加權抽出這次的路線
+    function aiChooseRoutePlan(ai, heatOverride) {
+      const p = aiP(ai), slot = ai.slot || {};
+      if (slot.lastPlan && Math.random() < 0.4 * (0.6 + p.discipline * 0.8)) return slot.lastPlan;   // 守紀律者更常沿用上次路線
+      const heat = heatOverride || laneHeat(ai.team);
+      const total = heat.west + heat.center + heat.east;
+      const w = { lane_west: 1, lane_center: 1, lane_east: 1, house_1f: 0.7, house_2f: 0.7 };
+      if (total > 0) {
+        ['west', 'center', 'east'].forEach(k => {
+          const frac = heat[k] / total;
+          w['lane_' + k] *= (1 - p.courage) * (1.6 - frac * 1.5) + p.aggression * (0.4 + frac * 1.6);   // 膽小→冷區、積極→熱區
+        });
+      }
+      if (p.quirk === 'camper') { w.house_1f *= 2.2; w.house_2f *= 2.6; }
+      if (p.quirk === 'rusher' || p.aggression > 0.85) { w.house_1f *= 0.4; w.house_2f *= 0.5; }
+      if (p.quirk === 'wanderer') Object.keys(w).forEach(k => { w[k] = 0.6 + Math.random(); });
+      if (slot.lastPlan && slot.lastPlan.startsWith('house') && p.quirk !== 'camper') { w.house_1f *= 0.45; w.house_2f *= 0.45; }   // 不要每次都躲房子
+      const sum = Object.values(w).reduce((a, b) => a + b, 0);
+      let r = Math.random() * sum;
+      for (const k of AI_ROUTE_PLANS) { r -= w[k]; if (r <= 0) return k; }
+      return 'lane_center';
+    }
+    function aiApplyRoutePlan(ai, plan) {
+      ai.routePlan = plan;
+      if (ai.slot) { ai.slot.lastPlan = plan; ai.slot.plans.push(plan); if (ai.slot.plans.length > 12) ai.slot.plans.shift(); }
+      ai.preferHouse = plan.startsWith('house');
+      ai.laneBias = plan === 'lane_west' ? -24 : (plan === 'lane_east' ? 24 : (plan === 'lane_center' ? 0 : undefined));
+      if (ai.preferHouse) { ai.lastEngaged = gameNow - 9000; ai.houseFloorPref = (plan === 'house_2f') ? '2F' : '1F'; }   // 3 秒後就會進屋
+      else { ai.goal = null; ai.coverTarget = null; }
+      return plan;
+    }
+    window.aiChooseRoutePlan = aiChooseRoutePlan;
+
+
     // 火力壓制值：敵方子彈落在 4m 內 +1，每秒衰減 0.6；超過 (3 + 膽量×7) 就龜縮 (COWER)，低於 40% 才敢衝出來
     function aiAddSuppression(ai, amount) { const p = aiP(ai); p.suppression = Math.min(20, (p.suppression || 0) + (amount || 1)); }
     function aiUpdateSuppression(ai, delta, now, los, target) {
@@ -6023,10 +6109,18 @@
         // 久未交戰 (12 秒沒被打、也沒開到槍) → 進屋找制高點 (#13)
         if ((ai.state === 'ADVANCE' || ai.state === 'HIDE' || ai.state === 'PEEK_SHOOT') && now - ai.lastEngaged > 12000) {
           ai.lastEngaged = now;
-          const r = HOUSE_ROUTES[Math.random() < 0.7 ? (Math.random() < 0.5 ? 0 : 3) : Math.floor(Math.random() * HOUSE_ROUTES.length)];
+          if (!ai.preferHouse && Math.random() < 0.72) {
+            // 本次路線計畫是走野外路線：不進屋，改沿路線側往前換掩體
+            ai.coverTarget = aiChooseCover(ai, target, ai.coverTarget, 60); ai.goal = aiCoverGoal(ai, ai.coverTarget, target); ai.route = null; aiSetState(ai, 'ADVANCE', 0);
+          } else {
+          const sideWant = (ai.laneBias !== undefined && ai.laneBias !== 0) ? Math.sign(ai.laneBias) : (Math.random() < 0.5 ? -1 : 1);
+          const floorWant = ai.houseFloorPref || (Math.random() < 0.6 ? '2F' : '1F');
+          const candidates = HOUSE_ROUTES.filter(rt => Math.sign(rt.pts[0].x) === sideWant && (floorWant === '2F' ? rt.kind === '2F' : rt.kind === '1F'));
+          const r = candidates.length ? candidates[Math.floor(Math.random() * candidates.length)] : HOUSE_ROUTES[Math.floor(Math.random() * HOUSE_ROUTES.length)];
           ai.route = { kind: r.kind, pts: r.pts.map(p => ({ x: p.x, z: p.z })) };
           ai.routeIdx = 0;
           aiSetState(ai, 'HUNT', 0);
+          }
         }
 
         const gy = getGroundHeight(ai.mesh.position.x, ai.mesh.position.z, ai.mesh.position.y);
@@ -6594,10 +6688,11 @@
       el.className = 'text-xs font-black ' + (respawnModeSetting === 'unlimited' ? 'text-emerald-300' : (playerState.lives <= 1 ? 'text-rose-400 animate-pulse' : 'text-rose-300'));
     }
 
-    const TEAM_SPAWN = [{ x: 0, z: 28, yaw: 0 }, { x: 0, z: -28, yaw: Math.PI }];
+    // v8.2 重生點移到兩側矮牆正後方 (二樓看台射不到)：藍營 (-14.8, 25.6)、紅營 (14.8, -25.6)
+    const TEAM_SPAWN = [{ x: -14.8, z: 25.6, yaw: 0 }, { x: 14.8, z: -25.6, yaw: Math.PI }];
     function teamSpawnPoint(team) {
       const s = TEAM_SPAWN[team] || TEAM_SPAWN[0];
-      return { x: s.x + (Math.random() - 0.5) * 6, z: s.z, yaw: s.yaw };
+      return { x: s.x + (Math.random() - 0.5) * 5, z: s.z, yaw: s.yaw };
     }
     // 敵人蹲在基地旁 16m 內守屍時：重生點改為「最近敵人的正後方 3.5m」(背對基地那側)，雙方皆適用
     function computeSafeSpawnPoint(team, forAI) {
@@ -7618,9 +7713,9 @@
         const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.35, TURRET_RANGE * 0.5, 8, 1, true), new THREE.MeshBasicMaterial({ color: 0x67e8f9, transparent: true, opacity: 0.12, depthWrite: false, side: THREE.DoubleSide }));
         beam.rotation.z = -Math.PI / 2 + 0.3; beam.position.set(TURRET_RANGE * 0.24, 1.0, 0); fanPivot.add(beam);
         g.add(fanPivot);
-        const wbar = makeWorldHpBar(g, 2.35, 2.2, `🤖 ${team === 0 ? '藍隊' : '紅隊'}哨戒砲`, 0x22c55e);
+        const wbar = makeWorldHpBar(g, 2.35, 2.2, team === 0 ? '藍隊哨戒砲' : '紅隊哨戒砲', 0x22c55e);
         const hpBg = wbar.bg, hpBar = wbar.fill;
-        const lbl = createItemLabelSprite(`🔫 砲彈 ${TURRET_AMMO}/${TURRET_AMMO}`, team === 0 ? '#7dd3fc' : '#fda4af'); lbl.position.set(0, 3.1, 0); g.add(lbl);
+        const lbl = createItemLabelSprite(`砲彈 ${TURRET_AMMO}/${TURRET_AMMO}`, team === 0 ? '#7dd3fc' : '#fda4af'); lbl.position.set(0, 3.1, 0); g.add(lbl);
         g.position.set(x, 0, z);
         g.traverse(o => { if (o.isMesh) o.castShadow = true; });
         scene.add(g);
@@ -7649,7 +7744,7 @@
       if (t.lastLabelAmmo !== t.ammo || t.lastLabelHp !== t.hp) {
         t.lastLabelAmmo = t.ammo; t.lastLabelHp = t.hp;
         t.group.remove(t.label);
-        t.label = createItemLabelSprite(t.destroyed ? `💥 ${t.team === 0 ? '藍隊' : '紅隊'}哨戒砲已被摧毀` : `🔫 砲彈 ${t.ammo}/${t.maxAmmo}${t.ammo === 0 ? ' (缺彈！按 T 補給)' : ''}`, t.team === 0 ? '#7dd3fc' : '#fda4af');
+        t.label = createItemLabelSprite(t.destroyed ? '哨戒砲 已摧毀' : (t.ammo === 0 ? '砲彈 0 · 按T補給' : `砲彈 ${t.ammo}/${t.maxAmmo}`), t.team === 0 ? '#7dd3fc' : '#fda4af');
         t.label.position.set(0, 3.1, 0); t.group.add(t.label);
       }
     }
@@ -7945,13 +8040,13 @@
       g.add(cyl(0.012, 0.012, 0.5, darkIron, 0.5, 0.65, -0.1, 'x'));                                             // 瓦斯管
       const rack = box(0.03, 0.6, 0.03, iron, -0.55, 1.15, -0.3); g.add(rack); g.add(box(0.5, 0.03, 0.03, iron, -0.3, 1.45, -0.3));   // 掛勺架
       [-0.45, -0.25].forEach(lx => { g.add(cyl(0.01, 0.01, 0.25, potMat, lx, 1.3, -0.3)); g.add(new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), potMat)).position.set(lx, 1.17, -0.3); });
-      const lbl = createItemLabelSprite(`🍲 ${team === 0 ? '藍隊' : '紅隊'}野戰爐 (打掉它・對方餐盒就不會再補給)`, '#fde68a'); lbl.position.set(0, 2.2, 0); g.add(lbl);
+      const lbl = createItemLabelSprite('基地爐', '#fde68a'); lbl.position.set(0, 2.25, 0); g.add(lbl);
       g.position.set(x, 0, z);
       g.traverse(o => { if (o.isMesh) o.castShadow = true; });
       scene.add(g);
       addBox(x - 0.6, x + 0.6, 0, 1.0, z - 0.42, z + 0.42, { walkTop: false, isStove: true });
       const stove = { team, x, z, hp: 150, maxHp: 150, group: g, fire, steam, destroyed: false, label: lbl };
-      stove.hpBar = makeWorldHpBar(g, 1.75, 1.6, '🍲 爐子', 0x22c55e);
+      stove.hpBar = makeWorldHpBar(g, 1.75, 1.6, '基地爐', 0x22c55e);
       window.campStoves.push(stove);
       return stove;
     }
@@ -7963,7 +8058,7 @@
         s.destroyed = true;
         s.group.rotation.z = (Math.random() < 0.5 ? 1 : -1) * 1.25; s.group.position.y = 0.05;   // 翻倒
         s.fire.visible = false; s.steam.visible = false;
-        s.group.remove(s.label); s.label = createItemLabelSprite(`💥 ${s.team === 0 ? '藍隊' : '紅隊'}野戰爐已被打翻 — 該隊餐盒不會再補給`, '#fca5a5'); s.label.position.set(0, 2.2, 0); s.group.add(s.label);
+        s.group.remove(s.label); s.label = createItemLabelSprite('基地爐 已打翻', '#fca5a5'); s.label.position.set(0, 2.2, 0); s.group.add(s.label);
         addKillFeed(`🍲💥 ${byName || '敵軍'} 打翻了${s.team === 0 ? '藍隊' : '紅隊'}的野戰爐，${s.team === 0 ? '藍隊' : '紅隊'}的軍用餐盒不會再補給！`, '#fb923c');
         if (Net.isHost) Net.sendAll({ type: 'stove_destroyed', team: s.team, sender: Net.myId });
       }
@@ -7987,65 +8082,94 @@
     function isStoveDestroyedForTeam(team) { const s = window.campStoves.find(x => x.team === team); return !!(s && s.destroyed); }
 
     // 三角屋形軍用帳篷 (A-frame)：屋脊沿 x 向、兩側斜面帆布、後端封閉、前端 (朝出生點) 開口；內部淨高 1.25m → 必須蹲或趴才進得去；在裡面蹲/趴可緩慢回血
+    // 建立 A 字帳篷幾何：屋脊沿 +x 方向、長 L、底寬 W、脊高 H；回傳 { slopes, back } 兩個 BufferGeometry (世界座標以帳篷中心為原點)
+    function makeTentGeometry(L, W, H) {
+      const hl = L / 2, hw = W / 2;
+      const slopes = new THREE.BufferGeometry();
+      // 兩片斜面：每片兩個三角形 (屋脊線 y=H,z=0 ↔ 簷線 y=0,z=±hw)
+      const sv = [
+        // +z 斜面
+        -hl, H, 0,   hl, H, 0,   hl, 0, hw,
+        -hl, H, 0,   hl, 0, hw,  -hl, 0, hw,
+        // -z 斜面
+        -hl, H, 0,  -hl, 0, -hw,  hl, 0, -hw,
+        -hl, H, 0,   hl, 0, -hw,  hl, H, 0
+      ];
+      slopes.setAttribute('position', new THREE.Float32BufferAttribute(sv, 3));
+      const uv = [0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1];
+      slopes.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+      slopes.computeVertexNormals();
+      const back = new THREE.BufferGeometry();   // 後端三角形 (x = -hl)
+      back.setAttribute('position', new THREE.Float32BufferAttribute([-hl, 0, -hw, -hl, 0, hw, -hl, H, 0], 3));
+      back.computeVertexNormals();
+      return { slopes, back, L, W, H };
+    }
+    // 帆布在 (x,z) 處的高度 (帳篷局部座標、脊沿 x)：|z| >= W/2 → 0
+    function tentCanvasHeightAt(localZ, W, H) { const t = 1 - Math.abs(localZ) / (W / 2); return t <= 0 ? 0 : t * H; }
+    window.makeTentGeometry = makeTentGeometry; window.tentCanvasHeightAt = tentCanvasHeightAt;
+
+    // 三角屋形軍用帳篷 (A-frame)：屋脊沿 x 向、兩側斜面帆布、後端封閉、前端 (朝出生點) 開口
+    // 碰撞：三條 z 帶 (外/中/內) 各自的實體頂部 = 該帶內側邊緣的帆布高度，保證「碰撞永遠不高於看得到的帆布」→ 漆彈不會黏在半空
     function buildAFrameTent(team, x, z, facing) {
-      const canvas = new THREE.MeshStandardMaterial({ color: 0x3f6212, roughness: 0.95, side: THREE.DoubleSide });
-      const canvasDark = new THREE.MeshStandardMaterial({ color: 0x365314, roughness: 0.95, side: THREE.DoubleSide });
+      const canvas = new THREE.MeshStandardMaterial({ color: 0x4d7c0f, roughness: 0.95, side: THREE.DoubleSide });
+      const canvasDark = new THREE.MeshStandardMaterial({ color: 0x3f6212, roughness: 0.95, side: THREE.DoubleSide });
       const woodMat2 = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.9 });
       const rope = new THREE.MeshStandardMaterial({ color: 0xd6d3d1, roughness: 1 });
+      const L = 3.6, W = 3.4, H = 2.0;
+      const geo = makeTentGeometry(L, W, H);
       const g = new THREE.Group();
-      const L = 3.6, W = 3.4, H = 2.0;                       // 長 (x) / 寬 (z) / 脊高
-      const slope = Math.hypot(W / 2, H);
-      [-1, 1].forEach(sg => {
-        const panel = new THREE.Mesh(new THREE.BoxGeometry(L, 0.04, slope), sg > 0 ? canvas : canvasDark);
-        panel.position.set(0, H / 2, sg * W / 4); panel.rotation.x = -sg * Math.atan2(H, W / 2); g.add(panel);
-      });
-      const triShape = new THREE.Shape(); triShape.moveTo(-W / 2, 0); triShape.lineTo(W / 2, 0); triShape.lineTo(0, H); triShape.closePath();
-      const back = new THREE.Mesh(new THREE.ShapeGeometry(triShape), canvasDark); back.rotation.y = Math.PI / 2; back.position.set(-L / 2 + 0.02, 0, 0); g.add(back);   // 後端封閉
-      const flap = new THREE.Mesh(new THREE.ShapeGeometry(triShape), canvas); flap.rotation.y = Math.PI / 2; flap.scale.set(0.5, 0.55, 1); flap.position.set(L / 2 - 0.02, 0, W / 4); g.add(flap);   // 前端半掀門簾
-      g.add(box(L + 0.3, 0.04, W + 0.6, new THREE.MeshStandardMaterial({ color: 0x365314, roughness: 1 }), 0, 0.02, 0));   // 地布
+      const slopes = new THREE.Mesh(geo.slopes, canvas); slopes.name = 'tent_slopes'; g.add(slopes);
+      const back = new THREE.Mesh(geo.back, canvasDark); back.name = 'tent_back'; g.add(back);
+      // 前端半掀門簾 (只遮下半部左側)
+      const flapGeo = new THREE.BufferGeometry(); flapGeo.setAttribute('position', new THREE.Float32BufferAttribute([L / 2 - 0.02, 0, W / 2, L / 2 - 0.02, 0, W / 2 * 0.15, L / 2 - 0.02, H * 0.55, W / 2 * 0.45], 3)); flapGeo.computeVertexNormals();
+      const flap = new THREE.Mesh(flapGeo, canvas); flap.name = 'tent_flap'; g.add(flap);
+      g.add(box(L + 0.3, 0.03, W + 0.6, new THREE.MeshStandardMaterial({ color: 0x365314, roughness: 1 }), 0, 0.015, 0));   // 地布
       g.add(cyl(0.035, 0.035, L + 0.4, woodMat2, 0, H, 0, 'x'));                                                            // 脊桿
-      [-1, 1].forEach(sg => { g.add(cyl(0.04, 0.05, H, woodMat2, sg * L / 2, H / 2, 0)); });                                 // 兩端立桿
+      [-1, 1].forEach(sg => g.add(cyl(0.04, 0.05, H, woodMat2, sg * L / 2, H / 2, 0)));                                   // 兩端立桿
       [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => {                                                           // 營繩 + 營釘
-        const r = cyl(0.008, 0.008, 1.4, rope, sx * (L / 2 + 0.5), 0.5, sz * (W / 2 + 0.35)); r.rotation.z = sx * 0.9; r.rotation.x = sz * 0.5; g.add(r);
-        g.add(cyl(0.02, 0.02, 0.22, woodMat2, sx * (L / 2 + 0.95), 0.08, sz * (W / 2 + 0.6)));
+        const r = cyl(0.008, 0.008, 1.5, rope, sx * (L / 2 + 0.45), 0.5, sz * (W / 2 + 0.3)); r.rotation.z = sx * 0.95; r.rotation.x = -sz * 0.4; g.add(r);
+        g.add(cyl(0.02, 0.02, 0.22, woodMat2, sx * (L / 2 + 0.9), 0.08, sz * (W / 2 + 0.6)));
       });
-      const insignia = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.5), new THREE.MeshBasicMaterial({ map: makeLabelTexture(team === 0 ? 'BLUE CAMP' : 'RED CAMP', team === 0 ? '#1e3a8a' : '#7f1d1d', '#fde68a', 40), transparent: true }));
-      insignia.position.set(0.4, 1.1, W / 4 + 0.03); insignia.rotation.x = -Math.atan2(H, W / 2); g.add(insignia);
-      const lbl = createItemLabelSprite('⛺ 軍用帳篷 (蹲下/趴下可進入・內部緩慢回血 +6 HP/s)', '#bef264'); lbl.position.set(0, 2.7, 0); g.add(lbl);
+      const lbl = createItemLabelSprite('軍用帳篷', '#bef264'); lbl.position.set(0, H + 0.6, 0); g.add(lbl);
       g.position.set(x, 0, z); g.rotation.y = facing || 0;
-      g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+      g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
       scene.add(g);
-      // 碰撞 (假設 facing = 0 或 π，邊界對稱)：兩側低矮斜面牆、頂棚 (1.25m 以上實體 → 站著進不去、擋子彈)、後端牆
-      const bx1 = x - L / 2, bx2 = x + L / 2, bz1 = z - W / 2, bz2 = z + W / 2;
-      addBox(bx1, bx2, 0, 1.2, bz1, bz1 + 0.55, { walkTop: false, isTent: true });
-      addBox(bx1, bx2, 0, 1.2, bz2 - 0.55, bz2, { walkTop: false, isTent: true });
-      addBox(bx1, bx2, 1.25, 2.05, bz1 + 0.5, bz2 - 0.5, { walkTop: false, isTent: true, blocksBullets: true });
-      const backX = (facing && Math.abs(facing) > 1) ? bx2 - 0.3 : bx1;   // facing=π 時後牆在 +x 端
-      addBox(backX, backX + 0.3, 0, 2.0, bz1, bz2, { walkTop: false, isTent: true });
-      const tent = { team, x, z, minX: bx1 + 0.3, maxX: bx2 - 0.3, minZ: bz1 + 0.55, maxZ: bz2 - 0.55, healPerSec: 6, group: g };
+      // 碰撞帶 (facing 0 或 π：對稱，直接用世界座標)
+      const bx1 = x - L / 2, bx2 = x + L / 2, hw = W / 2;
+      const bands = [
+        { z1: hw - 0.55, z2: hw, top: tentCanvasHeightAt(hw - 0.55, W, H), minY: 0 },          // 外帶：0 ~ 0.65m 實體 (擋走、擋彈)
+        { z1: hw - 1.1, z2: hw - 0.55, top: tentCanvasHeightAt(hw - 1.1, W, H), minY: 0.62 },  // 中帶：0.62 ~ 1.29m (趴可過、蹲不可)
+        { z1: 0, z2: hw - 1.1, top: H, minY: 1.25 }                                              // 內帶：1.25 ~ 2.0m (蹲/趴可過、站不可)
+      ];
+      const made = [];
+      bands.forEach(b => { [-1, 1].forEach(sg => { const z1 = z + sg * b.z1, z2 = z + sg * b.z2; const o = addBox(bx1, bx2, b.minY, b.top, Math.min(z1, z2), Math.max(z1, z2), { walkTop: false, isTent: true, blocksBullets: true }); made.push(o); }); });
+      const backX = (facing && Math.abs(facing) > 1) ? bx2 - 0.25 : bx1;
+      made.push(addBox(backX, backX + 0.25, 0, H, z - hw, z + hw, { walkTop: false, isTent: true }));
+      const tent = { team, x, z, L, W, H, minX: bx1 + 0.3, maxX: bx2 - 0.3, minZ: z - (hw - 1.1), maxZ: z + (hw - 1.1), healPerSec: 6, group: g, boxes: made, slopes, facing: facing || 0 };
       window.campTents.push(tent);
       return tent;
     }
     // 基地兩側破碎磚牆 (v8.0)：磚紋貼圖、高低不齊的斷口、散落磚塊；擋住二樓房子長距離直射重生點的視線
     window.ruinedWalls = [];
     function buildRuinedBrickWalls() {
-      const brickMat = MAT.brick();
-      const rubbleMat = new THREE.MeshStandardMaterial({ map: makeCanvasTexture('brick', 256, texBrick, 3, 1.2), roughness: 0.95 });
-      const buildWall = (x1, x2, z, seed) => {
+      const brickTex = makeCanvasTexture('brick', 256, texBrick, 3, 1.2);
+      const grayWall = new THREE.MeshStandardMaterial({ map: brickTex, color: 0x8a8f94, roughness: 0.95 });    // 佔地灰
+      const oldRed = new THREE.MeshStandardMaterial({ map: brickTex, color: 0xa0564a, roughness: 0.95 });      // 破舊紅
+      const rubbleMat = new THREE.MeshStandardMaterial({ map: brickTex, color: 0x9ca3af, roughness: 1 });
+      const buildWall = (x1, x2, z, seed, mat) => {
         const segW = 1.2, n = Math.max(1, Math.round((x2 - x1) / segW));
         for (let i = 0; i < n; i++) {
-          const sx = x1 + i * segW, hgt = 1.5 + Math.abs(Math.sin(seed + i * 1.7)) * 1.1;   // 1.5 ~ 2.6m 高低不齊
-          const m = new THREE.Mesh(new THREE.BoxGeometry(segW, hgt, 0.5), brickMat); m.position.set(sx + segW / 2, hgt / 2, z); m.castShadow = true; scene.add(m);
-          if (i % 2 === 0) { const chip = new THREE.Mesh(new THREE.BoxGeometry(segW * 0.5, 0.35, 0.52), brickMat); chip.position.set(sx + segW * 0.3, hgt + 0.15, z); chip.rotation.z = 0.12; scene.add(chip); }
-          for (let k = 0; k < 2; k++) { const rb = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.14, 0.18), rubbleMat); rb.position.set(sx + 0.2 + k * 0.6, 0.07, z + (k % 2 ? 0.55 : -0.55)); rb.rotation.y = seed + k; scene.add(rb); }
-          const o = addBox(sx, sx + segW, 0, hgt, z - 0.25, z + 0.25, { walkTop: false, isRuinedWall: true });
+          const sx = x1 + i * segW, hgt = 1.9 + Math.abs(Math.sin(seed + i * 1.7)) * 0.3;   // 1.9 ~ 2.2m：剛好擋住二樓看台射向牆後重生點的視線
+          const m = new THREE.Mesh(new THREE.BoxGeometry(segW, hgt, 0.45), mat); m.position.set(sx + segW / 2, hgt / 2, z); m.castShadow = true; scene.add(m);
+          if (i % 2 === 1) { const chip = new THREE.Mesh(new THREE.BoxGeometry(segW * 0.45, 0.25, 0.47), mat); chip.position.set(sx + segW * 0.35, hgt + 0.1, z); chip.rotation.z = -0.1; scene.add(chip); }
+          for (let k = 0; k < 2; k++) { const rb = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.13, 0.17), rubbleMat); rb.position.set(sx + 0.25 + k * 0.6, 0.065, z + (k % 2 ? 0.5 : -0.5)); rb.rotation.y = seed + k; scene.add(rb); }
+          const o = addBox(sx, sx + segW, 0, hgt, z - 0.225, z + 0.225, { walkTop: false, isRuinedWall: true });
           window.ruinedWalls.push(o);
         }
       };
-      // 藍營 (z=+23.2)：左側連續牆、右側留吉普車通道 (x 13~17)
-      buildWall(-21, -9, 23.2, 0.3); buildWall(9, 13, 23.2, 1.1); buildWall(17, 21, 23.2, 2.2);
-      // 紅營 (z=-23.2)：右側連續牆、左側留吉普車通道 (x -17~-13)
-      buildWall(9, 21, -23.2, 0.7); buildWall(-21, -17, -23.2, 1.9); buildWall(-13, -9, -23.2, 2.6);
+      // 縮窄：每側 9.6m (x 10~19.6)，灰色與舊紅交錯；吉普車改停在牆外側，不再卡進牆裡
+      buildWall(-19.6, -10, 23.2, 0.3, grayWall); buildWall(10, 19.6, 23.2, 1.1, oldRed);
+      buildWall(-19.6, -10, -23.2, 1.9, oldRed); buildWall(10, 19.6, -23.2, 2.6, grayWall);
     }
     function buildBaseCampFacilities() {
       const canvasMat = new THREE.MeshStandardMaterial({ color: 0x4d7c0f, roughness: 0.95 });
@@ -8059,19 +8183,26 @@
         buildFieldStove(team, -6, 31.5 * s);
         // 大型裝飾障礙物醫藥箱 (11, 29s)
         const chest = new THREE.Group();
-        chest.add(box(1.4, 0.9, 0.9, sheetMat, 0, 0.45, 0));
-        [[0, 0.46, 0], [0, -0.46, Math.PI]].forEach(([dx, dz, ry]) => { const c = new THREE.Group(); c.add(box(0.36, 0.1, 0.02, new THREE.MeshStandardMaterial({ color: 0xef4444 }), 0, 0, 0)); c.add(box(0.1, 0.36, 0.02, new THREE.MeshStandardMaterial({ color: 0xef4444 }), 0, 0, 0)); c.position.set(dx, 0.5, dz); c.rotation.y = ry; chest.add(c); });
-        chest.add(box(1.44, 0.06, 0.94, new THREE.MeshStandardMaterial({ color: 0xef4444 }), 0, 0.2, 0));
-        const chestLbl = createItemLabelSprite('🧰 營地醫藥箱 (裝飾障礙物)', '#fecaca'); chestLbl.position.set(0, 1.4, 0); chest.add(chestLbl);
+        const oliveMetal = new THREE.MeshStandardMaterial({ color: 0x4d5b2a, roughness: 0.7, metalness: 0.45 });
+        const wornRed = new THREE.MeshStandardMaterial({ color: 0x9f1239, roughness: 0.85 });
+        const rivet = new THREE.MeshStandardMaterial({ color: 0x1f2937, metalness: 0.8, roughness: 0.4 });
+        chest.add(box(1.4, 0.9, 0.9, oliveMetal, 0, 0.45, 0));
+        chest.add(box(1.44, 0.08, 0.94, new THREE.MeshStandardMaterial({ color: 0x3f4f22, roughness: 0.75, metalness: 0.4 }), 0, 0.9, 0));   // 蓋沿
+        [[-0.62, -0.42], [0.62, -0.42], [-0.62, 0.42], [0.62, 0.42]].forEach(([rx, rz]) => { for (let k = 0; k < 3; k++) chest.add(cyl(0.025, 0.025, 0.02, rivet, rx, 0.2 + k * 0.28, rz, 'z')); });
+        [[0, 0.46, 0], [0, -0.46, Math.PI]].forEach(([dx, dz, ry]) => { const c = new THREE.Group(); c.add(box(0.34, 0.1, 0.02, wornRed, 0, 0, 0)); c.add(box(0.1, 0.34, 0.02, wornRed, 0, 0, 0)); c.position.set(dx, 0.5, dz); c.rotation.y = ry; chest.add(c); });
+        [-1, 1].forEach(sg => { const hd = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.015, 6, 12, Math.PI), rivet); hd.position.set(sg * 0.72, 0.55, 0); hd.rotation.y = Math.PI / 2; chest.add(hd); });   // 側提把
+        const stencil = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.18), new THREE.MeshBasicMaterial({ map: makeLabelTexture('MEDICAL', '#4d5b2a', '#e2e8f0', 40), transparent: true })); stencil.position.set(0.3, 0.72, 0.46); chest.add(stencil);
+        chest.add(box(0.5, 0.06, 0.3, new THREE.MeshStandardMaterial({ color: 0x6b7280, roughness: 1 }), -0.35, 0.93, 0.1));   // 磨損痕跡
+        const chestLbl = createItemLabelSprite('野戰醫療箱', '#fecaca'); chestLbl.position.set(0, 1.4, 0); chest.add(chestLbl);
         chest.position.set(11, 0, 29 * s); scene.add(chest);
         addBox(10.3, 11.7, 0, 0.9, 29 * s - 0.45, 29 * s + 0.45);
       });
       // 可撿的補給：營地急救箱 + 兩個軍用餐盒 (MRE，+35 HP，重生很慢 120 秒)
       [[0, 1], [1, -1]].forEach(([team, s]) => {
         [
-          { id: `camp_med_${team}`, type: 'medkit', x: 12.8, z: 28 * s, label: '營地急救箱 (+40 HP)', respawnTime: 40 },
-          { id: `camp_ration_${team}_a`, type: 'ration', x: 11, z: 27.3 * s, label: '🥫 軍用餐盒 MRE (+35 HP)', respawnTime: 120 },
-          { id: `camp_ration_${team}_b`, type: 'ration', x: 9.3, z: 28 * s, label: '🥫 軍用餐盒 MRE (+35 HP)', respawnTime: 120 }
+          { id: `camp_med_${team}`, type: 'medkit', x: 12.8, z: 28 * s, label: '急救箱', respawnTime: 40 },
+          { id: `camp_ration_${team}_a`, type: 'ration', x: -4.6, z: 30.3 * s, label: '軍用餐盒', respawnTime: 120 },
+          { id: `camp_ration_${team}_b`, type: 'ration', x: -7.4, z: 30.1 * s, label: '軍用餐盒', respawnTime: 120 }
         ].forEach(cfg => {
           const group = buildPickupModel(cfg);
           const baseY = 0.05;
@@ -8202,8 +8333,8 @@
       // 車輛改為軸對齊角度 (0 / ±π/2 / π)，碰撞盒與可見車身完全一致，不會再「撞進去」
       buildJeep(-26, 14, 0, 0x4b5320);
       buildJeep(26, -14, Math.PI, 0x6b7280);
-      buildJeep(-15, -24, Math.PI / 2, 0x4b5320);
-      buildJeep(15, 24, -Math.PI / 2, 0x6b7280);
+      buildJeep(-12.5, -20.5, Math.PI, 0x4b5320);   // 停在矮牆外側、與牆平行，自然不卡牆
+      buildJeep(12.5, 20.5, 0, 0x6b7280);
 
       // C4 存放木箱：綠色軍用木箱，側面寫「炸彈 / C4 EXPLOSIVES」，放在 C4 拾取點旁 (#炸彈箱)
       const buildBombCrate = (x, z) => {
@@ -8540,7 +8671,7 @@
       if (advanceCry) battleCryCursor = (battleCryCursor + 1) % BATTLE_CRIES.length;
       const cry = BATTLE_CRIES[battleCryCursor % BATTLE_CRIES.length];
       if (cryEl && cry) {
-        cryEl.innerHTML = `<span class="text-emerald-400 mr-1.5">[${cry.tag}]</span><span>${cry.text}</span>`;
+        cryEl.innerHTML = `<span>${cry.text}</span>`;
       }
     }
 
@@ -9868,9 +9999,35 @@
       }
     });
 
+    // 放開所有輸入 (失焦 / 切換分頁 / 滑鼠鎖定被釋放 / iPhone・iPad 切換 App 回來)：避免回來時殘留「按住開火」
+    function releaseAllInputs(reason) {
+      isFiring = false; isMouseDragging = false;
+      for (const k in keysDown) keysDown[k] = false;
+      moveInput.forward = 0; moveInput.right = 0;
+      if (typeof resetJoystick === 'function') resetJoystick();
+      if (typeof lookTouchId !== 'undefined') lookTouchId = null;
+      if (typeof cancelBombPlant === 'function') cancelBombPlant();
+      if (typeof ctfState !== 'undefined') ctfState.buttonHeld = false;
+      window.__lastInputRelease = reason || 'manual';
+    }
+    window.releaseAllInputs = releaseAllInputs;
+    function updateLockHint() {
+      const el = document.getElementById('click-to-lock');
+      if (!el) return;
+      const desktop = window.matchMedia('(pointer: fine)').matches && !(typeof DeviceProfile !== 'undefined' && DeviceProfile.hasTouch && !DeviceProfile.isDesktop);
+      const modalOpen = ['lobby-modal', 'waiting-room-modal', 'game-over-modal', 'team-select-modal'].some(id => { const m = document.getElementById(id); return m && !m.classList.contains('hidden'); });
+      el.classList.toggle('hidden', !(isGameRunning && desktop && !isPointerLocked && !modalOpen && !playerState.isBroadcaster));
+    }
     document.addEventListener('pointerlockchange', () => {
       isPointerLocked = (document.pointerLockElement === document.body);
+      if (!isPointerLocked) releaseAllInputs('pointerlock_lost');
+      updateLockHint();
     });
+    document.addEventListener('pointerlockerror', () => { updateLockHint(); });
+    window.addEventListener('blur', () => releaseAllInputs('blur'));
+    window.addEventListener('pagehide', () => releaseAllInputs('pagehide'));
+    document.addEventListener('visibilitychange', () => { if (document.hidden) releaseAllInputs('hidden'); else updateLockHint(); });
+    window.addEventListener('touchcancel', () => releaseAllInputs('touchcancel'));
 
     window.addEventListener('mousemove', (e) => {
       if (isPointerLocked && isGameRunning) {
@@ -9895,8 +10052,11 @@
       lastMouseY = e.clientY;
 
       if (e.button === 0) {
-        if (!isPointerLocked && window.matchMedia('(pointer: fine)').matches) {
+        if (!isPointerLocked && (window.__forceFinePointer || window.matchMedia('(pointer: fine)').matches) && !window.__noPointerLock) {
+          // 第一下點擊只用來鎖定滑鼠 (ESC 跳出後回來也一樣)，不會開槍，避免回來變成連點清空彈匣
           try { document.body.requestPointerLock(); } catch (err) {}
+          isFiring = false;
+          return;
         }
         isFiring = true;
       } else if (e.button === 2) {
@@ -10111,6 +10271,10 @@
       ctfState.progress = 0;
       isGameRunning = true;
       initEnemies();
+      releaseAllInputs('enter_world');
+      // 桌機：進場即嘗試鎖定滑鼠 (由大廳按鈕點擊的使用者手勢觸發)，開場就能用滑鼠轉視角，不必先開一槍
+      if (window.matchMedia('(pointer: fine)').matches && !playerState.isBroadcaster && !window.__manualLoop) { try { document.body.requestPointerLock(); } catch (e) {} }
+      setTimeout(updateLockHint, 50);
       if (playerState.isBroadcaster) enterBroadcastMode();
     }
 
@@ -10904,6 +11068,7 @@
       ai.mesh.scale.y = 1;
       const victimTeam = (ai.team === 0 || ai.team === 1) ? ai.team : AI_TEAM;
       const kTeam = (killerTeam === 0 || killerTeam === 1) ? killerTeam : (1 - victimTeam);
+      if (ai.slot) ai.slot.deaths++;
       if (isAIAuthority() && weaponLabel !== 'C4 爆炸') dropDeathLoot(ai.mesh.position.x, ai.mesh.position.y, ai.mesh.position.z, WEAPONS[ai.weaponKey], 50, true);   // #8
       if (killerName === playerState.name) {
         playerState.kills++;
@@ -11390,7 +11555,7 @@
     /* =========================================================================
        18. 自動化物理/戰鬥驗證模式：開啟 game.html?autotest=1 於 Console 輸出 [AUTOTEST] 結果
        ========================================================================= */
-    const BUILD_STAMP = 'v8.1 · 建置 2026-10-27 08:00 (台北)';
+    const BUILD_STAMP = 'v8.2 · 建置 2026-10-27 10:00 (台北)';
     console.log('現代突擊 3D ' + BUILD_STAMP);
     window.__manualLoop = new URLSearchParams(location.search).has('autotest');
     if (new URLSearchParams(location.search).has('demo')) {
@@ -11576,7 +11741,7 @@
         log('T15b AI 中彈後逃往另一個掩體 (FLEE) 或依個性原地閃避回擊 (v7.9)', (bot.state === 'FLEE' && bot.coverTarget !== coverBefore) || (bot.state !== 'FLEE' && !!bot.dodgeKind), `state=${bot.state} dodge=${bot.dodgeKind || '-'}`);
         bot.lastEngaged = simTime; frame(60 * 4);
         log('T15c 逃到掩體後躲藏並回射', ['HIDE', 'PEEK_SHOOT', 'ADVANCE'].includes(bot.state), `state=${bot.state}`);
-        bot.lastEngaged = simTime - 13000; aiSetState(bot, 'HIDE', 0.1); frame(30);
+        bot.lastEngaged = simTime - 13000; bot.preferHouse = true; bot.houseFloorPref = '2F'; aiSetState(bot, 'HIDE', 0.1); frame(30);   // v8.2：路線計畫為進屋者才一定進屋
         log('T15d 久未交戰 → 進屋路線 (HUNT)', bot.state === 'HUNT' || bot.state === 'CAMP', `state=${bot.state} route=${bot.route ? bot.route.kind : '-'}`);
         Net.sendShotEvent = origFire;
 
@@ -12752,7 +12917,7 @@
           const hoodSurface = rampSurfaces.find(s => s.type === 'flat' && Math.abs(s.y - 0.92) < 0.01);
           const groundOnHood = hoodSurface ? getGroundHeight((hoodSurface.minX + hoodSurface.maxX) / 2, (hoodSurface.minZ + hoodSurface.maxZ) / 2, 1.0) : -1;
           const hoodWalkOk = Math.abs(groundOnHood - 0.92) < 0.01;
-          const vehicleCenters = [[-11, -17, 4.2], [11, 17, 4.2], [-26, 14, 2.6], [26, -14, 2.6], [-15, -24, 2.6], [15, 24, 2.6]];
+          const vehicleCenters = [[-11, -17, 4.2], [11, 17, 4.2], [-26, 14, 2.6], [26, -14, 2.6], [-12.5, -20.5, 2.6], [12.5, 20.5, 2.6]];
           const hedgehogClearOk = window.czechHedgehogs.every(hh => vehicleCenters.every(([vx, vz, vr]) => { const cx = Math.max(hh.minX, Math.min(vx, hh.maxX)), cz = Math.max(hh.minZ, Math.min(vz, hh.maxZ)); return Math.hypot(cx - vx, cz - vz) >= vr + 1.5; }));
           const wireOk = window.barbedWireList.every(w => w.warTorn === true) && window.barbedWireList.some(w => w.gaps >= 1);
 
@@ -12955,8 +13120,8 @@
           const heights = new Set(rw.map(o => +o.maxY.toFixed(2)));
           const wallTexOk = rw.length >= 30 && heights.size >= 5 && rw.every(o => o.maxY >= 1.4 && o.maxY <= 2.7 && o.blocksBullets !== false) && !!makeCanvasTexture('brick', 256, texBrick, 3, 1.2).image;
           const losBlocked = segmentHitObstacle(new THREE.Vector3(-13, 3.4 + 0.5, 0), new THREE.Vector3(-2, 1.2, 28)) !== null;
-          const gapOpen = !checkCollision(15, 23.2, 0, 0.42, PLAYER_HEIGHT) || obstacles.some(o => o.isVehicle && o.minX < 15 && o.maxX > 15 && o.minZ < 23.2 && o.maxZ > 23.2);
-          const noWallAtGap = !rw.some(o => o.minX < 15 && o.maxX > 15);
+          const gapOpen = !checkCollision(4, 21.0, 0, 0.42, PLAYER_HEIGHT) && !checkCollision(-4, -21.0, 0, 0.42, PLAYER_HEIGHT);   // v8.2 中央通道暢通 (兩側矮牆縮窄到 |x| 10~19.6)
+          const noWallAtGap = !rw.some(o => o.maxX > 19.7 || o.minX < -19.7) && !rw.some(o => o.minX < 10 && o.maxX > -10);
           const wallOk = wallTexOk && losBlocked && gapOpen && noWallAtGap;
           // 6. 瞄準鏡 30 秒；油桶頂可站
           const scopeOk = pickupItems.filter(p => p.type === 'scope').every(p => p.respawnTime <= 30);
@@ -13031,6 +13196,80 @@
             'T86 v8.1 UI 分區重排、SVG 按鈕圖示、短版號、HP/護甲兩位小數、貼花不飄空、播報四段循環+戰術喊話開關、AI 積極度低中高、無火網安全重生驗證',
             uiOk && iconsOk && fmtOk && noDecalOk && projectedOk && casterOk && levelOk && safeSpawnOk,
             `ui=${uiOk}(${buffRight}/${casterLeft}/${buildShort}/${audioLineHidden}) icons=${iconsOk}(${svgCount}) fmt=${fmtOk}(${hpTxt}|${arTxt}) decal=${noDecalOk}/${projectedOk} caster=${cycleOk}/${battleAllows}/${calloutBlocked}/${calloutsOnlyOk}/${offOk} level=${levelOk}(${pLow.aggression.toFixed(2)}<${pHigh.aggression.toFixed(2)}) safeSpawn=${safeSpawnOk}(${ssp.x},${ssp.z},d=${dEnemy.toFixed(1)},hidden=${hiddenFromEnemy})`
+          );
+        }
+
+
+        // ---- T87: v8.2 帳篷幾何/碰撞一致、名稱不溢框、餐盒在爐旁、牆後重生看台射不到、吉普不卡牆、弧形沙包、野外槍枝、AI 身分槽與路線多樣、滑鼠鎖定/失焦修正 ----
+        {
+          const sv = { ai: aiEnabled, force: window.forceBothTeamsAI, fire: isFiring };
+          // 1. 帳篷：可見帆布 raycast 高度 vs 碰撞盒頂 (碰撞永不高於帆布)、幾何邊界、站不進/蹲可進
+          const tent0 = window.campTents.find(t => t.team === 0);
+          tent0.group.updateMatrixWorld(true);
+          const rc = new THREE.Raycaster(); const down = new THREE.Vector3(0, -1, 0);
+          const canvasH = (lz) => { rc.set(new THREE.Vector3(tent0.x, 6, tent0.z + lz), down); const hits = rc.intersectObject(tent0.slopes, false); return hits.length ? hits[0].point.y : 0; };
+          const ridgeOk = Math.abs(canvasH(0) - tent0.H) < 0.03 && Math.abs(canvasH(tent0.W / 4) - tent0.H / 2) < 0.05 && canvasH(tent0.W / 2 + 0.2) === 0;
+          const boxesOk = tent0.boxes.filter(o => o.isTent && (o.maxZ - o.minZ) < 1.5).every(o => { const zc = (o.minZ + o.maxZ) / 2; const innerEdge = Math.min(Math.abs(o.minZ - tent0.z), Math.abs(o.maxZ - tent0.z)); const hVis = tentCanvasHeightAt(innerEdge, tent0.W, tent0.H); return o.maxY <= hVis + 0.05; });
+          const geo = makeTentGeometry(3.6, 3.4, 2.0); geo.slopes.computeBoundingBox(); const bb = geo.slopes.boundingBox;
+          const geoOk = Math.abs(bb.min.x + 1.8) < 1e-3 && Math.abs(bb.max.x - 1.8) < 1e-3 && Math.abs(bb.min.y) < 1e-3 && Math.abs(bb.max.y - 2.0) < 1e-3 && Math.abs(bb.max.z - 1.7) < 1e-3;
+          const standBlocked = checkCollision(tent0.x, tent0.z, 0, undefined, PLAYER_HEIGHT) && !checkCollision(tent0.x, tent0.z, 0, undefined, 1.2);
+          const tentOk = ridgeOk && boxesOk && geoOk && standBlocked && tent0.group.children.some(c => c.name === 'tent_back');
+          // 2. 名稱精簡：所有道具標籤 ≤ 11 字且無括號註解
+          const labelsOk = pickupItems.every(p => shortItemLabel(p.label).length <= 12 && !/[（(]/.test(shortItemLabel(p.label))) && shortItemLabel('基地彈藥補給箱 (5.56 / 9mm / 7.62mm)') === '基地彈藥補給箱' && shortItemLabel('基地爐') === '基地爐';
+          // 3. 餐盒在爐子旁 (≤ 3m)、不在醫藥箱旁
+          const st0 = window.campStoves.find(s => s.team === 0);
+          const rationsNearStove = pickupItems.filter(p => p.type === 'ration' && p.id.includes('_0_')).every(p => Math.hypot(p.x - st0.x, p.z - st0.z) <= 3.2 && Math.hypot(p.x - 11, p.z - 29) > 10);
+          // 4. 牆後重生：兩棟二樓看台 (±13, 3.9, 0) 射向藍營重生點頭部都被擋；牆高 1.9~2.2；灰/紅兩色
+          const sp0 = TEAM_SPAWN[0];
+          const losW = segmentHitObstacle(new THREE.Vector3(-13, 3.9, 0), new THREE.Vector3(sp0.x, 1.6, sp0.z)) !== null;
+          const losE = segmentHitObstacle(new THREE.Vector3(13, 3.9, 0), new THREE.Vector3(sp0.x, 1.6, sp0.z)) !== null;
+          const sp1 = TEAM_SPAWN[1];
+          const losR = segmentHitObstacle(new THREE.Vector3(13, 3.9, 0), new THREE.Vector3(sp1.x, 1.6, sp1.z)) !== null && segmentHitObstacle(new THREE.Vector3(-13, 3.9, 0), new THREE.Vector3(sp1.x, 1.6, sp1.z)) !== null;
+          const rw = window.ruinedWalls;
+          const wallHeightsOk = rw.every(o => o.maxY >= 1.9 && o.maxY <= 2.21) && rw.every(o => Math.abs(o.minX) >= 10 && Math.abs(o.maxX) <= 19.7);
+          const spawnOk = losW && losE && losR && wallHeightsOk && !checkCollision(sp0.x, sp0.z, 0, 0.42, PLAYER_HEIGHT);
+          // 5. 吉普不與牆/拒馬重疊
+          const jeepBoxes = obstacles.filter(o => o.isVehicle && o.vehiclePart === 'cabin');
+          const jeepClearOk = jeepBoxes.every(j => !rw.some(w => j.minX < w.maxX && j.maxX > w.minX && j.minZ < w.maxZ && j.maxZ > w.minZ) && !window.czechHedgehogs.some(hh => j.minX < hh.maxX && j.maxX > hh.minX && j.minZ < hh.maxZ && j.maxZ > hh.minZ));
+          // 6. 弧形加高沙包：高度 1.44m、三段碰撞 z 不同 (弧形)、站立 (眼高 1.6) 可越過射擊
+          const arcs = obstacles.filter(o => o.isSandbagArc);
+          const arcHeightOk = arcs.length >= 18 && arcs.every(o => Math.abs(o.maxY - 1.44) < 0.01);
+          const arcGroup = arcs.slice(0, 3); const zs = arcGroup.map(o => +((o.minZ + o.maxZ) / 2).toFixed(2));
+          const arcShapeOk = new Set(zs).size >= 2 && STAND_HEIGHT > 1.44;
+          // 7. 野外隨機槍枝：7 把、都離兩棟房子中心 ≥ 9m、種子一致
+          const fg = pickupItems.filter(p => p.fieldGun);
+          const fieldGunOk = fg.length === 7 && fg.every(p => Math.hypot(p.x - 17, p.z) >= 9 && Math.hypot(p.x + 17, p.z) >= 9) && pickupItems.filter(p => p.type === 'weapon').length >= 14;
+          // 8. AI 身分槽：同隊重生沿用同一名字與個性；路線多樣 (個性/火力加權)、可重複上次
+          aiEnabled = true; window.forceBothTeamsAI = true; initEnemies();
+          const a1 = aiEnemies.find(a => a.team === 1); const slotRef = a1.slot; const name1 = a1.name; const persona1 = a1.persona;
+          killAI(a1, '測試', 0, 'M4A1'); a1.deadTimer = -1; scene.remove(a1.mesh); aiEnemies.splice(aiEnemies.indexOf(a1), 1);
+          const a2 = spawnAIEnemyFromBase(0, 1);
+          const slotReuseOk = a2.slot === slotRef && a2.name === name1 && a2.persona === persona1 && slotRef.deaths >= 1 && !!a2.routePlan;
+          const coward = a2; coward.persona = Object.assign(rollAIPersona('coward'), { courage: 0.05, aggression: 0.2, discipline: 0.5 }); coward.slot = { lastPlan: null, plans: [] };
+          const hot = { west: 0, center: 0, east: 20 }; let eastPicks = 0; const planSet = new Set();
+          for (let k = 0; k < 60; k++) { const pl = aiChooseRoutePlan(coward, hot); planSet.add(pl); if (pl === 'lane_east') eastPicks++; }
+          const avoidHotOk = eastPicks <= 12 && planSet.size >= 3;
+          coward.slot.lastPlan = 'lane_west'; let repeats = 0; for (let k = 0; k < 60; k++) if (aiChooseRoutePlan(coward, hot) === 'lane_west') repeats++;
+          const repeatOk = repeats >= 12;
+          const camper = aiEnemies.find(a => a.team === 0); camper.persona = rollAIPersona('camper'); camper.slot = { lastPlan: null, plans: [] }; let houses = 0; for (let k = 0; k < 60; k++) if (aiChooseRoutePlan(camper, { west: 0, center: 0, east: 0 }).startsWith('house')) houses++;
+          const camperOk = houses >= 20;
+          aiApplyRoutePlan(camper, 'lane_west'); const applyOk = camper.laneBias === -24 && camper.preferHouse === false;
+          const aiOk = slotReuseOk && avoidHotOk && repeatOk && camperOk && applyOk;
+          // 9. 滑鼠/失焦：失焦放開開火；未鎖定時點擊不開槍；提示元件存在
+          isFiring = true; keysDown['KeyW'] = true; window.dispatchEvent(new Event('blur'));
+          const blurOk = isFiring === false && keysDown['KeyW'] === false && window.__lastInputRelease === 'blur';
+          const lockedBefore = isPointerLocked; isPointerLocked = false; window.__noPointerLock = false; window.__forceFinePointer = true;
+          window.dispatchEvent(new MouseEvent('mousedown', { button: 0, clientX: 300, clientY: 300 }));
+          const noFireUnlocked = isFiring === false; window.dispatchEvent(new MouseEvent('mouseup', { button: 0 })); isPointerLocked = lockedBefore; window.__forceFinePointer = false;
+          const hintOk = !!document.getElementById('click-to-lock');
+          const inputOk = blurOk && noFireUnlocked && hintOk;
+          // 10. 呼號只顯示本文
+          renderMissionBriefingWhiteboard(false); const cryTxt = document.getElementById('prep-battle-cry').innerText; const cryOk = !cryTxt.includes('[') && cryTxt.length > 6;
+          aiEnabled = sv.ai; window.forceBothTeamsAI = sv.force; isFiring = false; initEnemies(); teleport(0, 20, 0, 0);
+          log(
+            'T87 v8.2 帳篷幾何=碰撞、名稱精簡、餐盒在爐旁、牆後重生看台射不到、吉普不卡牆、弧形加高沙包、野外隨機槍枝、AI 身分槽+路線多樣、滑鼠鎖定/失焦修正、呼號精簡驗證',
+            tentOk && labelsOk && rationsNearStove && spawnOk && jeepClearOk && arcHeightOk && arcShapeOk && fieldGunOk && aiOk && inputOk && cryOk,
+            `tent=${ridgeOk}/${boxesOk}/${geoOk}/${standBlocked} labels=${labelsOk} ration=${rationsNearStove} spawn=${losW}/${losE}/${losR}/${wallHeightsOk} jeep=${jeepClearOk} sandbag=${arcHeightOk}/${arcShapeOk} fieldGun=${fieldGunOk}(${fg.length}) ai=${slotReuseOk}/${avoidHotOk}(${eastPicks})/${repeatOk}(${repeats})/${camperOk}(${houses})/${applyOk} input=${blurOk}/${noFireUnlocked}/${hintOk} cry=${cryOk}`
           );
         }
 
