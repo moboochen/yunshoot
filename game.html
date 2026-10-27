@@ -8,7 +8,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="現代突擊3D">
-  <title>Q版特種部隊：現代突擊 3D v8.2 - 跨平台電競對戰</title>
+  <title>Q版特種部隊：現代突擊 3D v8.3 - 跨平台電競對戰</title>
   <!-- Tailwind CSS (支援 Jetski 官方與外部 CDN) -->
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -308,7 +308,7 @@
           <span id="hud-fps" class="px-1.5 py-0.5 rounded text-[11px] font-mono text-slate-400 bg-slate-900/80 border border-slate-800">
             60 FPS
           </span>
-          <span id="hud-build" class="px-1.5 py-0.5 rounded text-[10px] font-mono text-amber-300/90 bg-slate-900/80 border border-slate-800">v8.2</span>
+          <span id="hud-build" class="px-1.5 py-0.5 rounded text-[10px] font-mono text-amber-300/90 bg-slate-900/80 border border-slate-800">v8.3</span>
         </div>
         <div class="text-xs text-slate-300 font-semibold bg-slate-900/80 border border-slate-800 px-2.5 py-1 rounded-lg backdrop-blur-sm flex items-center gap-2">
           <span>擊倒: <b id="kills-count" class="text-amber-400">0</b></span>
@@ -447,7 +447,7 @@
     </div>
   </div>
   <!-- 桌機滑鼠未鎖定提示 (v8.2)：點一下畫面鎖定滑鼠，ESC 釋放；鎖定前點擊不會開槍 -->
-  <div id="click-to-lock" class="hidden absolute inset-0 z-[35] flex items-end justify-center pb-24 pointer-events-auto cursor-pointer" onclick="try{document.body.requestPointerLock();}catch(e){}">
+  <div id="click-to-lock" class="hidden absolute inset-0 z-[35] flex items-end justify-center pb-24 pointer-events-auto cursor-pointer" onclick="try{const p=document.body.requestPointerLock(); if(p&&p.catch)p.catch(()=>{});}catch(e){}">
     <div class="px-5 py-2.5 rounded-2xl bg-slate-950/85 border-2 border-cyan-400 text-cyan-100 text-sm font-black shadow-2xl animate-pulse">🖱️ 點一下畫面鎖定滑鼠開始瞄準（ESC 可釋放滑鼠；鎖定前的點擊不會開槍）</div>
   </div>
   <!-- 射線被牆擋住提示 -->
@@ -622,10 +622,10 @@
         <span>●</span> WebRTC P2P + 本地雙通道零延遲連線架構
       </div>
       <h1 class="text-2xl sm:text-3xl font-black tracking-wider text-white mb-1">
-        Q版特種部隊：現代突擊 3D v8.2
+        Q版特種部隊：現代突擊 3D v8.3
       </h1>
       <p class="text-xs text-slate-400 mb-1 font-medium">iPhone / iPad 雙手拇指熱區觸控版 ＋ 筆電 PC 鍵鼠同場競技 ｜ 藍天白雲雙層 CQB 戰場</p>
-      <div id="build-stamp" class="inline-block text-[11px] font-mono font-bold text-amber-300 bg-slate-950 border border-amber-400/40 rounded-lg px-2.5 py-1 mb-4">🏷️ 版本 v8.2 · 建置 2026-10-27 10:00 (台北)</div>
+      <div id="build-stamp" class="inline-block text-[11px] font-mono font-bold text-amber-300 bg-slate-950 border border-amber-400/40 rounded-lg px-2.5 py-1 mb-4">🏷️ 版本 v8.3 · 建置 2026-10-27 12:00 (台北)</div>
 
       <details class="text-left text-[11px] text-slate-400 bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2 mb-3">
         <summary class="cursor-pointer font-bold text-slate-300">❓ 房間怎麼運作？(開房 / 看到別人 / 關閉 / 多久消失)</summary>
@@ -4311,7 +4311,7 @@
     //  5) 表情只靠「眼睛形狀」變化：圓點 / 笑眼 ∪∪ / 眨眼 / 星星眼 (稀有)
     function drawKawaiiFace(ctx, S, o) {
       ctx.clearRect(0, 0, S, S);
-      const eyeY = S * 0.57, eyeDX = S * 0.205, eyeW = S * 0.088, eyeH = S * 0.145;   // v7.7 更大更水汪汪的眼睛
+      const eyeY = S * 0.56, eyeDX = S * 0.2, eyeW = S * 0.082, eyeH = S * 0.135;   // v8.3 公仔眼：大、低位、間距寬
       const ink = '#1f1a17';
       const proud = o.expression === 'proud';
       const happy = o.expression === 'happy' || o.expression === 'grin';
@@ -4339,15 +4339,11 @@
         ctx.beginPath(); ctx.ellipse(cx, eyeY, eyeW, eyeH, 0, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#ffffff';
         ctx.beginPath(); ctx.ellipse(cx - eyeW * 0.32, eyeY - eyeH * 0.38, eyeW * 0.36, eyeH * 0.27, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.ellipse(cx + eyeW * 0.3, eyeY + eyeH * 0.4, eyeW * 0.16, eyeH * 0.12, 0, 0, Math.PI * 2); ctx.fill();   // 第二顆小高光 (水汪汪)
-        ctx.fillStyle = 'rgba(255,255,255,0.35)';
-        ctx.beginPath(); ctx.ellipse(cx, eyeY + eyeH * 0.55, eyeW * 0.6, eyeH * 0.22, 0, 0, Math.PI * 2); ctx.fill();   // 下緣柔光
+        ctx.beginPath(); ctx.ellipse(cx + eyeW * 0.32, eyeY + eyeH * 0.42, eyeW * 0.14, eyeH * 0.1, 0, 0, Math.PI * 2); ctx.fill();   // 小副高光
       });
       // 腮紅 (寬扁、很淡)
-      ctx.fillStyle = 'rgba(251, 113, 133, 0.55)';
-      [-1, 1].forEach(sg => { ctx.beginPath(); ctx.ellipse(S / 2 + sg * S * 0.33, eyeY + eyeH * 1.05, S * 0.1, S * 0.05, 0, 0, Math.PI * 2); ctx.fill(); });
-      ctx.strokeStyle = 'rgba(244, 63, 94, 0.5)'; ctx.lineWidth = S * 0.008;
-      [-1, 1].forEach(sg => { for (let k = -1; k <= 1; k++) { ctx.beginPath(); ctx.moveTo(S / 2 + sg * S * 0.33 + k * S * 0.03, eyeY + eyeH * 0.8); ctx.lineTo(S / 2 + sg * S * 0.33 + k * S * 0.03 + S * 0.012, eyeY + eyeH * 1.3); ctx.stroke(); } });   // 腮紅斜線
+      ctx.fillStyle = 'rgba(251, 113, 133, 0.45)';
+      [-1, 1].forEach(sg => { ctx.beginPath(); ctx.ellipse(S / 2 + sg * S * 0.34, eyeY + eyeH * 1.0, S * 0.09, S * 0.045, 0, 0, Math.PI * 2); ctx.fill(); });
       // 極小嘴巴
       const my = eyeY + eyeH * 1.75;
       ctx.strokeStyle = '#8b3a3a'; ctx.lineWidth = S * 0.02; ctx.fillStyle = '#8b3a3a';
@@ -4453,6 +4449,7 @@
         skin: pick(SKIN_TONES),
         accent: pick(ACCENT_COLORS),
         eyeColor: pick(['#3b2f2f', '#1d4ed8', '#047857', '#7c3aed', '#b45309']),
+        hairColor: pick(['#3f2a1d', '#111827', '#f59e0b', '#fbbf24', '#9a3412', '#e5e7eb', '#f9a8d4', '#60a5fa']),
         expression: pick(EXPRESSIONS),
         perk: style.perk,
         desc: style.desc
@@ -4565,20 +4562,28 @@
         armR.position.set(0.44, 0.68, 0.05);
         addAnimalEars(group, animal, headY + 0.05, 0.36, matAccent, matInner);
       } else {
-        // 大頭娃娃兵 (預設 chibi)：二頭身 + 連帽動物裝 (約 1.75m)
-        headY = 1.22; headR = 0.52;
-        head = addP(sph(headR, matSkin, 0, headY, 0));
-        const hood = addP(sph(headR + 0.04, matFur, 0, headY + 0.04, -0.06, 1, 1, 1));
-        hood.scale.set(1, 1, 0.95);
-        const faceHole = sph(headR * 0.86, matSkin, 0, headY - 0.02, 0.14, 1, 1, 0.6); group.add(faceHole); paintTargets.push(faceHole);
-        const face = makeFaceDecal(faceOpts, 0.58); face.position.set(0, headY - 0.02, 0.455); group.add(face);
-        addP(sph(0.34, matFur, 0, 0.5, 0, 1, 1.1, 0.95));                       // 圓滾連帽裝身體
-        addP(bx(0.52, 0.3, 0.46, matTeam, 0, 0.5, 0.0));                        // 隊色背心
-        addP(bx(0.16, 0.1, 0.04, matAccent, 0.12, 0.66, 0.22), false);
-        legL = addP(sph(0.13, matDark, -0.16, 0.12, 0.04, 1, 0.8, 1.2)); legR = addP(sph(0.13, matDark, 0.16, 0.12, 0.04, 1, 0.8, 1.2));
-        armL = addP(sph(0.12, matFur, -0.4, 0.55, 0.1));
-        armR.position.set(0.38, 0.58, 0.1);
-        addAnimalEars(group, animal, headY + 0.04, headR + 0.04, matFur, matInner);
+        // v8.3 公仔比例 (參考 2.5 頭身公仔)：超大圓頭 (佔身高 45%) + 瀏海髮型 + 細短脖子 + 小身體 + 裙襬/下襬外擴 + 短圓手腳 (約 1.7m)
+        headY = 1.22; headR = 0.58;
+        head = addP(sph(headR, matSkin, 0, headY, 0, 1.0, 0.94, 0.98));
+        const hairMat = new THREE.MeshStandardMaterial({ color: spec.hairColor || animal.fur, roughness: 0.85 });
+        const hairCap = addP(sph(headR + 0.05, hairMat, 0, headY + 0.07, -0.08, 1.02, 0.92, 0.98));   // 後腦髮帽
+        hairCap.name = 'hair';
+        // 瀏海：五撮由中央向兩側垂下的髮片 (扁球)，中央稍短
+        [[-0.34, 0.06, 0.34], [-0.17, 0.0, 0.42], [0.0, 0.03, 0.46], [0.17, 0.0, 0.42], [0.34, 0.06, 0.34]].forEach(([hx, hy, hz], i) => {
+          const b = addP(sph(0.17, hairMat, hx * headR / 0.5, headY + headR * 0.55 - hy, hz, 1.0, 1.35, 0.7)); b.rotation.z = -hx * 0.9; b.name = 'bang';
+        });
+        [-1, 1].forEach(sg => { const side = addP(sph(0.2, hairMat, sg * headR * 0.92, headY - headR * 0.25, 0.05, 0.6, 1.5, 0.9)); side.name = 'sidehair'; });   // 兩側髮束
+        const face = makeFaceDecal(faceOpts, 0.68); face.position.set(0, headY - 0.1, headR * 0.985); group.add(face);
+        addP(cy(0.09, 0.1, 0.1, matSkin, 0, 0.64, 0));                              // 細短脖子
+        const torso = addP(cy(0.2, 0.3, 0.42, matTeam, 0, 0.47, 0)); torso.name = 'torso';   // 小上身 (隊色)
+        const skirt = addP(cy(0.3, 0.42, 0.2, matTeam, 0, 0.2, 0)); skirt.name = 'skirt';    // 下襬外擴 (裙襬/戰術衣擺)
+        addP(sph(0.045, matAccent, 0, 0.52, 0.27), false);                          // 胸前小鈕扣
+        addP(bx(0.26, 0.05, 0.03, matDark, 0, 0.33, 0.3), false);                   // 腰帶
+        legL = addP(cy(0.075, 0.085, 0.24, matSkin, -0.11, 0.12, 0)); legR = addP(cy(0.075, 0.085, 0.24, matSkin, 0.11, 0.12, 0));
+        [-0.11, 0.11].forEach(lx => addP(sph(0.09, matDark, lx, 0.04, 0.03, 1, 0.6, 1.2), false));   // 小圓鞋
+        armL = addP(sph(0.1, matTeam, -0.3, 0.5, 0.06, 1, 1.5, 1)); armL.rotation.z = 0.5;      // 短圓手 (外張)
+        armR.position.set(0.3, 0.5, 0.06);
+        addAnimalEars(group, animal, headY + 0.07, headR + 0.05, matFur, matInner);
       }
 
       // v7.7 可愛化：立體粉嫩腮紅球 (所有造型) + 圓潤頭型微調
@@ -4645,7 +4650,8 @@
         walkPhase: 0,
         bodyHeight: headY + headR,
         blushMeshes,
-        cuteFeatures: ['bigEyes', 'dualCatchlight', 'blush3D', 'mochiCheeks']
+        cuteFeatures: ['bigEyes', 'dualCatchlight', 'blush3D', 'mochiCheeks', 'dollProportions', 'bangs'],
+        hair: group.children.find(c => c.name === 'hair') || null
       };
     }
 
@@ -5116,8 +5122,19 @@
       return d;
     }
 
+    function aiFacingTarget(ai, target, cosLimit) {
+      if (!target) return false;
+      const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(ai.mesh.quaternion);
+      const dx = target.x - ai.mesh.position.x, dz = target.z - ai.mesh.position.z, d = Math.hypot(dx, dz) || 1;
+      return (dx * fwd.x + dz * fwd.z) / d >= (cosLimit !== undefined ? cosLimit : 0.82);   // cos 35°
+    }
     function aiFire(ai, target, now) {
       const wpn = WEAPONS[ai.weaponKey] || WEAPONS.m4a1;
+      if (!aiFacingTarget(ai, target)) {   // 背對或側對目標：先轉身面向 (槍口朝向敵人)，這一幀不開火
+        ai.mesh.lookAt(target.x, ai.mesh.position.y, target.z);
+        ai.turnedToFireAt = now;
+        return false;
+      }
       if (now - ai.lastShoot < wpn.fireRate * aiLevel().fireIntervalMul) return;
       ai.lastShoot = now;
       ai.armR.rotation.x = -1.25;
@@ -5139,6 +5156,7 @@
       const pr = firePaintballBullet(muzzle, dir, wpn, isFriendlyAI, ai.id, ai.name, ai.paint);
       if (pr) { pr.shooterTeam = ai.team; pr.fromAI = true; pr.shooterWeapon = ai.weaponKey; }
       Net.sendShotEvent({ x: muzzle.x, y: muzzle.y, z: muzzle.z, dx: dir.x, dy: dir.y, dz: dir.z, weapon: ai.weaponKey, paint: ai.paint, ai: true, team: ai.team });
+      return true;
     }
 
     // 被擊中 / 被發現 (子彈落在附近) 時呼叫 (#10 #12)：轉頭就跑到另一個掩體
@@ -7513,7 +7531,7 @@
     function exitBroadcastMode() {
       if (!playerState.isBroadcaster) return;
       playerState.isBroadcaster = false;
-      Caster.setMode('callouts');
+      Caster.setMode('battle');
       ['broadcast-panel', 'bc-cams', 'caster-feed'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('hidden'); });
       { const cf = document.getElementById('caster-feed'); if (cf) { cf.classList.add('caster-left'); cf.classList.remove('caster-bottom'); } }
       ['touch-controls', 'hud-right-box', 'weapon-slots'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('hidden'); });
@@ -7524,6 +7542,7 @@
     /* ---- 規則式智慧播報引擎 (不耗 AI 算力)：事件 + 週期分析 + 規則講解 ---- */
     window.tacticalCalloutsEnabled = true;
     const CASTER_MODES = ['all', 'battle', 'callouts', 'off'];
+    const CASTER_DEFAULT_MODE = 'battle';   // v8.3 玩家預設：僅戰況
     const CASTER_MODE_LABELS = { all: '🎙️ 播報:全開 (戰況+戰術+分析)', battle: '🎙️ 播報:僅戰況 (擊殺/奪旗)', callouts: '📻 僅 AI 戰術喊話', off: '🔇 播報:全關' };
     const Caster = {
       mode: 'callouts', enabled: false, tts: false, feed: [], lastSayAt: -1e9, minGap: 3500, shotLog: [], killLog: [], streak: {}, lastKillerOf: {}, firstBloodDone: false,
@@ -7535,7 +7554,7 @@
         any: ['補充：敵人若蹲在你基地守屍，系統會把你重生在他正後方，別急著放棄。', '補充：基地哨戒砲一次只掃一個方向，從它紅光掃不到的那側接近最安全。', '補充：吉普和戰車要從低車頭開始跳，第二跳才上得了車頂狙擊。']
       },
       setMode(m) {
-        if (!CASTER_MODES.includes(m)) m = 'callouts';
+        if (!CASTER_MODES.includes(m)) m = 'battle';
         this.mode = m;
         this.enabled = (m === 'all' || m === 'battle');
         window.tacticalCalloutsEnabled = (m === 'all' || m === 'callouts');
@@ -7546,7 +7565,7 @@
         return this.mode;
       },
       cycleMode() { return this.setMode(CASTER_MODES[(CASTER_MODES.indexOf(this.mode) + 1) % CASTER_MODES.length]); },
-      setEnabled(on) { return this.setMode(on ? 'all' : 'callouts'); },
+      setEnabled(on) { return this.setMode(on ? 'all' : 'battle'); },
       allows(kind) { if (!this.enabled) return false; if (this.mode === 'battle') return kind === 'kill' || kind === 'flag'; return true; },
       setTTS(on) { this.tts = !!on && ('speechSynthesis' in window); const b = document.getElementById('btn-caster-tts'); if (b) b.innerText = this.tts ? '🔊 語音:開' : '🔈 語音:關'; return this.tts; },
       say(text, prio, kind) {
@@ -7651,7 +7670,7 @@
     };
     window.Caster = Caster; window.BroadcastCam = BroadcastCam;
     const casterBtn = document.getElementById('btn-caster-toggle'); if (casterBtn) casterBtn.addEventListener('click', () => Caster.cycleMode());
-    Caster.setMode('callouts');
+    Caster.setMode('battle');   // v8.3 預設：僅戰況 (擊殺 / 奪旗)
     const casterTtsBtn = document.getElementById('btn-caster-tts'); if (casterTtsBtn) casterTtsBtn.addEventListener('click', () => Caster.setTTS(!Caster.tts));
 
     /* =========================================================================
@@ -8011,12 +8030,11 @@
       g.add(cyl(0.012, 0.012, 0.5, darkIron, 0.5, 0.65, -0.1, 'x'));                                             // 瓦斯管
       const rack = box(0.03, 0.6, 0.03, iron, -0.55, 1.15, -0.3); g.add(rack); g.add(box(0.5, 0.03, 0.03, iron, -0.3, 1.45, -0.3));   // 掛勺架
       [-0.45, -0.25].forEach(lx => { g.add(cyl(0.01, 0.01, 0.25, potMat, lx, 1.3, -0.3)); g.add(new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), potMat)).position.set(lx, 1.17, -0.3); });
-      const lbl = createItemLabelSprite('基地爐', '#fde68a'); lbl.position.set(0, 2.25, 0); g.add(lbl);
       g.position.set(x, 0, z);
       g.traverse(o => { if (o.isMesh) o.castShadow = true; });
       scene.add(g);
       addBox(x - 0.6, x + 0.6, 0, 1.0, z - 0.42, z + 0.42, { walkTop: false, isStove: true });
-      const stove = { team, x, z, hp: 150, maxHp: 150, group: g, fire, steam, destroyed: false, label: lbl };
+      const stove = { team, x, z, hp: 150, maxHp: 150, group: g, fire, steam, destroyed: false, label: null };
       stove.hpBar = makeWorldHpBar(g, 1.75, 1.6, '基地爐', 0x22c55e);
       window.campStoves.push(stove);
       return stove;
@@ -8029,7 +8047,7 @@
         s.destroyed = true;
         s.group.rotation.z = (Math.random() < 0.5 ? 1 : -1) * 1.25; s.group.position.y = 0.05;   // 翻倒
         s.fire.visible = false; s.steam.visible = false;
-        s.group.remove(s.label); s.label = createItemLabelSprite('基地爐 已打翻', '#fca5a5'); s.label.position.set(0, 2.2, 0); s.group.add(s.label);
+        updateWorldHpBar(s.hpBar, 0, s.maxHp, '已打翻');
         addKillFeed(`🍲💥 ${byName || '敵軍'} 打翻了${s.team === 0 ? '藍隊' : '紅隊'}的野戰爐，${s.team === 0 ? '藍隊' : '紅隊'}的軍用餐盒不會再補給！`, '#fb923c');
         if (Net.isHost) Net.sendAll({ type: 'stove_destroyed', team: s.team, sender: Net.myId });
       }
@@ -8091,16 +8109,25 @@
       const g = new THREE.Group();
       const slopes = new THREE.Mesh(geo.slopes, canvas); slopes.name = 'tent_slopes'; g.add(slopes);
       const back = new THREE.Mesh(geo.back, canvasDark); back.name = 'tent_back'; g.add(back);
-      // 前端半掀門簾 (只遮下半部左側)
-      const flapGeo = new THREE.BufferGeometry(); flapGeo.setAttribute('position', new THREE.Float32BufferAttribute([L / 2 - 0.02, 0, W / 2, L / 2 - 0.02, 0, W / 2 * 0.15, L / 2 - 0.02, H * 0.55, W / 2 * 0.45], 3)); flapGeo.computeVertexNormals();
-      const flap = new THREE.Mesh(flapGeo, canvas); flap.name = 'tent_flap'; g.add(flap);
-      g.add(box(L + 0.3, 0.03, W + 0.6, new THREE.MeshStandardMaterial({ color: 0x365314, roughness: 1 }), 0, 0.015, 0));   // 地布
-      g.add(cyl(0.035, 0.035, L + 0.4, woodMat2, 0, H, 0, 'x'));                                                            // 脊桿
-      [-1, 1].forEach(sg => g.add(cyl(0.04, 0.05, H, woodMat2, sg * L / 2, H / 2, 0)));                                   // 兩端立桿
-      [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => {                                                           // 營繩 + 營釘
-        const r = cyl(0.008, 0.008, 1.5, rope, sx * (L / 2 + 0.45), 0.5, sz * (W / 2 + 0.3)); r.rotation.z = sx * 0.95; r.rotation.x = -sz * 0.4; g.add(r);
-        g.add(cyl(0.02, 0.02, 0.22, woodMat2, sx * (L / 2 + 0.9), 0.08, sz * (W / 2 + 0.6)));
+      // 前端：A 形雙斜桿 (從兩簷角斜向屋脊) 取代中柱，入口完全淨空；兩片門簾往兩側收起綁好
+      [-1, 1].forEach(sg => {
+        const pole = cyl(0.035, 0.04, Math.hypot(W / 2, H), woodMat2, 0, 0, 0);
+        pole.position.set(L / 2 + 0.02, H / 2, sg * W / 4); pole.rotation.x = -sg * Math.atan2(W / 2, H); pole.name = 'front_apole'; g.add(pole);   // 由簷角斜向屋脊 (A 形)
+        const curtain = new THREE.BufferGeometry();
+        curtain.setAttribute('position', new THREE.Float32BufferAttribute([L / 2 - 0.03, 0, sg * W / 2, L / 2 - 0.03, 0, sg * W / 2 * 0.62, L / 2 - 0.03, H * 0.62, sg * W / 2 * 0.42], 3)); curtain.computeVertexNormals();
+        const cm = new THREE.Mesh(curtain, canvasDark); cm.name = 'curtain'; g.add(cm);
+        g.add(cyl(0.012, 0.012, 0.35, rope, L / 2 - 0.02, H * 0.3, sg * W / 2 * 0.72, 'z'));   // 綁簾繩
       });
+      // 後端中柱 (封閉端)
+      const backPole = cyl(0.04, 0.05, H, woodMat2, -L / 2, H / 2, 0); backPole.name = 'back_pole'; g.add(backPole);
+      // 營繩：從四個簷角與兩端屋脊各拉一條到地面營釘 (圓柱兩點對齊)
+      const ropeBetween = (a, b) => { const dir = new THREE.Vector3().subVectors(b, a); const len = dir.length(); const m = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, len, 5), rope); m.position.copy(a).addScaledVector(dir, 0.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize()); m.name = 'guy_rope'; return m; };
+      const pegAt = (p) => { const peg = cyl(0.018, 0.025, 0.24, woodMat2, p.x, 0.07, p.z); peg.rotation.x = (p.z > 0 ? -1 : 1) * 0.5; peg.rotation.z = (p.x > 0 ? 1 : -1) * 0.3; peg.name = 'peg'; return peg; };
+      [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => {
+        const a = new THREE.Vector3(sx * L / 2, 0.12, sz * W / 2), b = new THREE.Vector3(sx * (L / 2 + 0.75), 0.03, sz * (W / 2 + 0.65));
+        g.add(ropeBetween(a, b)); g.add(pegAt(b));
+      });
+      [[-1], [1]].forEach(([sx]) => { const a = new THREE.Vector3(sx * L / 2, H, 0), b = new THREE.Vector3(sx * (L / 2 + 1.4), 0.03, 0); g.add(ropeBetween(a, b)); g.add(pegAt(b)); });
       const lbl = createItemLabelSprite('軍用帳篷', '#bef264'); lbl.position.set(0, H + 0.6, 0); g.add(lbl);
       g.position.set(x, 0, z); g.rotation.y = facing || 0;
       g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
@@ -8130,11 +8157,26 @@
       const buildWall = (x1, x2, z, seed, mat) => {
         const segW = 1.2, n = Math.max(1, Math.round((x2 - x1) / segW));
         for (let i = 0; i < n; i++) {
-          const sx = x1 + i * segW, hgt = 1.9 + Math.abs(Math.sin(seed + i * 1.7)) * 0.3;   // 1.9 ~ 2.2m：剛好擋住二樓看台射向牆後重生點的視線
+          const sx = x1 + i * segW;
+          const gapX = (z > 0) ? (TEAM_SPAWN[0].x + 2.2) : (TEAM_SPAWN[1].x - 2.2);   // 觀察缺口位置 (重生點側邊 2.2m)
+          const isGap = Math.abs((sx + segW / 2) - gapX) < segW * 0.6;
+          const hgt = isGap ? 1.2 : 1.9 + Math.abs(Math.sin(seed + i * 1.7)) * 0.3;   // 缺口段 1.2m：站著可看到戰場；其餘 1.9~2.2m 擋住二樓看台視線
           const m = new THREE.Mesh(new THREE.BoxGeometry(segW, hgt, 0.45), mat); m.position.set(sx + segW / 2, hgt / 2, z); m.castShadow = true; scene.add(m);
           if (i % 2 === 1) { const chip = new THREE.Mesh(new THREE.BoxGeometry(segW * 0.45, 0.25, 0.47), mat); chip.position.set(sx + segW * 0.35, hgt + 0.1, z); chip.rotation.z = -0.1; scene.add(chip); }
-          for (let k = 0; k < 2; k++) { const rb = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.13, 0.17), rubbleMat); rb.position.set(sx + 0.25 + k * 0.6, 0.065, z + (k % 2 ? 0.5 : -0.5)); rb.rotation.y = seed + k; scene.add(rb); }
-          const o = addBox(sx, sx + segW, 0, hgt, z - 0.225, z + 0.225, { walkTop: false, isRuinedWall: true });
+          { // 散落磚頭：每段 0~4 塊，位置/角度/大小/半埋深度皆為種子亂數，偶爾一小堆碎屑
+            let rs = (seed * 1000 + i * 7919) >>> 0; const rr = () => { rs = (rs * 1664525 + 1013904223) >>> 0; return rs / 4294967296; };
+            const count = Math.floor(rr() * 5);
+            for (let k = 0; k < count; k++) {
+              const w = 0.16 + rr() * 0.18, hh = 0.07 + rr() * 0.08, d = 0.1 + rr() * 0.1;
+              const rb = new THREE.Mesh(new THREE.BoxGeometry(w, hh, d), rr() < 0.3 ? mat : rubbleMat);
+              const side = rr() < 0.5 ? -1 : 1;
+              rb.position.set(sx + rr() * segW, hh / 2 - rr() * 0.04, z + side * (0.35 + rr() * 0.9));
+              rb.rotation.set((rr() - 0.5) * 0.5, rr() * Math.PI, (rr() - 0.5) * 0.6);
+              scene.add(rb);
+            }
+            if (rr() < 0.35) { const mound = new THREE.Mesh(new THREE.SphereGeometry(0.28 + rr() * 0.2, 8, 6), rubbleMat); mound.scale.set(1.4, 0.32, 1.0); mound.position.set(sx + rr() * segW, 0.02, z + (rr() < 0.5 ? -0.7 : 0.7)); mound.rotation.y = rr() * 3; mound.name = 'rubble_mound'; scene.add(mound); }
+          }
+          const o = addBox(sx, sx + segW, 0, hgt, z - 0.225, z + 0.225, { walkTop: false, isRuinedWall: true, isViewGap: isGap });
           window.ruinedWalls.push(o);
         }
       };
@@ -10025,7 +10067,7 @@
       if (e.button === 0) {
         if (!isPointerLocked && (window.__forceFinePointer || window.matchMedia('(pointer: fine)').matches) && !window.__noPointerLock) {
           // 第一下點擊只用來鎖定滑鼠 (ESC 跳出後回來也一樣)，不會開槍，避免回來變成連點清空彈匣
-          try { document.body.requestPointerLock(); } catch (err) {}
+          try { const plp = document.body.requestPointerLock(); if (plp && plp.catch) plp.catch(() => {}); } catch (err) {}
           isFiring = false;
           return;
         }
@@ -10244,7 +10286,7 @@
       initEnemies();
       releaseAllInputs('enter_world');
       // 桌機：進場即嘗試鎖定滑鼠 (由大廳按鈕點擊的使用者手勢觸發)，開場就能用滑鼠轉視角，不必先開一槍
-      if (window.matchMedia('(pointer: fine)').matches && !playerState.isBroadcaster && !window.__manualLoop) { try { document.body.requestPointerLock(); } catch (e) {} }
+      if (window.matchMedia('(pointer: fine)').matches && !playerState.isBroadcaster && !window.__manualLoop) { try { const plp = document.body.requestPointerLock(); if (plp && plp.catch) plp.catch(() => {}); } catch (e) {} }
       setTimeout(updateLockHint, 50);
       if (playerState.isBroadcaster) enterBroadcastMode();
     }
@@ -11526,7 +11568,7 @@
     /* =========================================================================
        18. 自動化物理/戰鬥驗證模式：開啟 game.html?autotest=1 於 Console 輸出 [AUTOTEST] 結果
        ========================================================================= */
-    const BUILD_STAMP = 'v8.2 · 建置 2026-10-27 10:00 (台北)';
+    const BUILD_STAMP = 'v8.3 · 建置 2026-10-27 12:00 (台北)';
     console.log('現代突擊 3D ' + BUILD_STAMP);
     window.__manualLoop = new URLSearchParams(location.search).has('autotest');
     if (new URLSearchParams(location.search).has('demo')) {
@@ -12758,7 +12800,8 @@
 
         // ---- T82: v7.7 全面驗證 ----
         {
-          const sv = { mode: gameModeSetting, ai: aiEnabled, team: playerState.team, spect: playerState.isSpectating, hp: playerState.hp, rifle: ammoPool.rifle, force: window.forceBothTeamsAI };
+          const sv = { mode: gameModeSetting, ai: aiEnabled, team: playerState.team, spect: playerState.isSpectating, hp: playerState.hp, rifle: ammoPool.rifle, force: window.forceBothTeamsAI, caster: Caster.mode };
+          Caster.setMode('all');   // 本測試需要 AI 戰術喊話
           playerState.isSpectating = false; playerState.team = 0;
           // 1. 排名規則與並列冠軍
           const rk = rankScoreRows([['A', { kills: 3, deaths: 1 }], ['B', { kills: 3, deaths: 1 }], ['C', { kills: 3, deaths: 2 }], ['D', { kills: 1, deaths: 0 }]]);
@@ -12900,7 +12943,7 @@
           const turretSelOk = !!document.getElementById('turret-select') && document.getElementById('turret-select').value === 'on';
 
           // 還原
-          window.forceBothTeamsAI = sv.force; gameModeSetting = sv.mode; aiEnabled = sv.ai; playerState.team = sv.team; playerState.isSpectating = sv.spect; playerState.hp = sv.hp; ammoPool.rifle = sv.rifle; playerState.burnTimer = 0;
+          window.forceBothTeamsAI = sv.force; gameModeSetting = sv.mode; aiEnabled = sv.ai; playerState.team = sv.team; playerState.isSpectating = sv.spect; playerState.hp = sv.hp; ammoPool.rifle = sv.rifle; playerState.burnTimer = 0; Caster.setMode(sv.caster);
           initEnemies(); teleport(0, 20, 0, 0);
 
           log(
@@ -13089,7 +13132,7 @@
           // 5. 基地兩側破碎磚牆：有貼圖、高低不齊、擋子彈 (從西屋二樓射向藍營重生點被擋)、留吉普通道
           const rw = window.ruinedWalls;
           const heights = new Set(rw.map(o => +o.maxY.toFixed(2)));
-          const wallTexOk = rw.length >= 30 && heights.size >= 5 && rw.every(o => o.maxY >= 1.4 && o.maxY <= 2.7 && o.blocksBullets !== false) && !!makeCanvasTexture('brick', 256, texBrick, 3, 1.2).image;
+          const wallTexOk = rw.length >= 30 && heights.size >= 5 && rw.every(o => o.maxY >= 1.1 && o.maxY <= 2.7 && o.blocksBullets !== false) && !!makeCanvasTexture('brick', 256, texBrick, 3, 1.2).image;
           const losBlocked = segmentHitObstacle(new THREE.Vector3(-13, 3.4 + 0.5, 0), new THREE.Vector3(-2, 1.2, 28)) !== null;
           const gapOpen = !checkCollision(4, 21.0, 0, 0.42, PLAYER_HEIGHT) && !checkCollision(-4, -21.0, 0, 0.42, PLAYER_HEIGHT);   // v8.2 中央通道暢通 (兩側矮牆縮窄到 |x| 10~19.6)
           const noWallAtGap = !rw.some(o => o.maxX > 19.7 || o.minX < -19.7) && !rw.some(o => o.minX < 10 && o.maxX > -10);
@@ -13197,7 +13240,7 @@
           const sp1 = TEAM_SPAWN[1];
           const losR = segmentHitObstacle(new THREE.Vector3(13, 3.9, 0), new THREE.Vector3(sp1.x, 1.6, sp1.z)) !== null && segmentHitObstacle(new THREE.Vector3(-13, 3.9, 0), new THREE.Vector3(sp1.x, 1.6, sp1.z)) !== null;
           const rw = window.ruinedWalls;
-          const wallHeightsOk = rw.every(o => o.maxY >= 1.9 && o.maxY <= 2.21) && rw.every(o => Math.abs(o.minX) >= 10 && Math.abs(o.maxX) <= 19.7);
+          const wallHeightsOk = rw.every(o => (o.isViewGap ? Math.abs(o.maxY - 1.2) < 0.01 : (o.maxY >= 1.9 && o.maxY <= 2.21))) && rw.every(o => Math.abs(o.minX) >= 10 && Math.abs(o.maxX) <= 19.7) && rw.filter(o => o.isViewGap).length >= 2;
           const spawnOk = losW && losE && losR && wallHeightsOk && !checkCollision(sp0.x, sp0.z, 0, 0.42, PLAYER_HEIGHT);
           // 5. 吉普不與牆/拒馬重疊
           const jeepBoxes = obstacles.filter(o => o.isVehicle && o.vehiclePart === 'cabin');
@@ -13241,6 +13284,54 @@
             'T87 v8.2 帳篷幾何=碰撞、名稱精簡、餐盒在爐旁、牆後重生看台射不到、吉普不卡牆、弧形加高沙包、野外隨機槍枝、AI 身分槽+路線多樣、滑鼠鎖定/失焦修正、呼號精簡驗證',
             tentOk && labelsOk && rationsNearStove && spawnOk && jeepClearOk && arcHeightOk && arcShapeOk && fieldGunOk && aiOk && inputOk && cryOk,
             `tent=${ridgeOk}/${boxesOk}/${geoOk}/${standBlocked} labels=${labelsOk} ration=${rationsNearStove} spawn=${losW}/${losE}/${losR}/${wallHeightsOk} jeep=${jeepClearOk} sandbag=${arcHeightOk}/${arcShapeOk} fieldGun=${fieldGunOk}(${fg.length}) ai=${slotReuseOk}/${avoidHotOk}(${eastPicks})/${repeatOk}(${repeats})/${camperOk}(${houses})/${applyOk} input=${blurOk}/${noFireUnlocked}/${hintOk} cry=${cryOk}`
+          );
+        }
+
+
+        // ---- T88: v8.3 AI 面向才開火、公仔比例角色、帳篷開口/營繩營釘、散落磚頭隨機、基地爐單一名稱、播報預設僅戰況、重生牆觀察缺口 ----
+        {
+          const sv = { ai: aiEnabled, force: window.forceBothTeamsAI };
+          aiEnabled = true; window.forceBothTeamsAI = true; initEnemies();
+          // 1. AI 背對目標時 aiFire 不開火、只轉身；面向後才射
+          const shooter = aiEnemies.find(a => a.team === 1); shooter.mesh.position.set(0, 0, -5); shooter.lastShoot = 0;
+          const tgt = { x: 0, y: 0, z: 10, h: 1.6 };
+          shooter.mesh.lookAt(0, 0, -30);   // 背對
+          const pb = projectiles.length;
+          const r1 = aiFire(shooter, tgt, gameNow + 50000); const pbAfter1 = projectiles.length;
+          const facingAfter = aiFacingTarget(shooter, tgt);
+          const r2 = aiFire(shooter, tgt, gameNow + 50001);
+          const faceFireOk = r1 === false && pbAfter1 === pb && facingAfter === true && r2 === true && projectiles.length === pb + 1;
+          projectiles.slice(pb).forEach(p => { scene.remove(p.mesh); scene.remove(p.trail); }); projectiles.length = pb;
+          // 2. 公仔比例：頭徑 ≥ 0.55、有瀏海/髮帽/裙襬、頭高占比 ≥ 40%
+          const doll = createChibiSoldierMesh(true, '公仔測試', 'chibi', randomCharacterSpec('chibi'), { noScene: true });
+          const names = doll.mesh.children.map(c => c.name);
+          const headFrac = (0.58 * 2 * 0.94) / doll.bodyHeight;
+          const dollOk = !!doll.hair && names.filter(n => n === 'bang').length === 5 && names.includes('skirt') && names.includes('torso') && headFrac >= 0.4 && doll.cuteFeatures.includes('dollProportions');
+          // 3. 帳篷：前端無中柱、兩根 A 形斜桿、兩片門簾、6 條營繩 + 6 支營釘
+          const tent0 = window.campTents.find(t => t.team === 0); const tn = tent0.group.children.map(c => c.name);
+          const noFrontPole = !tent0.group.children.some(c => c.name !== 'front_apole' && c.name !== 'back_pole' && c.geometry && c.geometry.type === 'CylinderGeometry' && Math.abs(c.position.x - tent0.L / 2) < 0.05 && Math.abs(c.position.z) < 0.05 && c.geometry.parameters.height > 1.5);
+          const tentOk = noFrontPole && tn.filter(n => n === 'front_apole').length === 2 && tn.filter(n => n === 'curtain').length === 2 && tn.filter(n => n === 'guy_rope').length === 6 && tn.filter(n => n === 'peg').length === 6 && tn.includes('back_pole');
+          // 4. 散落磚頭：尺寸/角度多樣
+          const bricks = []; scene.traverse(o => { if (o.isMesh && o.geometry && o.geometry.type === 'BoxGeometry' && o.geometry.parameters.width < 0.36 && o.geometry.parameters.height < 0.16 && Math.abs(Math.abs(o.position.z) - 23.2) < 1.4 && o.position.y < 0.12) bricks.push(o); });
+          const sizes = new Set(bricks.map(b => b.geometry.parameters.width.toFixed(2))); const rots = new Set(bricks.map(b => b.rotation.y.toFixed(1)));
+          const mounds = []; scene.traverse(o => { if (o.name === 'rubble_mound') mounds.push(o); });
+          const rubbleOk = bricks.length >= 20 && sizes.size >= 8 && rots.size >= 8 && mounds.length >= 2;
+          // 5. 基地爐只有命條上的名稱 (無額外名牌)
+          const st0 = window.campStoves.find(s => s.team === 0);
+          const stoveSprites = st0.group.children.filter(c => c.isSprite).length;
+          const stoveLabelOk = st0.label === null && stoveSprites === 1;
+          // 6. 播報預設僅戰況
+          const casterDefaultOk = CASTER_DEFAULT_MODE === 'battle' && CASTER_MODES[0] === 'all';
+          // 7. 牆缺口：重生點側邊 2.2m 處有 1.2m 段，站著 (1.6) 看得到場中央；重生點本身仍被完整牆擋住二樓視線
+          const sp0 = TEAM_SPAWN[0]; const gapSeg = window.ruinedWalls.find(o => o.isViewGap && o.minZ > 0);
+          const seeField = gapSeg && segmentHitObstacle(new THREE.Vector3((gapSeg.minX + gapSeg.maxX) / 2, 1.6, sp0.z), new THREE.Vector3((gapSeg.minX + gapSeg.maxX) / 2, 1.3, 5)) === null;
+          const spawnStillSafe = segmentHitObstacle(new THREE.Vector3(-13, 3.9, 0), new THREE.Vector3(sp0.x, 1.6, sp0.z)) !== null && segmentHitObstacle(new THREE.Vector3(13, 3.9, 0), new THREE.Vector3(sp0.x, 1.6, sp0.z)) !== null;
+          const gapOk = !!gapSeg && Math.abs(gapSeg.maxY - 1.2) < 0.01 && seeField && spawnStillSafe && Math.abs((gapSeg.minX + gapSeg.maxX) / 2 - (sp0.x + 2.2)) < 0.8;
+          aiEnabled = sv.ai; window.forceBothTeamsAI = sv.force; initEnemies(); teleport(0, 20, 0, 0);
+          log(
+            'T88 v8.3 AI 面向才開火、公仔比例角色、帳篷開口/營繩營釘、散落磚頭隨機、基地爐單一名稱、播報預設僅戰況、重生牆觀察缺口驗證',
+            faceFireOk && dollOk && tentOk && rubbleOk && stoveLabelOk && casterDefaultOk && gapOk,
+            `face=${faceFireOk} doll=${dollOk}(${headFrac.toFixed(2)}) tent=${tentOk}(${noFrontPole}) rubble=${rubbleOk}(${bricks.length},${sizes.size},${mounds.length}) stove=${stoveLabelOk}(${stoveSprites}) caster=${casterDefaultOk} gap=${gapOk}(${seeField}/${spawnStillSafe})`
           );
         }
 
