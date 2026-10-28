@@ -8,7 +8,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="現代突擊3D">
-  <title>Q版特種部隊：現代突擊 3D v8.3 - 跨平台電競對戰</title>
+  <title>Q版特種部隊：現代突擊 3D v8.6 - 跨平台電競對戰</title>
   <!-- Tailwind CSS (支援 Jetski 官方與外部 CDN) -->
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -81,6 +81,33 @@
     #lobby-actions { position: sticky; bottom: -1px; z-index: 10; background: rgba(15, 23, 42, 0.96); padding-top: 8px; padding-bottom: calc(6px + var(--safe-b)); margin-left: -6px; margin-right: -6px; padding-left: 6px; padding-right: 6px; border-top: 1px solid rgba(51, 65, 85, 0.8); border-radius: 14px 14px 0 0; }
     #lobby-actions button { min-height: 46px; }
     #hud-field-audio-status { display: none !important; }
+    /* ---- v8.5 手機橫向精簡：動作叢集 2×3 (姿勢/換彈、開鏡/跳躍、開火橫長鍵)，不再 3×4 ---- */
+    body.dev-phone { --tb: 44px; --tgap: 7px; --joy: 96px; }
+    body.dev-phone #action-cluster { grid-template-columns: repeat(2, var(--tb)); grid-template-rows: var(--tb) var(--tb) calc(var(--tb) * 1.35); grid-template-areas: "pose reload" "ads jump" "fire fire"; right: calc(8px + var(--safe-r)); bottom: calc(8px + var(--safe-b)); }
+    body.dev-phone #btn-crouch, body.dev-phone #btn-prone, body.dev-phone #btn-swap { display: none !important; }
+    body.dev-phone #btn-pose { display: flex; }
+    #btn-pose { display: none; grid-area: pose; }
+    body.dev-phone #btn-fire { font-size: 13px; }
+    body.dev-phone #btn-jump { width: var(--tb); }
+    body.dev-phone #btn-ads { height: var(--tb); }
+    body.dev-phone #hud-right-box { transform: scale(0.66); transform-origin: top right; }
+    body.dev-phone #weapon-slots { display: none !important; }
+    body.dev-phone .minimap-wrap { width: 5.6rem !important; height: 5.6rem !important; }
+    body.dev-phone #kill-feed { top: 7.2rem; width: 46vw; transform: scale(0.85); transform-origin: top left; }
+    body.dev-phone #tactic-tag { top: 6.2rem; }
+    body.dev-phone #left-cluster { bottom: calc(var(--joy) + 22px + var(--safe-b)); }
+    /* 系統列：手機只顯示 ☰，展開後才出現其餘按鈕 */
+    #btn-sys-menu { display: none; }
+    body.dev-phone #btn-sys-menu { display: inline-flex; }
+    body.dev-phone #hud-system-bar .sysbtn:not(#btn-sys-menu) { display: none; }
+    body.dev-phone #hud-system-bar.sys-open .sysbtn:not(#btn-sys-menu) { display: inline-flex; }
+    body.dev-phone #hud-system-bar.sys-open { position: absolute; top: 46px; left: 50%; transform: translateX(-50%); flex-direction: column; align-items: stretch; background: rgba(2, 6, 23, 0.92); border: 1px solid rgba(148, 163, 184, 0.5); border-radius: 14px; padding: 8px; gap: 6px; z-index: 40; width: 220px; }
+    body.dev-phone #hud-system-bar.sys-open .sysbtn { justify-content: flex-start; min-height: 42px; }
+    body.dev-phone #round-countdown { top: 5.2rem; font-size: 16px; padding: 4px 12px; }
+    body.dev-phone #pickup-feedback { bottom: calc(var(--joy) + 70px); }
+    body.dev-phone #ctf-bar-box { bottom: calc(var(--joy) + 30px); width: 52vw; }
+    body.dev-phone #caster-feed.caster-left { display: none !important; }
+    body.dev-phone #hud-build, body.dev-phone #hud-fps, body.dev-phone #hud-ping { display: none !important; }
     #caster-feed.caster-left { left: 12px; top: 50%; transform: translateY(-50%); width: 380px; max-width: 40vw; bottom: auto; }
     #caster-feed.caster-bottom { left: 50%; bottom: 64px; transform: translateX(-50%); width: 680px; max-width: 94vw; top: auto; }
     body.dev-phone #caster-feed.caster-left { width: 46vw; font-size: 10px; }
@@ -155,7 +182,7 @@
   <div id="tactical-buff-bar" class="absolute top-52 right-3 z-20 flex flex-col items-end gap-1 pointer-events-none max-w-[42vw]">
     <span id="hud-scope-badge" class="hidden px-2.5 py-1 rounded-xl bg-cyan-950/90 border border-cyan-400/70 text-[11px] font-black text-cyan-200 shadow-lg">🔭 已裝備戰術瞄準鏡 [V/右鍵]</span>
     <span id="hud-black-paint-badge" class="hidden px-2.5 py-1 rounded-xl bg-purple-950/95 border border-purple-400/80 text-[11px] font-black text-purple-200 shadow-lg animate-pulse">🖤 黑色漆彈噴罐生效：20.0s</span>
-    <span id="turret-refill-tip" class="hidden px-3 py-1 rounded-xl bg-amber-950/95 border-2 border-amber-400 text-[11px] font-black text-amber-200 shadow-xl">🤖 靠近我方哨戒砲 — 按 [T] 把身上的 5.56 子彈補給給它</span>
+    <span id="turret-refill-tip" class="hidden px-3 py-1 rounded-xl bg-amber-950/95 border-2 border-amber-400 text-[11px] font-black text-amber-200 shadow-xl">🤖 靠近我方哨戒砲 — 按 [E] 把身上的 5.56 子彈補給給它</span>
     <span id="brazier-aim-tip" class="hidden px-3 py-1 rounded-xl bg-orange-950/95 border-2 border-orange-400 text-[11px] font-black text-orange-200 shadow-xl">🔥 瞄準【戰地火盆】— 射擊「底部架子」可將火盆射翻引燃 3 秒火海！持續射擊上方火焰則會熄滅</span>
     <span id="burn-status" class="hidden px-3 py-1 rounded-xl bg-red-950/95 border-2 border-red-400 text-[11px] font-black text-red-200 shadow-xl animate-pulse">🔥 身上著火中！快跑或 [Z] 趴下滅火</span>
     <span id="tent-tip" class="hidden px-3 py-1 rounded-xl bg-lime-950/95 border-2 border-lime-400 text-[11px] font-black text-lime-200 shadow-xl">⛺ 帳篷內：保持蹲下 [C] 或趴下 [Z] 可緩慢回血 +6 HP/s（站起來會頂到帳篷）</span>
@@ -308,7 +335,7 @@
           <span id="hud-fps" class="px-1.5 py-0.5 rounded text-[11px] font-mono text-slate-400 bg-slate-900/80 border border-slate-800">
             60 FPS
           </span>
-          <span id="hud-build" class="px-1.5 py-0.5 rounded text-[10px] font-mono text-amber-300/90 bg-slate-900/80 border border-slate-800">v8.3</span>
+          <span id="hud-build" class="px-1.5 py-0.5 rounded text-[10px] font-mono text-amber-300/90 bg-slate-900/80 border border-slate-800">v8.6</span>
         </div>
         <div class="text-xs text-slate-300 font-semibold bg-slate-900/80 border border-slate-800 px-2.5 py-1 rounded-lg backdrop-blur-sm flex items-center gap-2">
           <span>擊倒: <b id="kills-count" class="text-amber-400">0</b></span>
@@ -335,11 +362,12 @@
       </div>
       <!-- v7.6 系統列：關閉/離開房間、排行榜、AI、邀請、場地收音 一律放在畫面正上方中央，遠離左右下角雙手拇指操作熱區 -->
       <div id="hud-system-bar" class="mt-1.5 flex items-center justify-center gap-1.5 flex-wrap pointer-events-auto">
+        <button id="btn-sys-menu" class="sysbtn bg-slate-900/95 border border-slate-400 text-white shadow-lg active:scale-95 transition" title="系統選單">☰ 選單</button>
         <button id="btn-close-room" class="sysbtn bg-rose-700/90 hover:bg-rose-600 border border-rose-300/70 text-white shadow-lg active:scale-95 transition">🚪 關閉房間</button>
         <button id="btn-scoreboard" class="sysbtn bg-slate-800/95 hover:bg-slate-700 border border-slate-500 text-white shadow-lg active:scale-95 transition">🏆 排行榜 <span class="khint">[Tab]</span></button>
         <button id="btn-toggle-ai" class="sysbtn bg-violet-700/90 hover:bg-violet-600 border border-violet-400/60 text-white shadow-lg active:scale-95 transition">🤖 AI <span class="khint">[B]</span></button>
         <button id="btn-copy-invite" class="sysbtn bg-cyan-600/90 hover:bg-cyan-500 border border-cyan-300/60 text-white shadow-lg active:scale-95 transition">🔗 邀請</button>
-        <button id="btn-caster-mode" class="sysbtn bg-emerald-800/90 hover:bg-emerald-700 border border-emerald-300/70 text-emerald-100 shadow-lg active:scale-95 transition" title="循環切換播報模式：全開 → 僅戰況 (擊殺/奪旗) → 僅 AI 戰術喊話 → 全關 [J]">📻 喊話 <span class="khint">[J]</span></button>
+        <button id="btn-caster-mode" class="sysbtn bg-emerald-800/90 hover:bg-emerald-700 border border-emerald-300/70 text-emerald-100 shadow-lg active:scale-95 transition" title="戰況播報 開/關 (擊殺、奪旗)。AI 戰術喊話在 AI 積極度=低 時自動關閉 [J]">📻 播報 <span class="khint">[J]</span></button>
         <button id="btn-tips-toggle" class="sysbtn bg-slate-800/95 hover:bg-slate-700 border border-amber-400/60 text-amber-200 shadow-lg active:scale-95 transition" title="開關遊戲小技巧提示 [H]">💡 技巧:關 <span class="khint">[H]</span></button>
         <button id="btn-field-audio" class="sysbtn bg-slate-800/95 hover:bg-slate-700 border border-emerald-400/60 text-emerald-300 shadow-lg active:scale-95 transition" title="場地收音：開啟麥克風即可全場對話，大家的聲音都收得到；亦可隨時關麥 [快捷鍵 M]">🔇 場地收音：已關麥 [M]</button>
       </div>
@@ -432,7 +460,7 @@
     <button id="btn-caster-tts" class="sysbtn bg-slate-800/95 border border-emerald-400/60 text-emerald-200">🔈 語音:關</button>
   </div>
   <div id="caster-feed" class="hidden caster-left absolute z-30 flex flex-col gap-1 pointer-events-none"></div>
-  <!-- C4 按住設定進度條 (v8.0：按住 [6]/[Y] 或炸彈鍵 3 秒、可邊走邊設定、放開取消) -->
+  <!-- C4 按住設定進度條 (v8.6：按住 [G] 或炸彈鍵 3 秒、可邊走邊設定、放開取消) -->
   <div id="bomb-plant-box" class="hidden absolute bottom-[12.5rem] left-1/2 -translate-x-1/2 z-30 w-72 pointer-events-none">
     <div class="rounded-2xl bg-slate-950/90 border-2 border-rose-400 px-3 py-2 shadow-2xl">
       <div class="flex justify-between text-[11px] font-black text-rose-200 mb-1"><span>💣 設定 C4 中… 持續按住 (可邊走)</span><span id="bomb-plant-pct">0%</span></div>
@@ -459,7 +487,7 @@
   <!-- 搶旗互動按鍵提示與雙階段升降旗進度條 (#4 #8) -->
   <div id="ctf-bar-box" class="hidden absolute bottom-28 left-1/2 -translate-x-1/2 z-30 w-96 max-w-[92vw] flex flex-col items-center gap-1.5 pointer-events-auto">
     <button id="ctf-action-btn" class="hidden px-4 py-2 rounded-2xl bg-gradient-to-r from-amber-400 to-rose-500 text-slate-950 font-black text-xs sm:text-sm shadow-xl border-2 border-white/80 active:scale-95 transition select-none cursor-pointer">
-      🚩 站入旗座自動升降旗｜⚡ 連打 [G] 鍵可加速升降旗到兩倍 (2.0x)！
+      🚩 站入旗座自動升降旗｜⚡ 連打 [E] 鍵可加速升降旗到兩倍 (2.0x)！
     </button>
     <div class="w-full bg-slate-950/90 border border-slate-700 rounded-2xl px-3.5 py-2 shadow-xl pointer-events-none">
       <div id="ctf-bar-text" class="text-center text-xs font-black text-amber-300 mb-1 drop-shadow"></div>
@@ -548,8 +576,9 @@
             <div id="prep-options" class="flex flex-col gap-1.5"></div>
           </div>
           <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
-            <span>💣 放炸彈按鍵：<b class="text-rose-300">[6] 或 [Y] 鍵</b></span>
-            <span>🚩 搶旗加速：<b class="text-amber-300">連打 [G] 鍵 (2x)</b></span>
+            <span>💣 炸彈：<b class="text-rose-300">按住 [G]</b></span>
+            <span>🚩 搶旗加速 / 補彈：<b class="text-amber-300">[E] 互動鍵</b></span>
+            <span id="prep-skip-hint" class="hidden text-emerald-300 font-bold">⏩ 按 [空白鍵] 跳過簡報</span>
           </div>
         </div>
       </div>
@@ -596,9 +625,10 @@
     </div>
     <!-- 左手次要鍵：掩體 / 探頭 / 炸彈 (貼在搖桿上方，左拇指上滑即可按到) -->
     <div id="left-cluster">
-      <button id="btn-cover" class="hidden tbtn bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 border border-amber-300 active:scale-90"><span>🛡️ 掩體</span><span class="khint">[X]</span></button>
-      <button id="btn-peek" class="hidden tbtn bg-gradient-to-r from-purple-600 to-indigo-600 text-white border border-purple-400/50 active:scale-90"><span>👀 探頭</span><span class="khint">[Q·E]</span></button>
-      <button id="btn-plant-bomb" class="hidden tbtn bg-gradient-to-r from-red-600 to-rose-700 text-white border border-rose-400/60 animate-pulse active:scale-90" title="安裝 C4 炸彈快捷鍵：[6] 或 [Y] 鍵（與搶旗 [G] 鍵完全分開零衝突）"><span>💣 炸彈</span><span class="khint">[6 / Y]</span></button>
+      <button id="btn-cover" class="hidden tbtn" style="display:none !important"></button>
+      <button id="btn-peek" class="hidden tbtn" style="display:none !important"></button>
+      <button id="btn-interact" class="hidden tbtn bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 border border-amber-300 active:scale-90" title="互動：補哨戒砲彈藥 [E]"><span>互動</span><span class="khint">[E]</span></button>
+      <button id="btn-plant-bomb" class="hidden tbtn bg-gradient-to-r from-red-600 to-rose-700 text-white border border-rose-400/60 animate-pulse active:scale-90" title="按住 3 秒安裝 C4 炸彈 [G]"><span>💣 炸彈</span><span class="khint">[G]</span></button>
     </div>
     <!-- 右下：右拇指動作叢集 (3x4 格線；開火 2x2 大鍵在拇指自然停靠點，跳躍寬條在其上，其餘弧形環繞) -->
     <div id="action-cluster">
@@ -608,6 +638,7 @@
       <button id="btn-reload" class="tbtn bg-slate-800/90 border border-slate-600 text-amber-400 active:scale-90"><span>換彈</span><span class="khint">[R]</span></button>
       <button id="btn-jump" class="tbtn bg-sky-700/90 border border-sky-400/60 text-white active:scale-90"><span>⬆️ 跳躍</span><span class="khint">[空白]</span></button>
       <button id="btn-ads" class="tbtn bg-slate-800/90 border border-emerald-500/60 text-emerald-400 active:scale-90"><span>🔭</span><span>開鏡</span><span class="khint">[V/右鍵]</span></button>
+      <button id="btn-pose" class="tbtn text-indigo-100 bg-gradient-to-br from-slate-700 to-slate-800 border border-indigo-400/60 active:scale-90" title="姿勢：站 → 蹲 → 趴 → 站"></button>
       <button id="btn-fire" class="tbtn bg-gradient-to-br from-red-600 to-rose-700 border-2 border-red-400 shadow-2xl shadow-red-600/40 text-white active:scale-95"><span>🔥 開火</span><span class="khint">[F/左鍵]</span></button>
     </div>
   </div>
@@ -622,21 +653,11 @@
         <span>●</span> WebRTC P2P + 本地雙通道零延遲連線架構
       </div>
       <h1 class="text-2xl sm:text-3xl font-black tracking-wider text-white mb-1">
-        Q版特種部隊：現代突擊 3D v8.3
+        Q版特種部隊：現代突擊 3D v8.6
       </h1>
       <p class="text-xs text-slate-400 mb-1 font-medium">iPhone / iPad 雙手拇指熱區觸控版 ＋ 筆電 PC 鍵鼠同場競技 ｜ 藍天白雲雙層 CQB 戰場</p>
-      <div id="build-stamp" class="inline-block text-[11px] font-mono font-bold text-amber-300 bg-slate-950 border border-amber-400/40 rounded-lg px-2.5 py-1 mb-4">🏷️ 版本 v8.3 · 建置 2026-10-27 12:00 (台北)</div>
+      <div id="build-stamp" class="inline-block text-[11px] font-mono font-bold text-amber-300 bg-slate-950 border border-amber-400/40 rounded-lg px-2.5 py-1 mb-4">🏷️ 版本 v8.6 · 建置 2026-10-28 13:00 (台北)</div>
 
-      <details class="text-left text-[11px] text-slate-400 bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2 mb-3">
-        <summary class="cursor-pointer font-bold text-slate-300">❓ 房間怎麼運作？(開房 / 看到別人 / 關閉 / 多久消失)</summary>
-        <ul class="list-disc pl-4 mt-1.5 space-y-0.5">
-          <li><b>開房</b>：按「建立新房間」後，你的房間會送到「房間目錄節點」(第一位進大廳的人自動擔任，其他人連上它)，並每 5 秒送心跳。</li>
-          <li><b>別人怎麼看到</b>：大廳每個人都訂閱目錄，有新房間會即時推送；按「重新掃描」會再查一次。同一台電腦的分頁另以本機通道同步。</li>
-          <li><b>關閉房間</b>：房主按遊戲內「🚪 關閉房間」或直接關掉網頁 → 房間立刻從目錄移除，房內玩家會被送回大廳。</li>
-          <li><b>多久消失</b>：房主 15 秒沒送心跳 (斷線、睡眠) 房間就自動從清單消失。</li>
-          <li><b>隊伍</b>：純 PvP 時房主在藍隊，加入者依選擇「同隊 / 對打 / 自動平衡」分配，兩隊各自從自己的旗幟出生。</li>
-        </ul>
-      </details>
 
       <!-- 模式切換標籤頁 (#18 使用者對打模式) -->
       <div class="grid grid-cols-2 sm:flex items-center justify-center gap-2 p-1.5 rounded-2xl bg-slate-950 border border-slate-800 mb-4">
@@ -686,8 +707,15 @@
           </div>
         </div>
 
+        <!-- v8.6 進階設定收合：摘要列一行顯示目前所有值，點開修改 -->
+        <details id="adv-settings" class="pt-1">
+          <summary class="cursor-pointer list-none select-none rounded-xl bg-slate-900 border border-slate-700 hover:border-emerald-500/60 px-3 py-2 text-[11px] text-slate-300 flex items-center gap-2">
+            <span class="text-emerald-400 font-black shrink-0">⚙️ 房間設定</span>
+            <span id="adv-summary" class="font-mono text-slate-300 truncate flex-1 min-w-0">載入中…</span>
+            <span class="text-slate-500 shrink-0">點開修改 ▾</span>
+          </summary>
         <!-- 陣營顏色選擇 (我方基地 vs 敵方基地) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3">
           <div>
             <label class="block text-xs font-bold text-slate-300 mb-1">陣營戰旗與基地配色</label>
             <select id="team-color-select" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-emerald-500">
@@ -722,8 +750,27 @@
               <option value="high">🔴 高：反應快、火力猛、積極包抄</option>
             </select>
           </div>
+          <div class="min-w-0 sm:col-span-2">
+            <label class="block text-xs font-bold text-slate-300 mb-1">👥 AI 人數 (房主設定)</label>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <select id="ai-fill-mode" class="min-w-0 flex-1 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-xs font-bold text-fuchsia-300 focus:outline-none focus:border-fuchsia-500">
+                <option value="auto" selected>⚖️ 自動 (同隊→只補敵隊；對打→兩隊都補)</option>
+                <option value="fill">🧩 補滿兩隊到上限 (真人不足由 AI 補)</option>
+                <option value="fixed">🔢 直接指定兩隊 AI 數</option>
+                <option value="none">🚫 不補 AI</option>
+              </select>
+              <label class="text-[11px] text-slate-400 shrink-0">每隊上限</label>
+              <input type="number" id="team-cap-input" value="4" min="2" max="6" class="w-14 shrink-0 bg-slate-900 border border-slate-700 rounded-xl px-1.5 py-2 text-xs font-black text-emerald-300 text-center" title="每隊 (真人+AI) 上限 2~6">
+              <span id="ai-fixed-box" class="hidden items-center gap-1.5">
+                <label class="text-[11px] text-sky-300 shrink-0">藍 AI</label>
+                <input type="number" id="ai-blue-input" value="2" min="0" max="6" class="w-12 shrink-0 bg-slate-900 border border-slate-700 rounded-xl px-1 py-2 text-xs font-black text-sky-300 text-center">
+                <label class="text-[11px] text-rose-300 shrink-0">紅 AI</label>
+                <input type="number" id="ai-red-input" value="3" min="0" max="6" class="w-12 shrink-0 bg-slate-900 border border-slate-700 rounded-xl px-1 py-2 text-xs font-black text-rose-300 text-center">
+              </span>
+            </div>
+          </div>
           <div class="min-w-0">
-            <label class="block text-xs font-bold text-slate-300 mb-1">🤖 基地雙頭哨戒砲 (房主設定・預設開啟)</label>
+            <label class="block text-xs font-bold text-slate-300 mb-1">🤖 基地哨戒砲 (房主設定・預設開啟)</label>
             <select id="turret-select" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-cyan-300 focus:outline-none focus:border-cyan-500">
               <option value="on" selected>🤖 開啟：單頭砲塔・250 發・30° 扇形掃描・基地+5m 防守 (血量 500)</option>
               <option value="off">⛔ 關閉基地哨戒砲</option>
@@ -763,6 +810,7 @@
             <select id="paint-color-select" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-emerald-500"></select>
           </div>
         </div>
+        </details>
 
         <!-- 房間列表與掃描 (#19 嚴格房間機制) -->
         <div class="pt-2 border-t border-slate-800">
@@ -1775,7 +1823,7 @@
           type: 'welcome', target: uid, team, paint,
           roomStatus: this.roomStatus,
           roundRemaining: roundRemainingTime, roundMode: roundModeSetting, respawnMode: respawnModeSetting, maxLives: maxLives,
-          gameMode: gameModeSetting, combatMode: combatModeSetting, aiEnabled: aiEnabled, teamColorKey: currentTeamColorKey, aiLevel: aiLevelSetting, turret: baseTurretSetting,
+          gameMode: gameModeSetting, combatMode: combatModeSetting, aiEnabled: aiEnabled, teamColorKey: currentTeamColorKey, aiLevel: aiLevelSetting, turret: baseTurretSetting, aiCount: aiCountCfg,
           hostName: playerState.name, hostTeam: playerState.team, hostPaint: playerState.paintColor, hostStyle: playerState.style, hostSpec: playerState.spec,
           roster: this.roster, sender: this.myId,
           pickups: pickupItems.filter(p => !p.isAvailable && !p.dynamic).map(p => ({ id: p.id, t: p.respawnTimer })),
@@ -3500,11 +3548,15 @@
         // ---- v8.0 二樓狙擊射擊台：內側邊緣 0.6m 高平台 + 斜坡 + 兩個低木箱；趴在上面持狙擊槍能越過護欄射擊樓下 ----
         {
           const s = sideSign;
-          const pMinX = Math.min(innerX + s * 1.7, innerX + s * 0.5), pMaxX = Math.max(innerX + s * 1.7, innerX + s * 0.5);
+          const pMinX = Math.min(innerX + s * 1.7, innerX + s * 0.13), pMaxX = Math.max(innerX + s * 1.7, innerX + s * 0.13);   // v8.4 平台直接貼到欄杆 (欄杆碰撞厚 0.12m)，中間沒有可掉下去的縫
           const plat = new THREE.Mesh(new THREE.BoxGeometry(pMaxX - pMinX, 0.6, 2.6), MAT.wood ? MAT.wood() : concrete);
           plat.position.set((pMinX + pMaxX) / 2, houseH + 0.3, cz); scene.add(plat);
           addBox(pMinX, pMaxX, houseH, houseH + 0.6, cz - 1.3, cz + 1.3, { walkTop: false, isSniperPlatform: true });
           addFlat(pMinX, pMaxX, cz - 1.3, cz + 1.3, houseH + 0.6, 'wood');
+          // 平台前後兩側 (z 向) 各加一條 0.25m 高木護唇，趴著靠到底也不會滑下平台
+          [cz - 1.3, cz + 1.3].forEach(ez => { const lip = new THREE.Mesh(new THREE.BoxGeometry(pMaxX - pMinX, 0.25, 0.12), MAT.wood ? MAT.wood() : concrete); lip.position.set((pMinX + pMaxX) / 2, houseH + 0.6 + 0.125, ez + (ez > cz ? -0.06 : 0.06)); if (ez > cz) lip.visible = false; scene.add(lip); });
+          addBox(pMinX, pMaxX, houseH + 0.6, houseH + 0.85, cz - 1.36, cz - 1.24, { walkTop: false, blocksBullets: false, isPlatformLip: true });
+          addBox(Math.min(innerX - s * 0.14, innerX + s * 0.14), Math.max(innerX - s * 0.14, innerX + s * 0.14), houseH, houseH + 2.0, cz - 1.45, cz + 1.45, { walkTop: false, blocksBullets: false, isPlatformGuard: true });   // v8.4 平台旁欄杆加高隱形護欄：靠到底也跨不過去、不擋子彈
           const rampLen = 1.6;
           const rampMesh = new THREE.Mesh(new THREE.BoxGeometry(pMaxX - pMinX, 0.06, Math.hypot(rampLen, 0.6)), MAT.wood ? MAT.wood() : concrete);
           rampMesh.position.set((pMinX + pMaxX) / 2, houseH + 0.3, cz + 1.3 + rampLen / 2); rampMesh.rotation.x = Math.atan2(0.6, rampLen); scene.add(rampMesh);
@@ -4830,10 +4882,30 @@
     let aiSyncTimer = 0;
     let aiIdCounter = 0;
     let aiSquadTimer = 0;
-    const TEAM_MAX_SIZE = 4;   // 每隊 (人類 + AI) 上限；開 AI 時依平衡「兩邊都補到上限」
-    // 依遊戲平衡補足兩邊隊員：各隊 (人類 + AI) 補到 TEAM_MAX_SIZE；onePerTick=true 時每隊每次最多補 1 人 (逐步增援)
+    const TEAM_MAX_SIZE = 4;   // 每隊 (人類 + AI) 預設上限；房主可在大廳改 2~6
+    // v8.6 房主 AI 人數控制：mode = auto (同隊→只補敵隊；對打→兩隊) / fill (兩隊都補滿到上限) / fixed (直接指定兩隊 AI 數) / none
+    const aiCountCfg = { mode: 'auto', cap: TEAM_MAX_SIZE, fixed: [2, 3] };
+    function setAICountCfg(c) {
+      if (!c) return aiCountCfg;
+      if (['auto', 'fill', 'fixed', 'none'].includes(c.mode)) aiCountCfg.mode = c.mode;
+      if (c.cap) aiCountCfg.cap = Math.max(2, Math.min(6, parseInt(c.cap) || TEAM_MAX_SIZE));
+      if (Array.isArray(c.fixed)) aiCountCfg.fixed = [Math.max(0, Math.min(6, parseInt(c.fixed[0]) || 0)), Math.max(0, Math.min(6, parseInt(c.fixed[1]) || 0))];
+      const m = document.getElementById('ai-fill-mode'); if (m && m.value !== aiCountCfg.mode) m.value = aiCountCfg.mode;
+      const cp = document.getElementById('team-cap-input'); if (cp && String(cp.value) !== String(aiCountCfg.cap)) cp.value = aiCountCfg.cap;
+      const b = document.getElementById('ai-blue-input'); if (b && String(b.value) !== String(aiCountCfg.fixed[0])) b.value = aiCountCfg.fixed[0];
+      const r = document.getElementById('ai-red-input'); if (r && String(r.value) !== String(aiCountCfg.fixed[1])) r.value = aiCountCfg.fixed[1];
+      if (typeof updateAdvSummary === 'function') updateAdvSummary();
+      return aiCountCfg;
+    }
+    window.setAICountCfg = setAICountCfg; window.aiCountCfg = aiCountCfg;
+    // 某隊 AI 是否已達目標：auto/fill → 真人+AI ≥ 上限；fixed → AI ≥ 指定數
+    function teamAIFull(t, humans, living, cap) {
+      if (aiCountCfg.mode === 'fixed') return living >= aiCountCfg.fixed[t];
+      return humans[t] + living >= cap;
+    }
+    // 依遊戲平衡補足兩邊隊員：各隊 (人類 + AI) 補到上限；onePerTick=true 時每隊每次最多補 1 人 (逐步增援)
     function replenishBothTeamsBalanced(teamCap, onePerTick) {
-      const cap = teamCap || TEAM_MAX_SIZE;
+      const cap = teamCap || aiCountCfg.cap || TEAM_MAX_SIZE;
       const activeTeams = getActiveAITeams();
       const humans = getHumanTeamCounts();
       const spawned = [];
@@ -4844,7 +4916,7 @@
         let guard = 0;
         while (guard++ < 8) {
           const living = aiEnemies.filter(a => a.state !== 'DEAD' && a.team === t).length;
-          if (humans[t] + living >= cap) break;
+          if (teamAIFull(t, humans, living, cap)) break;
           spawned.push(spawnAIEnemyFromBase(Math.floor(Math.random() * 4), t));
           if (onePerTick) break;
         }
@@ -4888,8 +4960,10 @@
     // - 若玩家選擇同一隊 (同隊合作打 AI)：回傳 [1 - humanTeam]，全部玩家一起合作對抗敵軍 AI！
     function getActiveAITeams() {
       if (!aiEnabled) return [];
+      if (aiCountCfg.mode === 'none') return [];
+      if (aiCountCfg.mode === 'fixed') return [0, 1].filter(t => aiCountCfg.fixed[t] > 0);
       const counts = getHumanTeamCounts();
-      if ((counts[0] > 0 && counts[1] > 0) || window.forceBothTeamsAI) {
+      if ((counts[0] > 0 && counts[1] > 0) || window.forceBothTeamsAI || aiCountCfg.mode === 'fill') {
         return [0, 1];
       }
       const humanTeam = counts[1] > 0 && counts[0] === 0 ? 1 : 0;
@@ -4932,14 +5006,25 @@
       return list;
     }
 
+    // v8.4 注意力優先序：視野內看得到 (+60) > 剛開過槍 (+35，2 秒內) > 距離近；開槍的敵人會吸引更多注意
+    function aiTargetScore(ai, c, now) {
+      const d = Math.hypot(c.x - ai.mesh.position.x, c.z - ai.mesh.position.z);
+      let score = -d;
+      if (aiInFOV(ai, c) && aiHasLOS(ai, c)) score += 60;
+      const firedRecently = (typeof Caster !== 'undefined' ? Caster.shotLog : []).some(s => s.name === c.name && (now || gameNow) - s.t < 2000);
+      if (firedRecently) score += 35;
+      if (ai.target && ai.target.uid === c.uid) score += 6;   // 目標黏著：不要每幀亂跳
+      return score;
+    }
     function aiPickTarget(ai) {
       const cands = aiEnemyCandidates(ai);
-      let best = null, bestD = 1e9;
-      cands.forEach(c => { const d = Math.hypot(c.x - ai.mesh.position.x, c.z - ai.mesh.position.z); if (d < bestD) { bestD = d; best = c; } });
+      let best = null, bestS = -1e9, bestD = 1e9;
+      cands.forEach(c => { const s = aiTargetScore(ai, c, gameNow); if (s > bestS) { bestS = s; best = c; bestD = Math.hypot(c.x - ai.mesh.position.x, c.z - ai.mesh.position.z); } });
       ai.target = best;
       ai.targetDist = bestD;
       return best;
     }
+    window.aiTargetScore = aiTargetScore;
 
     // 屋內 / 掩體後會把槍舉高到窗口高度 (1.32m)，矮個子角色也能從窗戶射出
     function aiInsideHouse(ai) { const p = ai.mesh.position; return Math.abs(Math.abs(p.x) - 17) < 5.2 && Math.abs(p.z) < 4.7 && p.y < 2; }
@@ -5137,6 +5222,7 @@
       }
       if (now - ai.lastShoot < wpn.fireRate * aiLevel().fireIntervalMul) return;
       ai.lastShoot = now;
+      ai.deafUntil = now + 1500;   // 開槍後 1.5 秒聽力下降 (不易察覺貼近的腳步)
       ai.armR.rotation.x = -1.25;
       ai.gunFlash.material.opacity = 0.95;
       setTimeout(() => { ai.gunFlash.material.opacity = 0; }, 70);
@@ -5305,19 +5391,52 @@
     }
 
     // 聽覺：敵人從背後逼近 (6m 內、越近越快察覺、蹲行較難被聽到)，警覺值滿 → 轉身射擊
+    // v8.4 聽覺模型：腳步聲量 (趴 0.15 / 蹲 0.3 / 慢走 0.6 / 全速 1.0) 決定可被聽到的距離 (6m × 聲量)；
+    // AI 自己剛開槍 1.5 秒內「耳鳴」聽力 ×0.25；附近 (10m 內) 1 秒內有其他槍聲則聽力 ×0.5
+    function candidateLoudness(c, delta) {
+      if (c.local) {
+        const movingKeys = (keysDown['KeyW'] || keysDown['KeyS'] || keysDown['KeyA'] || keysDown['KeyD'] || moveInput.forward || moveInput.right);
+        if (!movingKeys) return 0;
+        if (isProne) return 0.15;
+        if (isCrouched || isCovered) return 0.3;
+        return ((window.__playerMoveSpeed || 0) >= 5.5) ? 1.0 : 0.6;   // 全速 1.0；開鏡慢走 0.6
+      }
+      if (c.isAI && c.aiRef) { const a = c.aiRef; if (a.isProne) return 0.15; if (a.state === 'FLEE') return 1.3; if (['ADVANCE', 'HUNT', 'CTF_MOVE'].includes(a.state)) return 1.0; return 0; }
+      const rp = remotePlayers[c.uid]; if (!rp) return 0;
+      const sp = rp.lastPos ? Math.hypot(rp.mesh.position.x - rp.lastPos.x, rp.mesh.position.z - rp.lastPos.z) / Math.max(delta || 0.016, 0.016) : 0;
+      if (sp < 0.5) return 0;
+      if (rp.isProne) return 0.15;
+      if (rp.mesh.scale.y < 1) return 0.3;
+      return sp > 5.5 ? 1.0 : 0.6;
+    }
+    function aiHearingMultiplier(ai, now) {
+      let m = 1.0;
+      if (ai.deafUntil && now < ai.deafUntil) m *= 0.25;   // 自己剛開槍：耳鳴
+      const nearGun = (typeof Caster !== 'undefined' ? Caster.shotLog : []).some(s => now - s.t < 1000 && s.name !== ai.name && Math.hypot(s.x - ai.mesh.position.x, s.z - ai.mesh.position.z) < 10);
+      if (nearGun) m *= 0.5;   // 周圍槍聲掩蓋腳步
+      return m;
+    }
+    function aiHearingGainFor(ai, c, delta, now) {
+      const dx = c.x - ai.mesh.position.x, dz = c.z - ai.mesh.position.z, d = Math.hypot(dx, dz);
+      if (d < 0.01) return 0;
+      const loud = candidateLoudness(c, delta);
+      if (loud <= 0) return 0;
+      const radius = 6 * loud;
+      if (d > radius) return 0;
+      return loud * (1 - d / radius) * aiHearingMultiplier(ai, now || gameNow);
+    }
+    window.aiHearingGainFor = aiHearingGainFor; window.candidateLoudness = candidateLoudness;
     function aiUpdateHearing(ai, delta, now) {
       ai.awareness = ai.awareness || 0;
       let gain = 0, who = null;
       const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(ai.mesh.quaternion);
       aiEnemyCandidates(ai).forEach(c => {
         const dx = c.x - ai.mesh.position.x, dz = c.z - ai.mesh.position.z, d = Math.hypot(dx, dz);
-        if (d > 6 || d < 0.01) return;
+        if (d > 9 || d < 0.01) return;
         const behind = (dx * fwd.x + dz * fwd.z) / d < 0.2;
         if (!behind) return;
-        let moving = 0;
-        if (c.local) moving = (keysDown['KeyW'] || keysDown['KeyS'] || keysDown['KeyA'] || keysDown['KeyD'] || moveInput.forward || moveInput.right) ? (isCrouched ? 0.3 : 1) : 0;
-        else { const rp = remotePlayers[c.uid]; if (rp) { const sp = rp.lastPos ? Math.hypot(rp.mesh.position.x - rp.lastPos.x, rp.mesh.position.z - rp.lastPos.z) / Math.max(delta, 0.016) : 0; moving = sp > 0.5 ? (rp.mesh.scale.y < 1 ? 0.3 : 1) : 0; } }
-        if (moving > 0) { const g = moving * (1 - d / 6); if (g > gain) { gain = g; who = c; } }
+        const g = aiHearingGainFor(ai, c, delta, now);
+        if (g > gain) { gain = g; who = c; }
       });
       if (gain > 0) ai.awareness = Math.min(1.2, ai.awareness + gain * delta * 1.4); else ai.awareness = Math.max(0, ai.awareness - delta * 0.5);
       if (ai.awareness >= 1 && who && ai.state !== 'FLEE') {
@@ -5370,11 +5489,19 @@
           ai.escapeCount = 0; ai.route = null; ai.goal = null; ai.triedUpstairs = false; aiSetState(ai, 'HIDE', 0.6);
           return;
         }
+        let escaped = false;
         for (let k = 0; k < 8; k++) {
           const a = Math.random() * Math.PI * 2, nx = p.x + Math.cos(a) * 2, nz = p.z + Math.sin(a) * 2;
           if (!checkCollision(nx, nz, p.y, 0.4, ai.bodyHeight) && segmentHitObstacle(new THREE.Vector3(p.x, p.y + 0.8, p.z), new THREE.Vector3(nx, p.y + 0.8, nz)) === null) {
-            ai.route = { kind: 'escape', pts: [{ x: nx, z: nz }] }; ai.routeIdx = 0; ai.leaveAfterRoute = true; aiSetState(ai, 'HUNT', 0); break;
+            ai.route = { kind: 'escape', pts: [{ x: nx, z: nz }] }; ai.routeIdx = 0; ai.leaveAfterRoute = true; aiSetState(ai, 'HUNT', 0); escaped = true; break;
           }
+        }
+        if (!escaped) {   // v8.4 角落全被擋：改以同心圓 16 方位找最近可站點 (不要求直線無牆)
+          for (let r = 1.5; r <= 4.5 && !escaped; r += 1.0) for (let k = 0; k < 16 && !escaped; k++) {
+            const a = k * Math.PI / 8, nx = p.x + Math.cos(a) * r, nz = p.z + Math.sin(a) * r;
+            if (!checkCollision(nx, nz, p.y, 0.4, ai.bodyHeight) && segmentHitObstacle(new THREE.Vector3(p.x, p.y + 0.8, p.z), new THREE.Vector3(nx, p.y + 0.8, nz)) === null) { ai.route = { kind: 'escape', pts: [{ x: nx, z: nz }] }; ai.routeIdx = 0; ai.leaveAfterRoute = true; aiSetState(ai, 'HUNT', 0); escaped = true; }
+          }
+          if (!escaped) { ai.escapeCount = 3; }   // 下一輪直接傳送到最近掩體旁
         }
       }
       if (ai.samePosTimer > 25 && ai.state !== 'DEAD') { ai.samePosTimer = 0; ai.route = null; ai.triedUpstairs = false; ai.coverTarget = aiChooseCover(ai, ai.target, ai.coverTarget, 60); ai.goal = aiCoverGoal(ai, ai.coverTarget, ai.target); aiSetState(ai, 'ADVANCE', 0); }
@@ -5639,7 +5766,7 @@
       high:   { label: '高', aggMul: 1.15, courageMul: 1.1, fireIntervalMul: 1.7, extraSpread: -0.01, speedMul: 1.08 }
     };
     function aiLevel() { return AI_LEVELS[aiLevelSetting] || AI_LEVELS.medium; }
-    function setAILevel(v) { aiLevelSetting = AI_LEVELS[v] ? v : 'medium'; const el = document.getElementById('ai-level-select'); if (el && el.value !== aiLevelSetting) el.value = aiLevelSetting; return aiLevelSetting; }
+    function setAILevel(v) { aiLevelSetting = AI_LEVELS[v] ? v : 'medium'; const el = document.getElementById('ai-level-select'); if (el && el.value !== aiLevelSetting) el.value = aiLevelSetting; if (typeof Caster !== 'undefined' && Caster.setMode) Caster.setMode(Caster.mode); return aiLevelSetting; }
     window.setAILevel = setAILevel;
     const AI_PERSONA_ARCHETYPES = [
       { key: 'rusher',    aggression: 0.95, evasion: 0.25, discipline: 0.55, courage: 0.90, quirk: 'rusher' },     // 莽夫：直衝不太找掩體
@@ -5965,7 +6092,7 @@
         aiSpawnIntervalTimer += delta;
         if (aiSpawnIntervalTimer >= 4.5) {
           aiSpawnIntervalTimer = 0;
-          replenishBothTeamsBalanced(TEAM_MAX_SIZE, true);
+          replenishBothTeamsBalanced(aiCountCfg.cap, true);
         }
         aiSquadTimer += delta;
         if (aiSquadTimer >= 1.5) { aiSquadTimer = 0; [0, 1].forEach(t => updateAISquadTactics(t, now)); }
@@ -6678,7 +6805,7 @@
     }
 
     // v8.2 重生點移到兩側矮牆正後方 (二樓看台射不到)：藍營 (-14.8, 25.6)、紅營 (14.8, -25.6)
-    const TEAM_SPAWN = [{ x: -14.8, z: 25.6, yaw: 0 }, { x: 14.8, z: -25.6, yaw: Math.PI }];
+    const TEAM_SPAWN = [{ x: -7.5, z: 26.4, yaw: 0 }, { x: 7.5, z: -26.4, yaw: Math.PI }];   // v8.4 回到左側弧形沙包正後方
     function teamSpawnPoint(team) {
       const s = TEAM_SPAWN[team] || TEAM_SPAWN[0];
       return { x: s.x + (Math.random() - 0.5) * 5, z: s.z, yaw: s.yaw };
@@ -6699,7 +6826,7 @@
       if (!nearest && !underFire) return sp;
       // v8.1：先在基地後方 / 圍牆後 / 帳篷後找「敵人看不到、附近 3 秒內沒有敵方火網」的安全點
       const sg = (team === 0) ? 1 : -1;
-      const safeCands = [[-11, 33.3 * sg], [-14.5, 32.5 * sg], [6, 33.3 * sg], [-6, 33.5 * sg], [16, 32.5 * sg], [19.5, 33 * sg], [-19.5, 33 * sg], [11, 25.6 * sg], [-11, 25.6 * sg], [18.5, 25.6 * sg], [-18.5, 25.6 * sg], [0, 33.5 * sg]];
+      const safeCands = [[-11, 33.3 * sg], [-14.5, 32.5 * sg], [6, 33.3 * sg], [-6, 33.5 * sg], [10.5, 33.3 * sg], [16, 32.5 * sg], [19.5, 33 * sg], [-19.5, 33 * sg], [-7.5, 25.8 * sg], [0, 25.8 * sg], [7.5, 25.8 * sg], [0, 33.5 * sg]];
       const isSafe = (x, z) => {
         if (checkCollision(x, z, 0, 0.42, 1.75)) return false;
         if (shotsNear(x, z, 8) > 0) return false;
@@ -7107,7 +7234,7 @@
       row.style.borderLeft = `4px solid ${color || '#f59e0b'}`;
       row.innerText = text;
       feed.prepend(row);
-      while (feed.children.length > 6) feed.lastChild.remove();
+      while (feed.children.length > 4) feed.lastChild.remove();   // v8.6 最多 4 行
       setTimeout(() => { row.style.transition = 'opacity 1s'; row.style.opacity = '0'; setTimeout(() => row.remove(), 1000); }, 7000);
     }
     function recordKill(killerName, killerTeam, victimName, victimTeam, weaponLabel) {
@@ -7160,7 +7287,7 @@
       aiEnabled = (force !== undefined) ? force : !aiEnabled;
       if (!aiEnabled) { aiEnemies.forEach(a => scene.remove(a.mesh)); aiEnemies.length = 0; }
       aiSpawnIntervalTimer = 10;
-      if (aiEnabled && isGameRunning && isAIAuthority()) replenishBothTeamsBalanced(TEAM_MAX_SIZE, false);
+      if (aiEnabled && isGameRunning && isAIAuthority()) replenishBothTeamsBalanced(aiCountCfg.cap, false);
       document.getElementById('hud-mode-text').innerText = aiEnabled ? (gameModeSetting === 'pvp' ? 'PvP + AI' : '打 AI 模式') : '純 PvP 對決';
       addKillFeed(aiEnabled ? '🤖 AI 電腦對手已加入戰場 (B 鍵可關閉)' : '🤖 AI 電腦對手已撤離', '#a78bfa');
       Net.sendAIToggle(aiEnabled);
@@ -7176,16 +7303,16 @@
     /* ---- 遊戲小技巧提示 (v7.8)：[H] 開關、預設關閉、每 7 秒輪播 ---- */
     const GAME_TIPS = [
       '按 [Z] 趴下呈長型低姿態，移動時名字半透明；持 AWP 趴下名字會完全消失。',
-      '站在旗座圈內連打 [G] 鍵，升降旗速度提升到 2 倍。',
+      '站在旗座圈內連打 [E] 鍵，升降旗速度提升到 2 倍。',
       '瞄準鏡需在基地 / 房子 / 路上撿到，重生後要重新撿。',
       '躲在載體後面務必蹲下 [C]，站著露頭會被 C4 破片重創。',
       '吉普與戰車要從低的車頭先跳上去，再跳一次才能上車頂。',
       '散彈槍近距離有圓形殺傷範圍，不太需要瞄準；AWP 需要兩槍。',
       'AK-47 用稀有的 7.62mm 子彈，但殺傷力是一般步槍的 1.2 倍。',
-      '靠近我方哨戒砲按 [T]，可把身上的 5.56 子彈補給給它。',
+      '靠近我方哨戒砲按 [E]，可把身上的 5.56 子彈補給給它。',
       '開啟「🎙️ 場地收音 [M]」可全場語音對話。',
       '黑色漆彈噴罐 20 秒內打中敵人正面會讓對方視線擾亂 5 秒。',
-      '[6] 或 [Y] 放 C4 炸彈，與搶旗 [G] 鍵完全分開。',
+      '按住 [G] 三秒放 C4 炸彈；蹲下靠近掩體會自動躲入，A/D 探頭。',
       '單層鐵絲網可助跑跳過；雙層鐵絲網與軍事拒馬跳不過去。',
       '敵人蹲在你基地守屍時，你會自動重生在他的正後方。',
       '按 [Tab] 查看即時排行榜；按 [B] 由房主開關 AI 對手。'
@@ -7203,14 +7330,21 @@
       if (tipsEnabled) { renderTip(); tipsTimerHandle = setInterval(() => { tipsCursor++; renderTip(); }, 7000); }
       return tipsEnabled;
     }
-    function toggleTips() { return setTipsEnabled(!tipsEnabled); }
+    function toggleTips() { const on = setTipsEnabled(!tipsEnabled); try { localStorage.setItem('QFORCE3D_TIPS', on ? 'on' : 'off'); } catch (e) {} return on; }
+    // v8.6 第一局自動開啟技巧提示；玩家關掉後記住 (localStorage)
+    function autoOpenTipsFirstMatch() {
+      if (window.__manualLoop || playerState.isBroadcaster) return false;
+      let pref = null; try { pref = localStorage.getItem('QFORCE3D_TIPS'); } catch (e) {}
+      if (pref === 'off') return false;
+      return setTipsEnabled(true);
+    }
 
     /* ---- 設定開關 ---- */
     function bindSettings() {
       const tipsBtn = document.getElementById('btn-tips-toggle');
       if (tipsBtn) tipsBtn.addEventListener('click', toggleTips);
       const cmBtn = document.getElementById('btn-caster-mode');
-      if (cmBtn) cmBtn.addEventListener('click', () => { Caster.cycleMode(); cmBtn.innerHTML = CASTER_MODE_LABELS[Caster.mode].replace(/^\S+\s/, '📻 ') + ' <span class="khint">[J]</span>'; });
+      if (cmBtn) cmBtn.addEventListener('click', () => { (playerState.isBroadcaster ? Caster.cycleMode() : Caster.cyclePlayerMode()); cmBtn.innerHTML = CASTER_MODE_LABELS[Caster.mode].replace(/^\S+\s/, '📻 ') + ' <span class="khint">[J]</span>'; });
       const ouch = document.getElementById('toggle-ouch');
       if (ouch) ouch.addEventListener('change', () => { AudioEngine.ouchEnabled = ouch.checked; });
       const tg = document.getElementById('toggle-team-group');
@@ -7543,12 +7677,12 @@
     window.tacticalCalloutsEnabled = true;
     const CASTER_MODES = ['all', 'battle', 'callouts', 'off'];
     const CASTER_DEFAULT_MODE = 'battle';   // v8.3 玩家預設：僅戰況
-    const CASTER_MODE_LABELS = { all: '🎙️ 播報:全開 (戰況+戰術+分析)', battle: '🎙️ 播報:僅戰況 (擊殺/奪旗)', callouts: '📻 僅 AI 戰術喊話', off: '🔇 播報:全關' };
+    const CASTER_MODE_LABELS = { all: '🎙️ 播報:全開 (戰況+戰術+分析)', battle: '🎙️ 播報:開', callouts: '📻 僅 AI 戰術喊話', off: '🔇 播報:關' };
     const Caster = {
       mode: 'callouts', enabled: false, tts: false, feed: [], lastSayAt: -1e9, minGap: 3500, shotLog: [], killLog: [], streak: {}, lastKillerOf: {}, firstBloodDone: false,
       lastPeriodic: 0, lastRuleAt: 0, lastFightCall: 0, lastScoreCall: 0, lastFlagSummary: 0, idleSaid: {}, pushSaid: {}, moveTrack: {}, prevFlags: [], relayed: new WeakSet(), ruleCursor: 0,
       RULES: {
-        ctf: ['規則講解：場上有四面旗，二樓兩面預設黑旗，雙方主營各一面；時間到旗子多的一隊獲勝，四面全佔直接完勝。', '小知識：站進旗座先降旗 6 秒再升旗 6 秒，連打 G 鍵可以兩倍速，隊友接手不會重置進度。'],
+        ctf: ['規則講解：場上有四面旗，二樓兩面預設黑旗，雙方主營各一面；時間到旗子多的一隊獲勝，四面全佔直接完勝。', '小知識：站進旗座先降旗 6 秒再升旗 6 秒，連打 E 鍵可以兩倍速，隊友接手不會重置進度。'],
         pvp: ['規則講解：時限內擊殺多的隊伍獲勝；若擊殺相同則比陣亡少的一隊，再相同才算平手。', '小知識：爆頭傷害加成、身體傷害略減，AWP 要兩槍，散彈槍近距離有圓形殺傷圈。'],
         coop: ['規則講解：玩家同隊合作對抗 AI 軍團，殲滅整波 AI 或時限內擊殺領先即全隊獲勝。', '小知識：AI 會分工壓制與繞後包夾，聽無線電喊話就能預判他們的動向。'],
         any: ['補充：敵人若蹲在你基地守屍，系統會把你重生在他正後方，別急著放棄。', '補充：基地哨戒砲一次只掃一個方向，從它紅光掃不到的那側接近最安全。', '補充：吉普和戰車要從低車頭開始跳，第二跳才上得了車頂狙擊。']
@@ -7557,7 +7691,8 @@
         if (!CASTER_MODES.includes(m)) m = 'battle';
         this.mode = m;
         this.enabled = (m === 'all' || m === 'battle');
-        window.tacticalCalloutsEnabled = (m === 'all' || m === 'callouts');
+        // v8.6 戰術喊話：全開/僅喊話 一律開；戰況模式下依 AI 積極度 (低 = 關)；全關 = 關
+        window.tacticalCalloutsEnabled = (m === 'all' || m === 'callouts') || (m === 'battle' && aiLevelSetting !== 'low');
         if (!window.tacticalCalloutsEnabled) aiEnemies.forEach(a => { if (a.calloutSprite) { a.mesh.remove(a.calloutSprite); a.calloutSprite = null; } a.calloutText = ''; });
         const b = document.getElementById('btn-caster-toggle'); if (b) b.innerText = CASTER_MODE_LABELS[m] + ' [J]';
         const f = document.getElementById('caster-feed'); if (f) f.classList.toggle('hidden', !this.enabled);
@@ -7565,6 +7700,8 @@
         return this.mode;
       },
       cycleMode() { return this.setMode(CASTER_MODES[(CASTER_MODES.indexOf(this.mode) + 1) % CASTER_MODES.length]); },
+      // v8.6 玩家只在「開 (戰況)」↔「關」兩段切換；轉播者仍用四段 cycleMode
+      cyclePlayerMode() { return this.setMode(this.mode === 'off' ? 'battle' : 'off'); },
       setEnabled(on) { return this.setMode(on ? 'all' : 'battle'); },
       allows(kind) { if (!this.enabled) return false; if (this.mode === 'battle') return kind === 'kill' || kind === 'flag'; return true; },
       setTTS(on) { this.tts = !!on && ('speechSynthesis' in window); const b = document.getElementById('btn-caster-tts'); if (b) b.innerText = this.tts ? '🔊 語音:開' : '🔈 語音:關'; return this.tts; },
@@ -7669,7 +7806,7 @@
       }
     };
     window.Caster = Caster; window.BroadcastCam = BroadcastCam;
-    const casterBtn = document.getElementById('btn-caster-toggle'); if (casterBtn) casterBtn.addEventListener('click', () => Caster.cycleMode());
+    const casterBtn = document.getElementById('btn-caster-toggle'); if (casterBtn) casterBtn.addEventListener('click', () => (playerState.isBroadcaster ? Caster.cycleMode() : Caster.cyclePlayerMode()));
     Caster.setMode('battle');   // v8.3 預設：僅戰況 (擊殺 / 奪旗)
     const casterTtsBtn = document.getElementById('btn-caster-tts'); if (casterTtsBtn) casterTtsBtn.addEventListener('click', () => Caster.setTTS(!Caster.tts));
 
@@ -7814,9 +7951,23 @@
       if (tip) {
         const mine = window.baseTurrets.find(t => t.team === playerState.team && !t.destroyed && Math.hypot(t.x - playerGroup.position.x, t.z - playerGroup.position.z) < 2.4 && t.ammo < t.maxAmmo);
         tip.classList.toggle('hidden', !mine || !isGameRunning || baseTurretSetting !== 'on');
-        if (mine) tip.innerText = (ammoPool.rifle > 0) ? `🤖 按 [T] 把身上的 5.56 子彈補給哨戒砲 (砲彈 ${mine.ammo}/${mine.maxAmmo}・你有 ${ammoPool.rifle} 發)` : `🤖 哨戒砲砲彈 ${mine.ammo}/${mine.maxAmmo} — 你沒有 5.56 子彈，請先去撿彈藥箱再來補給`;
+        if (mine) tip.innerText = (ammoPool.rifle > 0) ? `🤖 按 [E] 把身上的 5.56 補給哨戒砲 (${mine.ammo}/${mine.maxAmmo}・你有 ${ammoPool.rifle} 發)` : `🤖 哨戒砲 ${mine.ammo}/${mine.maxAmmo} — 你沒有 5.56，請先撿彈藥箱`;
+        const ib = document.getElementById('btn-interact'); if (ib) ib.classList.toggle('hidden', !(mine && isGameRunning && baseTurretSetting === 'on'));
       }
     }
+    // v8.6 [E] 互動鍵：依所在位置決定動作 (旗座 → 連打加速升降旗；我方哨戒砲旁 → 補彈)。回傳執行的動作名稱
+    function interactAvailable() {
+      if (gameModeSetting === 'ctf' && ctfState.activeFlagIdx >= 0) return 'flag';
+      if (baseTurretSetting === 'on' && window.baseTurrets && window.baseTurrets.some(t => t.team === playerState.team && !t.destroyed && Math.hypot(t.x - playerGroup.position.x, t.z - playerGroup.position.z) < 2.4 && t.ammo < t.maxAmmo)) return 'turret';
+      return null;
+    }
+    function doInteract() {
+      const what = interactAvailable();
+      if (what === 'flag') { triggerCtfGMash(); return 'flag'; }
+      if (what === 'turret') { tryRefillTurret(); return 'turret'; }
+      return null;
+    }
+    window.doInteract = doInteract; window.interactAvailable = interactAvailable;
     function tryRefillTurret() {
       const mine = window.baseTurrets.find(t => t.team === playerState.team && !t.destroyed && Math.hypot(t.x - playerGroup.position.x, t.z - playerGroup.position.z) < 2.4);
       if (!mine) return 0;
@@ -8158,8 +8309,7 @@
         const segW = 1.2, n = Math.max(1, Math.round((x2 - x1) / segW));
         for (let i = 0; i < n; i++) {
           const sx = x1 + i * segW;
-          const gapX = (z > 0) ? (TEAM_SPAWN[0].x + 2.2) : (TEAM_SPAWN[1].x - 2.2);   // 觀察缺口位置 (重生點側邊 2.2m)
-          const isGap = Math.abs((sx + segW / 2) - gapX) < segW * 0.6;
+          const isGap = false;   // v8.4 牆已移到地圖外側，不需要觀察缺口
           const hgt = isGap ? 1.2 : 1.9 + Math.abs(Math.sin(seed + i * 1.7)) * 0.3;   // 缺口段 1.2m：站著可看到戰場；其餘 1.9~2.2m 擋住二樓看台視線
           const m = new THREE.Mesh(new THREE.BoxGeometry(segW, hgt, 0.45), mat); m.position.set(sx + segW / 2, hgt / 2, z); m.castShadow = true; scene.add(m);
           if (i % 2 === 1) { const chip = new THREE.Mesh(new THREE.BoxGeometry(segW * 0.45, 0.25, 0.47), mat); chip.position.set(sx + segW * 0.35, hgt + 0.1, z); chip.rotation.z = -0.1; scene.add(chip); }
@@ -8180,9 +8330,9 @@
           window.ruinedWalls.push(o);
         }
       };
-      // 縮窄：每側 9.6m (x 10~19.6)，灰色與舊紅交錯；吉普車改停在牆外側，不再卡進牆裡
-      buildWall(-19.6, -10, 23.2, 0.3, grayWall); buildWall(10, 19.6, 23.2, 1.1, oldRed);
-      buildWall(-19.6, -10, -23.2, 1.9, oldRed); buildWall(10, 19.6, -23.2, 2.6, grayWall);
+      // v8.4：破碎磚牆改放在地圖外側 (z=±37，離外圍石牆 4m)，當作戰場邊緣的廢墟景觀，不再擋在基地兩旁
+      buildWall(-26, -4, 37, 0.3, grayWall); buildWall(4, 26, 37, 1.1, oldRed);
+      buildWall(-26, -4, -37, 1.9, oldRed); buildWall(4, 26, -37, 2.6, grayWall);
     }
     function buildBaseCampFacilities() {
       const canvasMat = new THREE.MeshStandardMaterial({ color: 0x4d7c0f, roughness: 0.95 });
@@ -8500,12 +8650,26 @@
       playerVelY = 5.2; playerGrounded = false;   // 重生跳一下
       const el = document.getElementById('invuln-tag'); if (el) el.classList.remove('hidden');
     }
+    // v8.6 右側徽章列只顯示最新出現的 2 個 (其餘暫時 display:none)
+    function trimBuffBar(now) {
+      const bar = document.getElementById('tactical-buff-bar'); if (!bar) return 0;
+      const shown = [];
+      for (const s of bar.children) {
+        if (s.classList.contains('hidden')) { s.__shownAt = 0; s.style.display = ''; continue; }
+        if (!s.__shownAt) s.__shownAt = now || performance.now();
+        shown.push(s);
+      }
+      shown.sort((a, b) => b.__shownAt - a.__shownAt);
+      shown.forEach((s, i) => { s.style.display = i < 2 ? '' : 'none'; });
+      return Math.min(2, shown.length);
+    }
+    window.trimBuffBar = trimBuffBar;
     function updateInvulnerability(now) {
       const el = document.getElementById('invuln-tag');
       const inv = isInvulnerable();
       if (el) {
         el.classList.toggle('hidden', !inv);
-        if (inv) { const left = Math.ceil((playerState.invulnUntil - now) / 1000); el.innerText = `🛡️ 重生無敵 ${left}s（不能開槍也不會受傷，快找掩護）`; el.style.opacity = (Math.floor(now / 150) % 2) ? '1' : '0.35'; }
+        if (inv) { const left = Math.ceil((playerState.invulnUntil - now) / 1000); el.innerText = `🛡️ 無敵 ${left}s・不能開槍・快找掩護`; el.style.opacity = (Math.floor(now / 150) % 2) ? '1' : '0.35'; }
       }
       if (weaponMesh && !isAimingADS) weaponMesh.visible = inv ? (Math.floor(now / 150) % 2 === 0) : true;
       // 其他玩家 / AI 端：無敵者閃爍
@@ -8544,7 +8708,7 @@
 
       const banner = document.getElementById('match-end-banner');
       if (!forceAuthority) endBannerClicks = 0;
-      let secs = 20;
+      let secs = 8;   // v8.6 結束橫幅 8 秒自動進結算 (點一下即進)
       const render = () => {
         const headline = formatWinnerTeamHeadline(lastMatchEndState.winnerTeam, lastMatchEndState.isWinner);
         const myTeamBadge = playerState.team === 0 ? '🟦 你的隊伍：藍隊' : '🟥 你的隊伍：紅隊';
@@ -8553,7 +8717,7 @@
           <div class="text-[9vw] sm:text-[5.8vw] leading-tight font-black drop-shadow-2xl px-4">${headline}</div>
           <div class="text-2xl sm:text-4xl font-black mt-3 tracking-widest">遊 戲 結 束</div>
           <div class="text-base sm:text-xl mt-4 text-white/95 font-bold px-4">${lastMatchEndState.message || ''}</div>
-          <div class="text-sm sm:text-base mt-10 px-4 py-2 rounded-xl bg-black/35 border border-white/20 text-amber-200 font-bold">⌨️ 按兩下 [空白鍵 / Enter]（或點擊畫面兩下）進入結算 (${endBannerClicks}/2)，或 ${secs} 秒後自動進入</div>`;
+          <div class="text-sm sm:text-base mt-10 px-4 py-2 rounded-xl bg-black/35 border border-white/20 text-amber-200 font-bold">⌨️ 按 [空白鍵 / Enter] 或點擊畫面進入結算，${secs} 秒後自動進入</div>`;
       };
       banner.className = `absolute inset-0 z-40 flex flex-col items-center justify-center text-center text-white cursor-pointer select-none ${resolvedIsWinner ? 'bg-gradient-to-b from-amber-500/95 via-orange-600/95 to-rose-700/95' : 'bg-gradient-to-b from-slate-700/95 via-slate-900/95 to-black/95'}`;
       banner.classList.remove('hidden');
@@ -8566,10 +8730,10 @@
         banner.classList.add('hidden');
         triggerMatchEnd(lastMatchEndState.isWinner, lastMatchEndState.message, lastMatchEndState.winnerTeam);
       };
-      banner.onclick = () => { endBannerClicks++; render(); if (endBannerClicks >= 2) proceed(); };
+      banner.onclick = () => { endBannerClicks++; proceed(); };
       clearTimeout(endBannerTimer); clearInterval(endBannerCountdown);
       endBannerCountdown = setInterval(() => { secs--; render(); if (secs <= 0) proceed(); }, 1000);
-      endBannerTimer = setTimeout(proceed, 20500);
+      endBannerTimer = setTimeout(proceed, 8500);
     }
     function endRoundByTime() {
       if (gameModeSetting === 'ctf') {
@@ -8639,9 +8803,9 @@
           rules: '作戰區內有四支旗：中間兩個二樓據點各一支（預設未佔領黑旗），雙方主營各一支（紅藍旗），遊戲結束前佔領越多旗幟則是勝利方！',
           priorities: [
             '🥇 優先順序 ①【搶佔二樓據點黑旗】：開局火速衝上東西兩棟房子二樓，站入旗座將中立黑旗升為我方旗幟！',
-            '🥈 優先順序 ②【連打 G 鍵二倍速奪旗】：站在旗座圈內連打 [G] 鍵，可將升降旗速度提升至 2.0x 兩倍速！',
+            '🥈 優先順序 ②【連打 E 鍵二倍速奪旗】：站在旗座圈內連打 [E] 鍵，可將升降旗速度提升至 2.0x 兩倍速！',
             '🥉 優先順序 ③【主營護旗與緊急救旗】：隨時注意主營戰旗高度，若遭敵軍偷襲降旗，立即回防將旗幟升回！',
-            '🏅 優先順序 ④【C4 炸彈破點】：拾取中央 C4 炸彈（按 [6] 或 [Y] 鍵安裝）炸毀敵方掩體防線，四旗全佔即提前完勝！'
+            '🏅 優先順序 ④【C4 炸彈破點】：拾取中央 C4 炸彈（按住 [G] 鍵安裝）炸毀敵方掩體防線，四旗全佔即提前完勝！'
           ]
         };
       } else if (mode === 'coop') {
@@ -8651,8 +8815,8 @@
           rules: '作戰區內敵方 AI 特種部隊正由北側基地出兵推進。選擇同隊的弟兄將共享戰果並一起判定勝利；時間結束前擊殺領先或全滅敵軍即為勝利方！',
           priorities: [
             '🥇 優先順序 ①【搶佔二樓制高點與武器】：開局先撿取 M4A1、AK-47 或 AWP 狙擊槍，控制二樓窗口視野！',
-            '🥈 優先順序 ②【交叉火力掩護隊友】：利用掩體按 [X] 躲入、[Q/E] 探頭射擊，集中火力逐一擊破 AI 小隊！',
-            '🥉 優先順序 ③【C4 重創敵方密集掩體】：敵人躲在載體後未蹲下露頭時，用 C4（[6]/[Y] 鍵）引爆可造成破片重創！',
+            '🥈 優先順序 ②【交叉火力掩護隊友】：蹲下靠近掩體自動躲入、A/D 探頭射擊，集中火力逐一擊破 AI 小隊！',
+            '🥉 優先順序 ③【C4 重創敵方密集掩體】：敵人躲在載體後未蹲下露頭時，用 C4（按住 [G] 鍵）引爆可造成破片重創！',
             '🏅 優先順序 ④【補給續戰與護甲維持】：陣亡掉落的護甲與槍枝僅保留 10 秒（閃爍 3 秒後消失），務必迅速拾取！'
           ]
         };
@@ -8664,7 +8828,7 @@
         priorities: [
           '🥇 優先順序 ①【搶奪重型槍枝與瞄準鏡】：開局迅速拾取場上步槍、散彈槍、7.62mm AK-47 與戰術瞄準鏡！',
           '🥈 優先順序 ②【伏地隱匿與奇襲】：按 [Z] 趴下呈長型低姿態（移動時名字半透明；持狙擊槍趴下名字完全消失）！',
-          '🥉 優先順序 ③【C4 炸彈攻堅】：按 [6] 或 [Y] 鍵安裝 C4 炸彈；注意躲在載體後務必蹲下，露頭會受嚴重破片重創！',
+          '🥉 優先順序 ③【C4 炸彈攻堅】：按住 [G] 鍵安裝 C4 炸彈；注意躲在載體後務必蹲下，露頭會受嚴重破片重創！',
           '🏅 優先順序 ④【場地收音戰術報位】：開啟右上角「🎙️ 場地收音 [M]」即可全場語音對話、即時震撼全場！'
         ]
       };
@@ -8688,9 +8852,14 @@
       }
     }
 
+    // v8.6 單人 / 合作打 AI：簡報縮短為 5 秒並可按空白鍵跳過；PvP / CTF 維持房主設定秒數
+    function isPrepSkippable() { return Net.roomCode === 'SOLO' || gameModeSetting === 'coop'; }
+    let prepSkippable = false;
     function startPrepPhase(seconds) {
-      const dur = seconds || prepDurationSetting || 15;
+      prepSkippable = isPrepSkippable();
+      const dur = prepSkippable ? Math.min(seconds || 5, 5) : (seconds || prepDurationSetting || 15);
       prepActive = true; prepTimer = dur;
+      const skipHint = document.getElementById('prep-skip-hint'); if (skipHint) skipHint.classList.toggle('hidden', !prepSkippable);
       prepCursorIndex = 0;
       tacticVotes[0] = {}; tacticVotes[1] = {}; myVote = null;
       const panel = document.getElementById('prep-panel');
@@ -8787,7 +8956,7 @@
     const CTF_FLAG_BLACK_HEX = 0x111827;
     const ctfState = { progress: 0, enemyProgressSeen: 0, buttonHeld: false, activeFlagIdx: -1, gMashBoostUntil: 0, gMashTapCount: 0, currentSpeedMult: 1.0 };
 
-    // 按 [G] 鍵連打加速升降旗至 2 倍速 (2.0x)
+    // 按 [E] 互動鍵連打加速升降旗至 2 倍速 (2.0x)
     function triggerCtfGMash() {
       const nowMs = Math.max(performance.now(), typeof gameNow === 'number' ? gameNow : 0);
       ctfState.gMashBoostUntil = nowMs + 650;
@@ -9016,9 +9185,9 @@
             const nf = ctfFlags[nearIdx];
             const colorLabel = nf.currentColorTeam === -1 ? '⬛ 沒搶到的黑旗' : (nf.currentColorTeam === 0 ? '🟦 藍隊藍旗' : '🟥 紅隊紅旗');
             if (speedMultNow > 1.05) {
-              btn.innerText = `⚡ [G] 鍵連打 2 倍速加速中 (2.0x)！正在快速升降【${nf.label || '戰旗'}】(${colorLabel})`;
+              btn.innerText = `⚡ [E] 鍵連打 2 倍速加速中 (2.0x)！正在快速升降【${nf.label || '戰旗'}】(${colorLabel})`;
             } else {
-              btn.innerText = `🚩 已進入【${nf.label || '戰旗'}】(${colorLabel}) — 💡 連打 [G] 鍵可加速升降旗到兩倍 (2.0x)！`;
+              btn.innerText = `🚩 已進入【${nf.label || '戰旗'}】(${colorLabel}) — 💡 連打 [E] 鍵可加速升降旗到兩倍 (2.0x)！`;
             }
           }
         }
@@ -9029,7 +9198,7 @@
           const stageText = refFlag.currentColorTeam !== playerState.team
             ? `階段 1/2：降旗 (${((1 - refFlag.heightRatio) * CTF_STAGE_TIME).toFixed(1)} / ${CTF_STAGE_TIME}s)`
             : `階段 2/2：升旗 (${(refFlag.heightRatio * CTF_STAGE_TIME).toFixed(1)} / ${CTF_STAGE_TIME}s)`;
-          const gHint = speedMultNow > 1.05 ? '🔥 [G] 連打 2.0x 兩倍速！' : '💡 連打 [G] 鍵加速至 2 倍速 (1.0x)';
+          const gHint = speedMultNow > 1.05 ? '🔥 [E] 連打 2.0x 兩倍速！' : '💡 連打 [E] 鍵加速至 2 倍速 (1.0x)';
           document.getElementById('ctf-bar-text').innerText = `🚩 ${refFlag.label || '戰旗'}｜${stageText}｜${gHint}｜藍 ${counts[0]} 旗 vs 紅 ${counts[1]} 旗 (黑旗 ${counts.black})`;
         }
       }
@@ -9352,7 +9521,7 @@
 
       // 在我方基地旗幟旁重生 + 跳一下 + 10 秒無敵 (#2)
       spawnAtOwnBase();
-      grantInvulnerability(10);
+      grantInvulnerability(6);   // v8.6 重生無敵 6 秒
       ctfState.progress = 0;
 
       updateAmmoUI();
@@ -9618,10 +9787,10 @@
       if (targetState && activeCoverBox) {
         safePlayerPosBeforeCover.copy(playerGroup.position);
         isCovered = true;
+        isCrouched = true; isProne = false;   // v8.6 進掩體即為蹲姿
         isPeeking = false;
         btnCover.innerHTML = iconBtnHTML('cover', '離開掩體', '[X]');
-        btnPeek.classList.remove('hidden');
-        btnPeek.innerHTML = iconBtnHTML('peek', '探頭', '[Q·E]');
+        btnPeek.innerHTML = iconBtnHTML('peek', '探頭', '[A·D]');
       } else {
         isCovered = false;
         isPeeking = false;
@@ -9657,16 +9826,17 @@
           camera.rotation.z = 0;
           weaponMesh.rotation.z = 0;
         }
-        btnPeek.innerHTML = iconBtnHTML('peek', '縮回', '[Q·E]');
+        btnPeek.innerHTML = iconBtnHTML('peek', '縮回', '[A·D]');
       } else {
         camera.rotation.z = 0;
         weaponMesh.rotation.z = 0;
-        btnPeek.innerHTML = iconBtnHTML('peek', '探頭', '[Q·E]');
+        btnPeek.innerHTML = iconBtnHTML('peek', '探頭', '[A·D]');
       }
     }
 
-    btnCover.addEventListener('click', () => toggleCover());
-    btnPeek.addEventListener('click', () => togglePeek());
+    const btnInteract = document.getElementById('btn-interact');
+    if (btnInteract) btnInteract.addEventListener('click', () => doInteract());
+    let coverAutoSuppressed = false;   // v8.6 [X] 手動離開掩體後，暫停自動吸附
 
     /* =========================================================================
        13. 玩家實體移動碰撞檢驗 (二樓樓梯順暢走上去 #1) 與物資拾取 (#7)
@@ -9729,7 +9899,7 @@
         else if (it.type === 'laser') { if (playerState.hasLaser) continue; playerState.hasLaser = true; createFirstPersonWeapon(); msg = '🔴 裝上雷射瞄準器'; }
         else if (it.type === 'scope') { if (playerState.hasScope) continue; playerState.hasScope = true; updateScopeHUD(); createFirstPersonWeapon(); msg = '🔭 撿到【戰術瞄準鏡】！按 [V] 或右鍵可開鏡瞄準'; }
         else if (it.type === 'black_paint') { playerState.blackPaintTimer = 20.0; const b = document.getElementById('hud-black-paint-badge'); if (b) b.classList.remove('hidden'); msg = '🖤 撿到【黑色漆彈噴罐】！20 秒內發射黑彈，打中敵人正面擾亂視覺 5 秒！'; }
-        else if (it.type === 'bomb') { if (playerState.hasBomb) continue; playerState.hasBomb = true; btnPlantBomb.classList.remove('hidden'); msg = '💣 撿到 C4 炸彈（按住 [6] 或 [Y] 鍵 3 秒設定，可邊走邊設定，放開取消）'; }
+        else if (it.type === 'bomb') { if (playerState.hasBomb) continue; playerState.hasBomb = true; btnPlantBomb.classList.remove('hidden'); msg = '💣 撿到 C4 炸彈（按住 [G] 3 秒設定，可邊走邊設定，放開取消）'; }
 
         AudioEngine.playPickupKind((it.type === 'banana' || it.type === 'ham' || it.type === 'ration') ? 'medkit' : it.type);
         const fb = document.getElementById('pickup-feedback');
@@ -9769,6 +9939,7 @@
 
     /* ---- v8.1 觸控按鈕 SVG 圖示 (不用 emoji) 與配色 ---- */
     const ICONS = {
+      stand: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4" r="2"/><path d="M12 6v8M12 14l-3 7M12 14l3 7M8 10h8"/></svg>',
       fire: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>',
       jump: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V6M6 12l6-6 6 6"/><path d="M5 21h14"/></svg>',
       crouch: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="5" r="2"/><path d="M9 8v5l4 3v5M9 13l-4 7M13 16l5 1"/></svg>',
@@ -9791,9 +9962,8 @@
         'btn-reload': ['reload', '換彈', '[R]', 'tbtn text-amber-200 bg-gradient-to-br from-amber-700 to-amber-900 border border-amber-300/70 active:scale-90'],
         'btn-ads': ['ads', '開鏡', '[V/右鍵]', 'tbtn text-teal-100 bg-gradient-to-br from-teal-600 to-cyan-800 border border-teal-300/70 active:scale-90'],
         'btn-swap': ['swap', '切槍', '[1·2]', 'tbtn text-orange-100 bg-gradient-to-br from-orange-600 to-orange-800 border border-orange-300/70 active:scale-90'],
-        'btn-cover': ['cover', '掩體', '[X]', 'hidden tbtn text-amber-950 bg-gradient-to-br from-amber-300 to-orange-400 border border-amber-200 active:scale-90'],
-        'btn-peek': ['peek', '探頭', '[Q·E]', 'hidden tbtn text-white bg-gradient-to-br from-violet-600 to-indigo-700 border border-violet-300/70 active:scale-90'],
-        'btn-plant-bomb': ['bomb', '炸彈', '[6/Y]', 'hidden tbtn text-white bg-gradient-to-br from-rose-600 to-red-800 border border-rose-300/70 animate-pulse active:scale-90']
+        'btn-interact': ['reload', '補彈', '[E]', 'hidden tbtn text-amber-950 bg-gradient-to-br from-amber-300 to-orange-400 border border-amber-200 active:scale-90'],
+        'btn-plant-bomb': ['bomb', '炸彈', '[G]', 'hidden tbtn text-white bg-gradient-to-br from-rose-600 to-red-800 border border-rose-300/70 animate-pulse active:scale-90']
       };
       Object.entries(spec).forEach(([id, [icon, label, hint, cls]]) => { const b = document.getElementById(id); if (!b) return; b.className = cls; b.innerHTML = iconBtnHTML(icon, label, hint); });
       const exitBtn = document.getElementById('btn-close-room'); if (exitBtn) exitBtn.innerHTML = `${ICONS.exit}<span>關閉房間</span>`.replace('<svg ', '<svg style="width:14px;height:14px;display:inline-block;margin-right:4px" ');
@@ -9911,7 +10081,7 @@
     window.addEventListener('keydown', (e) => {
       keysDown[e.code] = true;
 
-      // A. 對戰結束全螢幕橫幅 (#match-end-banner)：按空白鍵或 Enter 推進點擊次數 (按兩下進入結算)
+      // A. 對戰結束全螢幕橫幅 (#match-end-banner)：按空白鍵或 Enter (或點一下) 進入結算
       const endBannerEl = document.getElementById('match-end-banner');
       if (endBannerEl && !endBannerEl.classList.contains('hidden')) {
         if (e.code === 'Space' || e.code === 'Enter') {
@@ -9946,7 +10116,7 @@
         if (e.code === 'Tab') { e.preventDefault(); toggleScoreboard(true); }
         return;
       }
-      if (e.code === 'KeyJ' && !e.repeat) { Caster.cycleMode(); addKillFeed(CASTER_MODE_LABELS[Caster.mode], '#22d3ee'); }
+      if (e.code === 'KeyJ' && !e.repeat) { Caster.cyclePlayerMode(); addKillFeed(CASTER_MODE_LABELS[Caster.mode], '#22d3ee'); }
 
       // C. 開局 10 秒戰術準備階段 (prepActive)：W/S 或 上/下 移動戰術游標，空白鍵或 Enter 投票選定
       if (prepActive) {
@@ -9964,6 +10134,7 @@
         }
         if (e.code === 'Space' || e.code === 'Enter') {
           e.preventDefault();
+          if (prepSkippable && e.code === 'Space') { if (!myVote) castVote(TACTICS[prepCursorIndex].code); prepTimer = Math.min(prepTimer, 0.01); return; }   // v8.6 空白鍵跳過簡報
           castVote(TACTICS[prepCursorIndex].code);
           return;
         }
@@ -9976,18 +10147,14 @@
       if (e.code === 'KeyZ' || e.code === 'Digit5') toggleProne();
       if (e.code === 'KeyV' || e.code === 'Digit4') toggleADS();
       if (e.code === 'KeyX') {
-        if (isCovered) toggleCover();
-        else if (checkNearCoverBoxQuiet()) toggleCover(true);
+        // v8.6 掩體改為「蹲下靠近自動吸附」；[X] 仍可手動離開 (並暫停自動吸附直到離開該掩體或站起)
+        if (isCovered) { toggleCover(); coverAutoSuppressed = true; }
+        else if (checkNearCoverBoxQuiet()) { toggleCover(true); coverAutoSuppressed = false; }
       }
-      if (e.code === 'KeyQ') togglePeek(-1);
-      if (e.code === 'KeyE') togglePeek(1);
-      if (e.code === 'KeyG') {
-        if (!e.repeat) triggerCtfGMash();
-        // 當站在搶旗旗座範圍內時，[G] 鍵 100% 專用於連打加速升降旗，絕不誤觸放炸彈！放炸彈隨時可用專屬鍵 [6] 或 [Y]
-        if (!e.repeat && (gameModeSetting !== 'ctf' || ctfState.activeFlagIdx < 0)) startBombPlant();
-      }
-      if ((e.code === 'Digit6' || e.code === 'KeyY') && !e.repeat) startBombPlant();
-      if (e.code === 'KeyT' && !e.repeat) tryRefillTurret();
+      // v8.6 [E] 互動鍵：旗座內 = 連打加速升降旗；我方哨戒砲旁 = 補 5.56 彈藥
+      if (e.code === 'KeyE' && !e.repeat) doInteract();
+      // v8.6 [G] 炸彈鍵：任何地方按住 3 秒設定 C4 (不再與旗座衝突)
+      if (e.code === 'KeyG' && !e.repeat) startBombPlant();
       if (e.code === 'KeyH' && !e.repeat) toggleTips();
       if (e.code === 'KeyM' && !e.repeat) {
         if (typeof FieldAudio !== 'undefined') FieldAudio.toggleMic();
@@ -10005,11 +10172,8 @@
 
     window.addEventListener('keyup', (e) => {
       keysDown[e.code] = false;
-      if (e.code === 'Digit6' || e.code === 'KeyY' || e.code === 'KeyG') cancelBombPlant();
+      if (e.code === 'KeyG') cancelBombPlant();
       if (e.code === 'Tab') toggleScoreboard(false);
-      if (e.code === 'KeyQ' || e.code === 'KeyE') {
-        if (isCovered && isPeeking) togglePeek();
-      }
     });
 
     // 放開所有輸入 (失焦 / 切換分頁 / 滑鼠鎖定被釋放 / iPhone・iPad 切換 App 回來)：避免回來時殘留「按住開火」
@@ -10098,6 +10262,7 @@
     btnJump.addEventListener('click', () => { jumpRequested = true; });
 
     function toggleCrouch() {
+      setTimeout(() => { if (typeof updatePoseButton === 'function') updatePoseButton(); }, 0);
       if ((isCrouched || isProne) && checkCollision(playerGroup.position.x, playerGroup.position.z, playerFeetY, undefined, PLAYER_HEIGHT)) { const fb = document.getElementById('pickup-feedback'); if (fb) { fb.innerText = '⛺ 頭頂有帳篷，這裡站不起來！'; fb.style.opacity = '1'; setTimeout(() => fb.style.opacity = '0', 1000); } return; }
       isCrouched = !isCrouched;
       if (isCrouched) isProne = false;
@@ -10105,6 +10270,7 @@
     }
 
     function toggleProne(force) {
+      setTimeout(() => { if (typeof updatePoseButton === 'function') updatePoseButton(); }, 0);
       const wantProne = (force !== undefined) ? !!force : !isProne;
       if (!wantProne && isProne && checkCollision(playerGroup.position.x, playerGroup.position.z, playerFeetY, undefined, PLAYER_HEIGHT)) { isProne = false; isCrouched = true; updateStealthSniperState(); return; }   // 帳篷內起身 → 改為蹲
       isProne = wantProne;
@@ -10116,6 +10282,29 @@
     }
     const btnProne = document.getElementById('btn-prone');
     if (btnProne) btnProne.addEventListener('click', () => toggleProne());
+    // v8.5 手機姿勢循環鍵：站 → 蹲 → 趴 → 站 (合併蹲/趴兩鍵)
+    function cyclePose() {
+      if (!isCrouched && !isProne) { toggleCrouch(); }
+      else if (isCrouched) { isCrouched = false; toggleProne(true); }
+      else { toggleProne(false); }
+      updatePoseButton();
+      return isProne ? 'prone' : (isCrouched ? 'crouch' : 'stand');
+    }
+    function updatePoseButton() {
+      const b = document.getElementById('btn-pose'); if (!b) return;
+      const next = isProne ? ['crouch', '站起', ''] : (isCrouched ? ['prone', '趴下', '[Z]'] : ['crouch', '蹲下', '[C]']);
+      b.innerHTML = iconBtnHTML(next[0], next[1], next[2]);
+      b.classList.toggle('ring-2', isCrouched || isProne); b.classList.toggle('ring-emerald-300', isCrouched || isProne);
+    }
+    window.cyclePose = cyclePose;
+    const btnPose = document.getElementById('btn-pose');
+    if (btnPose) { btnPose.addEventListener('click', cyclePose); updatePoseButton(); }
+    // ☰ 系統選單 (手機)：展開/收合其餘系統按鈕
+    const btnSysMenu = document.getElementById('btn-sys-menu');
+    if (btnSysMenu) btnSysMenu.addEventListener('click', () => { const bar = document.getElementById('hud-system-bar'); bar.classList.toggle('sys-open'); btnSysMenu.innerText = bar.classList.contains('sys-open') ? '✕ 關閉' : '☰ 選單'; });
+    // 手機沒有切槍鍵：點右上角彈藥面板即切換 1/2 號槍
+    const hudRightBox = document.getElementById('hud-right-box');
+    if (hudRightBox) { hudRightBox.style.pointerEvents = 'auto'; hudRightBox.addEventListener('click', () => { if (DeviceProfile.isPhone && isGameRunning && !playerState.isSpectating) equipSlot(activeSlot === 0 ? 1 : 0); }); }
 
     const btnAds = document.getElementById('btn-ads');
     function toggleADS(forceAllow) {
@@ -10182,6 +10371,31 @@
     if (combatSelect) combatSelect.addEventListener('change', (e) => { combatModeSetting = e.target.value; syncCombatModeUI(); });
     const aiLevelSelectEl = document.getElementById('ai-level-select');
     if (aiLevelSelectEl) aiLevelSelectEl.addEventListener('change', (e) => setAILevel(e.target.value));
+    // ---- v8.6 AI 人數控制 UI 綁定 ----
+    (function bindAICountUI() {
+      const modeEl = document.getElementById('ai-fill-mode'), capEl = document.getElementById('team-cap-input'), bEl = document.getElementById('ai-blue-input'), rEl = document.getElementById('ai-red-input');
+      if (!modeEl) return;
+      const read = () => setAICountCfg({ mode: modeEl.value, cap: parseInt(capEl.value) || 4, fixed: [parseInt(bEl.value) || 0, parseInt(rEl.value) || 0] });
+      [modeEl, capEl, bEl, rEl].forEach(el => el && el.addEventListener('change', read));
+      read();
+    })();
+    // ---- v8.6 進階設定摘要列 (一行顯示所有值) + localStorage 記住 ----
+    const ADV_SETTING_IDS = ['team-color-select', 'respawn-mode-select', 'lives-input', 'combat-mode-select', 'ai-level-select', 'ai-fill-mode', 'team-cap-input', 'ai-blue-input', 'ai-red-input', 'turret-select', 'round-mode-select', 'prep-time-select', 'team-pref-select', 'paint-color-select'];
+    function updateAdvSummary() {
+      const v = (id) => { const el = document.getElementById(id); if (!el) return ''; if (el.tagName === 'SELECT') { const o = el.options[el.selectedIndex]; return o ? o.text.replace(/^[^\s\w\u4e00-\u9fff]+\s*/, '').split(/[ (（:：]/)[0] : ''; } return el.value; };
+      const fill = { auto: '自動', fill: '補滿', fixed: `藍${v('ai-blue-input')}/紅${v('ai-red-input')}`, none: '無' }[v('ai-fill-mode')] || '自動';
+      const parts = [v('team-color-select'), (v('respawn-mode-select') || '').includes('無限') ? '無限重生' : `命×${v('lives-input')}`, v('combat-mode-select'), `回合 ${v('round-mode-select')}`, `簡報 ${v('prep-time-select')}`, `AI ${v('ai-level-select')}`, `AI人數 ${fill}・上限${v('team-cap-input')}`, `哨戒砲 ${v('turret-select')}`, v('team-pref-select'), `漆 ${v('paint-color-select')}`];
+      const el = document.getElementById('adv-summary'); if (el) el.innerText = parts.filter(Boolean).join(' ｜ ');
+      const fb = document.getElementById('ai-fixed-box'); if (fb) { fb.classList.toggle('hidden', v('ai-fill-mode') !== 'fixed'); fb.classList.toggle('flex', v('ai-fill-mode') === 'fixed'); }
+      return el ? el.innerText : '';
+    }
+    window.updateAdvSummary = updateAdvSummary;
+    (function bindAdvSettings() {
+      let saved = {}; try { saved = JSON.parse(localStorage.getItem('QFORCE3D_ADV') || '{}'); } catch (e) {}
+      if (!window.__manualLoop) ADV_SETTING_IDS.forEach(id => { const el = document.getElementById(id); if (el && saved[id] !== undefined && saved[id] !== '') { el.value = saved[id]; if (el.value !== String(saved[id])) return; el.dispatchEvent(new Event('change')); } });
+      ADV_SETTING_IDS.forEach(id => { const el = document.getElementById(id); if (!el) return; el.addEventListener('change', () => { updateAdvSummary(); const o = {}; ADV_SETTING_IDS.forEach(k => { const e2 = document.getElementById(k); if (e2) o[k] = e2.value; }); try { localStorage.setItem('QFORCE3D_ADV', JSON.stringify(o)); } catch (e) {} }); });
+      setTimeout(updateAdvSummary, 0);
+    })();
     const turretSelectEl = document.getElementById('turret-select');
     if (turretSelectEl) turretSelectEl.addEventListener('change', (e) => { baseTurretSetting = e.target.value; });
     if (btnToggleCombat) btnToggleCombat.addEventListener('click', () => {
@@ -10285,6 +10499,7 @@
       isGameRunning = true;
       initEnemies();
       releaseAllInputs('enter_world');
+      autoOpenTipsFirstMatch();
       // 桌機：進場即嘗試鎖定滑鼠 (由大廳按鈕點擊的使用者手勢觸發)，開場就能用滑鼠轉視角，不必先開一槍
       if (window.matchMedia('(pointer: fine)').matches && !playerState.isBroadcaster && !window.__manualLoop) { try { const plp = document.body.requestPointerLock(); if (plp && plp.catch) plp.catch(() => {}); } catch (e) {} }
       setTimeout(updateLockHint, 50);
@@ -10595,6 +10810,7 @@
         prepDuration: prepDurationSetting,
         aiLevel: aiLevelSetting,
         turret: baseTurretSetting,
+        aiCount: aiCountCfg,
         allowMidJoin: !!allowMidJoin,
         roundRemaining: roundRemainingTime,
         roundMode: roundModeSetting,
@@ -10792,6 +11008,7 @@
       if (data.combatMode) { combatModeSetting = data.combatMode; syncCombatModeUI(); }
       if (data.aiLevel) setAILevel(data.aiLevel);
       if (data.turret) baseTurretSetting = data.turret;
+      if (data.aiCount) setAICountCfg(data.aiCount);
       roundModeSetting = data.roundMode || roundModeSetting;
       roundRemainingTime = data.roundRemaining || roundRemainingTime;
       if (data.respawnMode) respawnModeSetting = data.respawnMode;
@@ -10842,6 +11059,7 @@
       if (data && data.prepDuration) prepDurationSetting = parseInt(data.prepDuration) || 15;
       if (data && data.aiLevel) setAILevel(data.aiLevel);
       if (data && data.turret) baseTurretSetting = data.turret;
+      if (data && data.aiCount) setAICountCfg(data.aiCount);
       document.getElementById('waiting-room-modal').classList.add('hidden');
       if (!isGameRunning) enterWorld();
       if (!['AUTOTEST', 'DEMO'].includes(Net.roomCode)) {
@@ -11171,6 +11389,7 @@
       // v6.3 階段系統：準備投票 / 無敵 / 鐵絲網 / 搶旗
       updatePrepPhase(delta);
       updateInvulnerability(now);
+      trimBuffBar(now);
       updateHazards(delta);
       updateCTF(delta);
       updateBaseTurrets(delta, now);
@@ -11190,6 +11409,7 @@
       if (keysDown['KeyD'] || keysDown['ArrowRight']) rx += 1;
       fx = Math.max(-1, Math.min(1, fx)); rx = Math.max(-1, Math.min(1, rx));
       if (prepActive) { fx = 0; rx = 0; }   // 準備階段 10 秒不能移動 (#5)
+      if (isCovered) rx = 0;   // v8.6 掩體中左右鍵只探頭不移動
       // 趴地模式移動速度 (#8, v7.5：趴下舉槍射擊時前後移動極緩慢 0.42 m/s，但左右可以靈活移動 1.65 m/s)
       const isProneShooting = isProne && !!(isFiring || keysDown['KeyF'] || keysDown['Enter'] || keysDown['ControlLeft'] || isAimingADS);
       const baseMoveSpeed = isProne ? PRONE_SPEED : ((isCovered || isCrouched) ? 3.2 : (isAimingADS ? 4.2 : 6.6));
@@ -11266,7 +11486,17 @@
 
       // 掩體提示 (遲滯避免閃爍 #6)
       const nearCover = checkNearCoverBoxQuiet();
-      if (nearCover !== coverButtonShown) { coverButtonShown = nearCover; btnCover.classList.toggle('hidden', !nearCover && !isCovered); if (!nearCover && !isCovered) btnPeek.classList.add('hidden'); }
+      if (nearCover !== coverButtonShown) { coverButtonShown = nearCover; }
+      // v8.6 自動掩體：蹲下靠近掩體自動吸附、站起 (或趴下) 自動離開；掩體中 A/D 或搖桿左右 = 探頭
+      if (!playerState.isSpectating && !prepActive) {
+        if (!nearCover || !isCrouched) coverAutoSuppressed = false;
+        if (isCrouched && !isProne && nearCover && !isCovered && !coverAutoSuppressed && activeCoverBox) toggleCover(true);
+        else if (isCovered && (!isCrouched || isProne)) toggleCover(false);
+        if (isCovered) {
+          const want = (moveInput.right > 0.35 || keysDown['KeyD'] || keysDown['ArrowRight']) ? 1 : ((moveInput.right < -0.35 || keysDown['KeyA'] || keysDown['ArrowLeft']) ? -1 : 0);
+          if (want !== peekDirection || (want !== 0) !== isPeeking) togglePeek(want);
+        }
+      }
       // 更新黑色漆彈噴罐 20 秒倒數與 5 秒正面致盲遮罩倒數 (#6)
       if (playerState.blackPaintTimer > 0) {
         playerState.blackPaintTimer = Math.max(0, playerState.blackPaintTimer - delta);
@@ -11568,7 +11798,7 @@
     /* =========================================================================
        18. 自動化物理/戰鬥驗證模式：開啟 game.html?autotest=1 於 Console 輸出 [AUTOTEST] 結果
        ========================================================================= */
-    const BUILD_STAMP = 'v8.3 · 建置 2026-10-27 12:00 (台北)';
+    const BUILD_STAMP = 'v8.6 · 建置 2026-10-28 13:00 (台北)';
     console.log('現代突擊 3D ' + BUILD_STAMP);
     window.__manualLoop = new URLSearchParams(location.search).has('autotest');
     if (new URLSearchParams(location.search).has('demo')) {
@@ -11854,7 +12084,7 @@
 
         // T31 重生無敵：不受傷、不能開槍、會跳
         playerState.hp = 100; updateHealthUI(); teleport(0, 20, 0, 0);
-        grantInvulnerability(10); const jumped = playerVelY > 0;
+        grantInvulnerability(6); const jumped = playerVelY > 0;
         receiveDamage(50); const hpInv = playerState.hp;
         currentWeapon.ammoInClip = 10; isFiring = true; frame(20); isFiring = false; const ammoInv = currentWeapon.ammoInClip;
         log('T31 重生 10 秒無敵：跳一下、不受傷、不能開槍 (#2)', jumped && hpInv === 100 && ammoInv === 10 && isInvulnerable(), `hp=${hpInv} ammo=${ammoInv}`);
@@ -11972,9 +12202,9 @@
         isRoundEnded = false; isGameRunning = true; announceMatchEnd(true, '測試');
         const bn = document.getElementById('match-end-banner');
         const fullScreen = bn.className.includes('inset-0') && !bn.classList.contains('hidden');
-        bn.onclick(); const stillBanner = !bn.classList.contains('hidden'); bn.onclick();
-        const modalShown = !gameOverModal.classList.contains('hidden') && document.getElementById('final-scoreboard').innerHTML.includes('🏆');
-        log('T44 全螢幕結束宣告，點兩下進入放大結算 (含全員排行 + 獎盃) (#6 #7)', fullScreen && stillBanner && modalShown, `full=${fullScreen} modal=${modalShown}`);
+        const stillBanner = !bn.classList.contains('hidden'); bn.onclick();
+        const modalShown = !gameOverModal.classList.contains('hidden') && document.getElementById('final-scoreboard').innerHTML.includes('🏆') && bn.classList.contains('hidden');
+        log('T44 全螢幕結束宣告，點一下進入放大結算 (含全員排行 + 獎盃) (#6 #7, v8.6 一鍵)', fullScreen && stillBanner && modalShown, `full=${fullScreen} modal=${modalShown}`);
         gameOverModal.classList.add('hidden'); isRoundEnded = false; isGameRunning = true; roundRemainingTime = 9999;
 
         // T45 搶旗二樓中立黑旗位於兩邊房子二樓屋頂 (y=3.4)，須上二樓靠近才自動升降旗
@@ -12157,8 +12387,7 @@
         prepActive = false; document.getElementById('prep-panel').classList.add('hidden');
         isRoundEnded = false; isGameRunning = true;
         announceMatchEnd(true, '鍵盤操作測試', 0);
-        window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space' }));
-        window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Enter' }));
+        window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space' }));   // v8.6 一鍵進結算
         const modalOpenedByKey = !gameOverModal.classList.contains('hidden');
         window.dispatchEvent(new KeyboardEvent('keydown', { code: 'ArrowDown' }));
         const cursorMoved = (gameOverCursorIndex === 1);
@@ -12564,10 +12793,10 @@
           const hAfterNormal1s = fWest2F.heightRatio; // 約 11/12 = 0.9167
           const btnNormalTxt = (document.getElementById('ctf-action-btn') || {}).innerText || '';
           const barNormalTxt = (document.getElementById('ctf-bar-text') || {}).innerText || '';
-          const promptShowsGKey = btnNormalTxt.includes('連打 [G] 鍵') && btnNormalTxt.includes('兩倍') && barNormalTxt.includes('[G]');
+          const promptShowsGKey = btnNormalTxt.includes('連打 [E] 鍵') && btnNormalTxt.includes('兩倍') && barNormalTxt.includes('[E]');
 
-          // 模擬玩家連打 [G] 鍵：觸發 KeyG keydown 事件並推進 3.0 秒 (2.0x 兩倍速下，3 秒等於 6 秒進度 = 降旗 0.50！)
-          window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyG' }));
+          // 模擬玩家連打 [E] 互動鍵：觸發 KeyE keydown 事件並推進 3.0 秒 (2.0x 兩倍速下，3 秒等於 6 秒進度 = 降旗 0.50！)
+          window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyE' }));
           const multDuringGMash = getCtfCaptureSpeedMultiplier(true);
           updateCTF(3.0);
           const hAfterGMash3s = fWest2F.heightRatio; // 0.9167 - (3.0 * 2.0 / 12.0) = 0.4167 (精準下降 0.50)
@@ -12633,9 +12862,9 @@
           updateCTF(0.2); // 進入旗座範圍 (ctfState.activeFlagIdx === 0)
           playerState.hasBomb = true;
           bombState.isPlanted = false;
-          window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyG' }));
+          window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyE' }));
           const gDidNotPlantInFlagZone = (bombState.isPlanted === false && playerState.hasBomb === true && getCtfCaptureSpeedMultiplier(true) === 2.0);
-          window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Digit6' }));
+          window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyG' }));
           updateBombPlanting(1.0); const notYetAt1s = (bombState.isPlanted === false && bombPlant.active === true);
           updateBombPlanting(2.5);
           const key6PlantedBomb = notYetAt1s && (bombState.isPlanted === true && playerState.hasBomb === false);
@@ -13132,10 +13361,10 @@
           // 5. 基地兩側破碎磚牆：有貼圖、高低不齊、擋子彈 (從西屋二樓射向藍營重生點被擋)、留吉普通道
           const rw = window.ruinedWalls;
           const heights = new Set(rw.map(o => +o.maxY.toFixed(2)));
-          const wallTexOk = rw.length >= 30 && heights.size >= 5 && rw.every(o => o.maxY >= 1.1 && o.maxY <= 2.7 && o.blocksBullets !== false) && !!makeCanvasTexture('brick', 256, texBrick, 3, 1.2).image;
-          const losBlocked = segmentHitObstacle(new THREE.Vector3(-13, 3.4 + 0.5, 0), new THREE.Vector3(-2, 1.2, 28)) !== null;
-          const gapOpen = !checkCollision(4, 21.0, 0, 0.42, PLAYER_HEIGHT) && !checkCollision(-4, -21.0, 0, 0.42, PLAYER_HEIGHT);   // v8.2 中央通道暢通 (兩側矮牆縮窄到 |x| 10~19.6)
-          const noWallAtGap = !rw.some(o => o.maxX > 19.7 || o.minX < -19.7) && !rw.some(o => o.minX < 10 && o.maxX > -10);
+          const wallTexOk = rw.length >= 30 && heights.size >= 5 && rw.every(o => o.maxY >= 1.8 && o.maxY <= 2.7 && o.blocksBullets !== false) && !!makeCanvasTexture('brick', 256, texBrick, 3, 1.2).image;
+          const losBlocked = true;   // v8.4 牆已移到地圖外側 (不再要求擋視線)
+          const gapOpen = !rw.some(o => Math.abs(o.minZ) < 30 && Math.abs(o.minX) < 30);   // v8.4 基地兩旁不再有磚牆
+          const noWallAtGap = rw.every(o => Math.abs(o.minZ) >= 36);
           const wallOk = wallTexOk && losBlocked && gapOpen && noWallAtGap;
           // 6. 瞄準鏡 30 秒；油桶頂可站
           const scopeOk = pickupItems.filter(p => p.type === 'scope').every(p => p.respawnTime <= 30);
@@ -13185,10 +13414,12 @@
           const projectedOk = paintDecals.length === dBefore + 1 && lastDecal.group.position.y < 0.2;
           // 5. 播報四段循環 + 戰術喊話開關
           Caster.setMode('all'); const m1 = Caster.cycleMode(), m2 = Caster.cycleMode(), m3 = Caster.cycleMode(), m4 = Caster.cycleMode();
-          const cycleOk = m1 === 'battle' && m2 === 'callouts' && m3 === 'off' && m4 === 'all';
-          Caster.setMode('battle'); const battleAllows = Caster.allows('kill') && Caster.allows('flag') && !Caster.allows('analysis') && window.tacticalCalloutsEnabled === false;
+          Caster.setMode('battle'); const p1 = Caster.cyclePlayerMode(), p2 = Caster.cyclePlayerMode();
+          const cycleOk = m1 === 'battle' && m2 === 'callouts' && m3 === 'off' && m4 === 'all' && p1 === 'off' && p2 === 'battle';
+          setAILevel('medium'); Caster.setMode('battle'); const battleAllows = Caster.allows('kill') && Caster.allows('flag') && !Caster.allows('analysis') && window.tacticalCalloutsEnabled === true;
+          setAILevel('low'); const lowOff = window.tacticalCalloutsEnabled === false; setAILevel('medium');
           aiEnabled = true; window.forceBothTeamsAI = true; initEnemies(); const anyAI = aiEnemies[0];
-          const calloutBlocked = aiTriggerTacticalCallout(anyAI, '測試喊話', 'test86') === false && !anyAI.calloutSprite;
+          Caster.setMode('off'); const calloutBlocked = lowOff && aiTriggerTacticalCallout(anyAI, '測試喊話', 'test86') === false && !anyAI.calloutSprite;
           Caster.setMode('callouts'); const calloutsOnlyOk = !Caster.enabled && window.tacticalCalloutsEnabled === true && aiTriggerTacticalCallout(anyAI, '測試喊話2', 'test86b') === true;
           Caster.setMode('off'); const offOk = !Caster.enabled && window.tacticalCalloutsEnabled === false;
           const casterOk = cycleOk && battleAllows && calloutBlocked && calloutsOnlyOk && offOk;
@@ -13235,12 +13466,11 @@
           const rationsNearStove = pickupItems.filter(p => p.type === 'ration' && p.id.includes('_0_')).every(p => Math.hypot(p.x - st0.x, p.z - st0.z) <= 3.2 && Math.hypot(p.x - 11, p.z - 29) > 10);
           // 4. 牆後重生：兩棟二樓看台 (±13, 3.9, 0) 射向藍營重生點頭部都被擋；牆高 1.9~2.2；灰/紅兩色
           const sp0 = TEAM_SPAWN[0];
-          const losW = segmentHitObstacle(new THREE.Vector3(-13, 3.9, 0), new THREE.Vector3(sp0.x, 1.6, sp0.z)) !== null;
-          const losE = segmentHitObstacle(new THREE.Vector3(13, 3.9, 0), new THREE.Vector3(sp0.x, 1.6, sp0.z)) !== null;
+          const losW = true, losE = true;   // v8.4 牆移到外側，重生點改沙包後 (不再要求全擋視線)
           const sp1 = TEAM_SPAWN[1];
-          const losR = segmentHitObstacle(new THREE.Vector3(13, 3.9, 0), new THREE.Vector3(sp1.x, 1.6, sp1.z)) !== null && segmentHitObstacle(new THREE.Vector3(-13, 3.9, 0), new THREE.Vector3(sp1.x, 1.6, sp1.z)) !== null;
+          const losR = Math.abs(sp1.z) > 25 && Math.abs(sp1.x) < 9;
           const rw = window.ruinedWalls;
-          const wallHeightsOk = rw.every(o => (o.isViewGap ? Math.abs(o.maxY - 1.2) < 0.01 : (o.maxY >= 1.9 && o.maxY <= 2.21))) && rw.every(o => Math.abs(o.minX) >= 10 && Math.abs(o.maxX) <= 19.7) && rw.filter(o => o.isViewGap).length >= 2;
+          const wallHeightsOk = rw.every(o => o.maxY >= 1.9 && o.maxY <= 2.21) && rw.every(o => Math.abs(o.minZ) >= 36 && Math.abs(o.maxX) <= 26.5);
           const spawnOk = losW && losE && losR && wallHeightsOk && !checkCollision(sp0.x, sp0.z, 0, 0.42, PLAYER_HEIGHT);
           // 5. 吉普不與牆/拒馬重疊
           const jeepBoxes = obstacles.filter(o => o.isVehicle && o.vehiclePart === 'cabin');
@@ -13312,7 +13542,7 @@
           const noFrontPole = !tent0.group.children.some(c => c.name !== 'front_apole' && c.name !== 'back_pole' && c.geometry && c.geometry.type === 'CylinderGeometry' && Math.abs(c.position.x - tent0.L / 2) < 0.05 && Math.abs(c.position.z) < 0.05 && c.geometry.parameters.height > 1.5);
           const tentOk = noFrontPole && tn.filter(n => n === 'front_apole').length === 2 && tn.filter(n => n === 'curtain').length === 2 && tn.filter(n => n === 'guy_rope').length === 6 && tn.filter(n => n === 'peg').length === 6 && tn.includes('back_pole');
           // 4. 散落磚頭：尺寸/角度多樣
-          const bricks = []; scene.traverse(o => { if (o.isMesh && o.geometry && o.geometry.type === 'BoxGeometry' && o.geometry.parameters.width < 0.36 && o.geometry.parameters.height < 0.16 && Math.abs(Math.abs(o.position.z) - 23.2) < 1.4 && o.position.y < 0.12) bricks.push(o); });
+          const bricks = []; scene.traverse(o => { if (o.isMesh && o.geometry && o.geometry.type === 'BoxGeometry' && o.geometry.parameters.width < 0.36 && o.geometry.parameters.height < 0.16 && Math.abs(Math.abs(o.position.z) - 37) < 1.4 && o.position.y < 0.12) bricks.push(o); });
           const sizes = new Set(bricks.map(b => b.geometry.parameters.width.toFixed(2))); const rots = new Set(bricks.map(b => b.rotation.y.toFixed(1)));
           const mounds = []; scene.traverse(o => { if (o.name === 'rubble_mound') mounds.push(o); });
           const rubbleOk = bricks.length >= 20 && sizes.size >= 8 && rots.size >= 8 && mounds.length >= 2;
@@ -13326,12 +13556,149 @@
           const sp0 = TEAM_SPAWN[0]; const gapSeg = window.ruinedWalls.find(o => o.isViewGap && o.minZ > 0);
           const seeField = gapSeg && segmentHitObstacle(new THREE.Vector3((gapSeg.minX + gapSeg.maxX) / 2, 1.6, sp0.z), new THREE.Vector3((gapSeg.minX + gapSeg.maxX) / 2, 1.3, 5)) === null;
           const spawnStillSafe = segmentHitObstacle(new THREE.Vector3(-13, 3.9, 0), new THREE.Vector3(sp0.x, 1.6, sp0.z)) !== null && segmentHitObstacle(new THREE.Vector3(13, 3.9, 0), new THREE.Vector3(sp0.x, 1.6, sp0.z)) !== null;
-          const gapOk = !!gapSeg && Math.abs(gapSeg.maxY - 1.2) < 0.01 && seeField && spawnStillSafe && Math.abs((gapSeg.minX + gapSeg.maxX) / 2 - (sp0.x + 2.2)) < 0.8;
+          const gapOk = !gapSeg && window.ruinedWalls.every(o => Math.abs(o.minZ) >= 36);   // v8.4：牆在地圖外側、無缺口段
           aiEnabled = sv.ai; window.forceBothTeamsAI = sv.force; initEnemies(); teleport(0, 20, 0, 0);
           log(
             'T88 v8.3 AI 面向才開火、公仔比例角色、帳篷開口/營繩營釘、散落磚頭隨機、基地爐單一名稱、播報預設僅戰況、重生牆觀察缺口驗證',
             faceFireOk && dollOk && tentOk && rubbleOk && stoveLabelOk && casterDefaultOk && gapOk,
             `face=${faceFireOk} doll=${dollOk}(${headFrac.toFixed(2)}) tent=${tentOk}(${noFrontPole}) rubble=${rubbleOk}(${bricks.length},${sizes.size},${mounds.length}) stove=${stoveLabelOk}(${stoveSprites}) caster=${casterDefaultOk} gap=${gapOk}(${seeField}/${spawnStillSafe})`
+          );
+        }
+
+
+        // ---- T89: v8.4 狙擊平台貼齊欄杆無縫、AI 聽覺 (聲量/耳鳴/槍聲掩蓋)、注意力優先序、磚牆在地圖外側 ----
+        {
+          const sv = { ai: aiEnabled, force: window.forceBothTeamsAI, crouch: isCrouched, prone: isProne };
+          // 1. 平台延伸到欄杆：平台與欄杆之間任一點地面高度都是 4.0 (不會掉到 3.4)；平台前緣護唇存在；趴在平台上眼睛高於踢腳板可射擊
+          const innerXW = -12; const samples = [-12.16, -12.3, -12.6, -13.0, -13.4, -13.65];
+          const noGap = samples.every(x => Math.abs(getGroundHeight(x, 0, 3.6) - 4.0) < 0.01);
+          const lipOk = obstacles.filter(o => o.isPlatformLip).length === 2;
+          const railBlocks = checkCollision(innerXW + 0.1, 0, 4.0, 0.42, 0.6) === true && obstacles.filter(o => o.isPlatformGuard).length === 2;   // 趴著靠到底被加高護欄擋住 (跨不過)
+          const eyeAboveKick = (0.6 + PRONE_HEIGHT) > 0.45 && (0.6 + PRONE_HEIGHT) < 1.05;   // 眼睛在玻璃區 (可射擊)
+          const platOk = noGap && lipOk && railBlocks && eyeAboveKick;
+          // 2. 聽覺：聲量 (趴/蹲/走/跑)、耳鳴、槍聲掩蓋
+          aiEnabled = true; window.forceBothTeamsAI = true; initEnemies();
+          const ear = aiEnemies.find(a => a.team === 1); ear.mesh.position.set(0, 0, 0); ear.mesh.lookAt(0, 0, -30); ear.deafUntil = 0;
+          teleport(0, 1.2, 0, 0); keysDown['KeyW'] = true; isCrouched = false; isProne = false; window.__playerMoveSpeed = 6.6; Caster.shotLog.length = 0;
+          const cLocal = aiEnemyCandidates(ear).find(c => c.local);
+          const gRun = aiHearingGainFor(ear, cLocal, 0.016, gameNow);
+          window.__playerMoveSpeed = 4.2; const gWalk = aiHearingGainFor(ear, cLocal, 0.016, gameNow);   // 開鏡慢走
+          isCrouched = true; const gCrouch = aiHearingGainFor(ear, cLocal, 0.016, gameNow);
+          isCrouched = false; isProne = true; const gProne = aiHearingGainFor(ear, cLocal, 0.016, gameNow); isProne = false;
+          ear.deafUntil = gameNow + 1500; isCrouched = false; window.__playerMoveSpeed = 4.2; const gDeaf = aiHearingGainFor(ear, cLocal, 0.016, gameNow); ear.deafUntil = 0;
+          Caster.onShot(3, 3, 0, '別人', 0, 1); const gMasked = aiHearingGainFor(ear, cLocal, 0.016, performance.now()); Caster.shotLog.length = 0;
+          keysDown['KeyW'] = false;
+          const hearingOk = gRun > gWalk && gWalk > gCrouch && gCrouch > gProne && gProne >= 0 && Math.abs(gDeaf - gWalk * 0.25) < 1e-6 && gMasked < gWalk;
+          // 4.5m 外：全速走聽得到 (半徑 6m)，開鏡慢走 (半徑 3.6m) 聽不到
+          teleport(0, 4.5, 0, 0); keysDown['KeyW'] = true; const cFar = aiEnemyCandidates(ear).find(c => c.local);
+          window.__playerMoveSpeed = 6.6; const farRun = aiHearingGainFor(ear, cFar, 0.016, gameNow); window.__playerMoveSpeed = 4.2; const farWalk = aiHearingGainFor(ear, cFar, 0.016, gameNow); keysDown['KeyW'] = false;
+          const radiusOk = farRun > 0 && farWalk === 0;
+          // 3. 注意力：視野內 8m 的 A 優先於背後 5m 的 B；B 開槍後 (A 不可見時) 優先 B
+          const A = aiEnemies.find(a => a.team === 0), B = aiEnemies.filter(a => a.team === 0)[1] || A;
+          ear.mesh.position.set(0, 0, 0); ear.mesh.lookAt(0, 0, 10); teleport(30, 30, 0, 0);
+          A.mesh.position.set(0, 0, 8); B.mesh.position.set(0, 0, -5); Caster.shotLog.length = 0;
+          const t1 = aiPickTarget(ear); const prefersVisible = !!(t1 && t1.aiRef === A);
+          A.mesh.position.set(0, 0, -8); B.mesh.position.set(0, 0, -5); const t2 = aiPickTarget(ear); const nearestWhenNoneVisible = !!(t2 && t2.aiRef === B);
+          A.mesh.position.set(0, 0, -5); B.mesh.position.set(0, 0, -8); Caster.onShot(0, -8, 0, B.name, 0, 1); const t3 = aiPickTarget(ear); const prefersShooter = !!(t3 && t3.aiRef === B); Caster.shotLog.length = 0;
+          const targetOk = prefersVisible && nearestWhenNoneVisible && prefersShooter;
+          // 4. 磚牆在地圖外側 (|z| ≥ 36)，基地旁無牆；重生點在沙包後
+          const rwAll = window.ruinedWalls;
+          const wallsOutside = rwAll.length >= 30 && rwAll.every(o => Math.abs(o.minZ) >= 36) && !obstacles.some(o => o.isRuinedWall && Math.abs(o.minZ) < 30);
+          const spawnOk = Math.abs(TEAM_SPAWN[0].x + 7.5) < 0.01 && TEAM_SPAWN[0].z > 25;
+          aiEnabled = sv.ai; window.forceBothTeamsAI = sv.force; isCrouched = sv.crouch; isProne = sv.prone; initEnemies(); teleport(0, 20, 0, 0);
+          log(
+            'T89 v8.4 狙擊平台貼齊欄杆無縫+護唇+加高護欄、AI 聽覺 (聲量/耳鳴/槍聲掩蓋/半徑)、注意力優先序 (視野>開槍者>距離)、磚牆移到地圖外側驗證',
+            platOk && hearingOk && radiusOk && targetOk && wallsOutside && spawnOk,
+            `plat=${noGap}/${lipOk}/${railBlocks}/${eyeAboveKick} hearing=${hearingOk}(${gRun.toFixed(2)}>${gWalk.toFixed(2)}>${gCrouch.toFixed(2)}>${gProne.toFixed(2)} deaf=${gDeaf.toFixed(3)} masked=${gMasked.toFixed(2)}) radius=${radiusOk} target=${prefersVisible}/${nearestWhenNoneVisible}/${prefersShooter} walls=${wallsOutside} spawn=${spawnOk}`
+          );
+        }
+
+
+        // ---- T90: v8.5 手機橫向精簡 HUD：2×3 叢集、姿勢循環鍵、☰ 系統選單、隱藏切槍/背包 ----
+        {
+          const wasPhone = document.body.classList.contains('dev-phone');
+          document.body.classList.add('dev-phone');
+          const vis = (id) => getComputedStyle(document.getElementById(id)).display !== 'none';
+          const hiddenOk = !vis('btn-crouch') && !vis('btn-prone') && !vis('btn-swap') && vis('btn-pose') && !vis('weapon-slots');
+          const clusterR = document.getElementById('action-cluster').getBoundingClientRect();
+          const twLoaded = !!(window.tailwind) || getComputedStyle(document.getElementById('canvas-container')).position === 'absolute';
+          const compactOk = !twLoaded || (clusterR.height <= window.innerHeight * 0.46 && clusterR.width <= 120);
+          const sysBar = document.getElementById('hud-system-bar');
+          const menuOnly = vis('btn-sys-menu') && !vis('btn-close-room') && !vis('btn-scoreboard');
+          document.getElementById('btn-sys-menu').click(); const menuOpen = sysBar.classList.contains('sys-open') && vis('btn-close-room');
+          document.getElementById('btn-sys-menu').click(); const menuClosed = !sysBar.classList.contains('sys-open');
+          isCrouched = false; isProne = false; teleport(0, 20, 0, 0);
+          const p1 = cyclePose(), p2 = cyclePose(), p3 = cyclePose();
+          const poseOk = p1 === 'crouch' && p2 === 'prone' && p3 === 'stand' && !isCrouched && !isProne && document.getElementById('btn-pose').innerHTML.includes('<svg');
+          if (!wasPhone) document.body.classList.remove('dev-phone');
+          log(
+            'T90 v8.5 手機橫向精簡：2×3 動作叢集 (≤46% 高)、姿勢循環鍵合併蹲/趴、☰ 系統選單收合、隱藏切槍與雙槍背包驗證',
+            hiddenOk && compactOk && menuOnly && menuOpen && menuClosed && poseOk,
+            `hidden=${hiddenOk} compact=${compactOk}(${clusterR.width.toFixed(0)}x${clusterR.height.toFixed(0)}/${window.innerHeight}) menu=${menuOnly}/${menuOpen}/${menuClosed} pose=${poseOk}(${p1},${p2},${p3})`
+          );
+        }
+
+
+        // ---- T91: v8.6 兩鍵操作 (E 互動 / G 炸彈)、蹲下自動掩體 + A/D 探頭、AI 人數控制 (auto/fill/fixed/none)、播報兩段、徽章 2 個、橫幅/無敵 ----
+        {
+          // 1. AI 人數控制：真人在藍隊 1 人
+          gameModeSetting = 'pvp'; aiEnabled = true; window.forceBothTeamsAI = false; aiSpawnIntervalTimer = 0;
+          const humans0 = getHumanTeamCounts();
+          setAICountCfg({ mode: 'fill', cap: 4 }); initEnemies(); replenishBothTeamsBalanced(undefined, false);
+          const f0 = aiEnemies.filter(a => a.team === 0 && a.state !== 'DEAD').length, f1 = aiEnemies.filter(a => a.team === 1 && a.state !== 'DEAD').length;
+          const fillOk = f0 === 4 - humans0[0] && f1 === 4 - humans0[1];
+          setAICountCfg({ mode: 'fixed', fixed: [1, 3] }); initEnemies(); replenishBothTeamsBalanced(undefined, false);
+          const x0 = aiEnemies.filter(a => a.team === 0 && a.state !== 'DEAD').length, x1 = aiEnemies.filter(a => a.team === 1 && a.state !== 'DEAD').length;
+          const fixedOk = x0 === 1 && x1 === 3;
+          setAICountCfg({ mode: 'none' }); initEnemies(); replenishBothTeamsBalanced(undefined, false);
+          const noneOk = aiEnemies.length === 0 && getActiveAITeams().length === 0;
+          setAICountCfg({ mode: 'auto', cap: 4, fixed: [2, 3] }); initEnemies(); replenishBothTeamsBalanced(undefined, false);
+          const a0 = aiEnemies.filter(a => a.team === 0 && a.state !== 'DEAD').length, a1 = aiEnemies.filter(a => a.team === 1 && a.state !== 'DEAD').length;
+          const autoOk = a0 === 0 && a1 === 4 && document.getElementById('ai-fill-mode').value === 'auto' && document.getElementById('team-cap-input').value === '4';
+          const summaryTxt = updateAdvSummary(); const summaryOk = summaryTxt.includes('AI人數 自動') && summaryTxt.includes('上限4') && !!document.getElementById('adv-settings');
+          const explainerGone = !document.body.innerText.includes('房間怎麼運作');
+          // 2. 兩鍵操作：E 互動 (哨戒砲補彈)、G 炸彈 (旗座內也可)；T/6/Y 不再有作用
+          const bt = window.baseTurrets.find(t => t.team === playerState.team); bt.destroyed = false; bt.ammo = 100; baseTurretSetting = 'on';
+          teleport(bt.x + 1.0, bt.z, 0, 0); ammoPool.rifle = 60;
+          window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyT' })); const tDead = bt.ammo === 100;
+          const avail = interactAvailable(); window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyE' })); const eRefill = avail === 'turret' && bt.ammo === 160 && ammoPool.rifle === 0;
+          updateBaseTurrets(0.001, gameNow); const interactBtnShown = !document.getElementById('btn-interact').classList.contains('hidden');
+          gameModeSetting = 'ctf'; resetAllCtfFlags(); teleport(ctfFlags[0].x + 0.8, ctfFlags[0].z, 0, ctfFlags[0].floorY); updateCTF(0.2);
+          playerState.hasBomb = true; bombState.isPlanted = false; cancelBombPlant();
+          window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Digit6' })); const sixDead = !bombPlant.active;
+          window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyG' })); const gInFlagZone = bombPlant.active === true;
+          window.dispatchEvent(new KeyboardEvent('keyup', { code: 'KeyG' })); const gRelease = !bombPlant.active && playerState.hasBomb === true;
+          ctfState.gMashBoostUntil = 0; window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyE' })); const eMash = getCtfCaptureSpeedMultiplier(true) === 2.0;
+          const q = document.getElementById('btn-peek'), c = document.getElementById('btn-cover'); const oldBtnsHidden = getComputedStyle(q).display === 'none' && getComputedStyle(c).display === 'none';
+          gameModeSetting = 'pvp'; playerState.hasBomb = false;
+          // 3. 蹲下靠近掩體自動吸附 + A/D 探頭 + 站起離開
+          const cb = coverBoxes[0]; isCrouched = false; isProne = false; isCovered = false; coverAutoSuppressed = false;
+          teleport(cb.x + cb.radius * 0.5, cb.z, 0, 0); keysDown['KeyD'] = false; keysDown['KeyA'] = false;
+          const nearBefore = checkNearCoverBoxQuiet();
+          isCrouched = true; frame(1);
+          const autoIn = isCovered === true && isCrouched === true;
+          keysDown['KeyD'] = true; frame(1); const peekR = isCovered && isPeeking && peekDirection === 1;
+          keysDown['KeyD'] = false; frame(1); const peekBack = isCovered && !isPeeking;
+          isCrouched = false; frame(1); const autoOut = isCovered === false;
+          const coverOk = nearBefore && autoIn && peekR && peekBack && autoOut;
+          isCrouched = false; isProne = false; isCovered = false; teleport(0, 20, 0, 0);
+          // 4. 播報兩段 + 喊話依 AI 積極度；徽章列最多 2 個；橫幅 8 秒；無敵 6 秒
+          Caster.setMode('battle'); const c1 = Caster.cyclePlayerMode(), c2 = Caster.cyclePlayerMode(); const twoStep = c1 === 'off' && c2 === 'battle' && CASTER_MODE_LABELS.battle.includes('開') && CASTER_MODE_LABELS.off.includes('關');
+          setAILevel('low'); const lowNoCallout = window.tacticalCalloutsEnabled === false; setAILevel('medium'); const midCallout = window.tacticalCalloutsEnabled === true;
+          const bar = document.getElementById('tactical-buff-bar'); const spans = Array.from(bar.children); const prevHidden = spans.map(s => s.classList.contains('hidden'));
+          spans.forEach((s, i) => { s.classList.toggle('hidden', i >= 4); s.__shownAt = 0; }); for (let i = 0; i < 4; i++) { spans[i].__shownAt = 1000 + i; }
+          const visCount = trimBuffBar(5000); const visible = spans.filter(s => !s.classList.contains('hidden') && s.style.display !== 'none').length;
+          const buffOk = visCount === 2 && visible === 2 && spans[3].style.display === '' && spans[0].style.display === 'none';
+          spans.forEach((s, i) => { s.classList.toggle('hidden', prevHidden[i]); s.style.display = ''; });
+          const feedEl = document.getElementById('kill-feed'); for (let i = 0; i < 7; i++) addKillFeed('t91 ' + i, '#fff'); const feedOk = feedEl.children.length <= 4;
+          const src = (announceMatchEnd.toString()); const bannerOk = src.includes('secs = 8') && src.includes('8500') && !src.includes('>= 2) proceed');
+          const invSrc = respawnPlayer.toString(); const invOk = invSrc.includes('grantInvulnerability(6)');
+          const prepSrc = startPrepPhase.toString(); const prepOk = prepSrc.includes('Math.min(seconds || 5, 5)') && typeof isPrepSkippable === 'function';
+          const tipsSrc = toggleTips.toString(); const tipsOk = tipsSrc.includes('QFORCE3D_TIPS') && typeof autoOpenTipsFirstMatch === 'function';
+          log(
+            'T91 v8.6 兩鍵操作 (E 互動/G 炸彈)、蹲下自動掩體 + A/D 探頭、AI 人數 auto/fill/fixed/none + 摘要列、播報兩段、徽章 2 個、橫幅 8s、無敵 6s、簡報 5s、技巧記憶',
+            fillOk && fixedOk && noneOk && autoOk && summaryOk && explainerGone && tDead && eRefill && interactBtnShown && sixDead && gInFlagZone && gRelease && eMash && oldBtnsHidden && coverOk && twoStep && lowNoCallout && midCallout && buffOk && feedOk && bannerOk && invOk && prepOk && tipsOk,
+            `fill=${fillOk}(${f0},${f1}) fixed=${fixedOk}(${x0},${x1}) none=${noneOk} auto=${autoOk}(${a0},${a1}) summary=${summaryOk} explainer=${explainerGone} T=${tDead} E=${eRefill} ibtn=${interactBtnShown} 6=${sixDead} G=${gInFlagZone}/${gRelease} Emash=${eMash} oldBtns=${oldBtnsHidden} cover=${coverOk}(${nearBefore},${autoIn},${peekR},${peekBack},${autoOut}) caster=${twoStep}/${lowNoCallout}/${midCallout} buff=${buffOk} feed=${feedOk} banner=${bannerOk} inv=${invOk} prep=${prepOk} tips=${tipsOk}`
           );
         }
 

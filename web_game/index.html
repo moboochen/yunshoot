@@ -401,6 +401,27 @@
     </div>
   </section>
 
+  <!-- v8.6：房間運作說明 (自 game.html 大廳移出) -->
+  <section id="room-explainer" class="max-w-6xl mx-auto py-10 border-t border-slate-800/80">
+    <div class="bg-slate-900/70 border border-slate-800 p-6 sm:p-8 rounded-3xl">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="text-3xl">❓</span>
+        <div>
+          <h3 class="text-xl font-black text-white">房間怎麼運作？(開房 / 看到別人 / 關閉 / 多久消失)</h3>
+          <p class="text-xs text-slate-400">大廳不再顯示這段說明，改放在這裡。</p>
+        </div>
+      </div>
+      <ul class="list-disc pl-5 space-y-1.5 text-sm text-slate-300">
+        <li><b class="text-white">開房</b>：按「建立新房間」後，你的房間會送到「房間目錄節點」(第一位進大廳的人自動擔任，其他人連上它)，並每 5 秒送心跳。</li>
+        <li><b class="text-white">別人怎麼看到</b>：大廳每個人都訂閱目錄，有新房間會即時推送；按「掃描刷新」會再查一次。同一台電腦的分頁另以本機通道同步。</li>
+        <li><b class="text-white">關閉房間</b>：房主按遊戲內「關閉房間」或直接關掉網頁 → 房間立刻從目錄移除，房內玩家會被送回大廳。</li>
+        <li><b class="text-white">多久消失</b>：房主 15 秒沒送心跳 (斷線、睡眠) 房間就自動從清單消失。</li>
+        <li><b class="text-white">隊伍</b>：純 PvP 時房主在藍隊，加入者依選擇「同隊 / 對打 / 自動平衡」分配，兩隊各自從自己的旗幟出生。</li>
+        <li><b class="text-white">AI 人數 (v8.6)</b>：房主可在「⚙️ 房間設定」選擇 自動 / 補滿兩隊到上限 / 直接指定兩隊 AI 數 / 不補 AI，並設定每隊上限 2~6。</li>
+      </ul>
+    </div>
+  </section>
+
   <!-- GitHub Pages 3 步驟發布教學 (#2) -->
   <section id="github-deploy" class="max-w-6xl mx-auto py-10 border-t border-slate-800/80">
     <div class="bg-gradient-to-r from-slate-900 to-slate-950 border border-slate-800 p-6 sm:p-8 rounded-3xl">
