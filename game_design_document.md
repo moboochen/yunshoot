@@ -1101,3 +1101,27 @@ sequenceDiagram
 - 新增 8 組程序化高解析 `CanvasTexture`＋`bumpMap` 凹凸紋理並全數快取（`GUN_TEX_CACHE` / `_GUN_MAT_INST`）：冷鍛拉絲磷化槍鋼、陽極氧化霧黑機匣（含鉚釘插銷與紅點保險刻線）、防滑菱格咬花聚合物、俄羅斯胡桃木實木流線木紋、衝壓鋼肋彈匣、電木紅棕肋紋彎彈匣、MIL-STD-1913 皮卡汀尼導軌齒槽、FDE 沙色 Cerakote 與 AWP 軍綠複合塗層。
 - 全面重構 `M4A1 SOPMOD`、`AK-47`、`AWP`、`12G 散彈槍`、`HK MP5`、`FN P90`、`9mm 戰術手槍` 細節（鍍鉻拋殼窗、鍍膜綠光學鏡、側掛紅殼黃銅底火散彈、P90 半透明琥珀彈匣內含黃銅彈藥、三點式夜光氚氣準星照門）。
 - 棚拍驗收圖見 `v89_characters_6pack.png` 與 `v89_weapons_realistic.png`。
+
+
+---
+
+## 三十四、 v9.0 十四項核心 Bug 修復、戰場無線電、UI/UX 美術統一與 AI 主題曲生成系統 (`T95`, 105/105 自動測試通過)
+
+### 1. 十四項需求與 Bug 根因分析及修復實裝一覽表
+
+| 編號 | 使用者反映問題 / 需求 | 根因分析與修復實裝細節 |
+| :---: | :--- | :--- |
+| **#1** | 遊戲畫面中應該要顯示自己角色的名字在明顯處 | 於畫面右上角生命值與護甲面板最上方新增醒目的 `#hud-player-name-box`（含戰術隊員標籤與 `#hud-player-name` 大字號顯示），並由 `updatePlayerNameHUD()` 根據藍隊／紅隊／觀察者身分即時切換高亮色調與邊框。 |
+| **#2** | 遊戲預設應該是麥克風開，可以由大廳建立者預設關閉 | `FieldAudio.micEnabled` 與 `FieldAudio.hostDefaultMic` 預設皆改為 `true`（開麥）；大廳新增 `#default-mic-select`（房主設定房間預設開麥／關麥），等待室新增房主專屬 `#btn-wait-host-default-mic` 按鈕，並透過 `welcome`、`match_start`、`host_default_mic` 封包同步給所有加入房間的玩家。 |
+| **#3** | 講話的時候要有自己以及收聽的音量條，這樣就知道通話是否有開啟。可以叫做戰場無線電 | 全面將「場地收音」更名為「**📻 戰場無線電**」，並於 `FieldAudio` 實作 WebAudio `AnalyserNode` 即時頻譜音量採樣 (`sampleVolumeLevels`)，在遊戲 HUD (`#hud-radio-panel`)、等待室 (`#waiting-room-radio-panel`) 與遊戲大廳 (`#lobby-radio-panel`) 同步渲染「🎙️ 自己音量條 (`*-vol-self-bar`)」與「🔊 收聽音量條 (`*-vol-rx-bar`)」。 |
+| **#4** | 搶旗遊戲的時候有可能我是紅隊但突然只能攻擊紅隊隊員，請檢查是否有這個 bug | **查明三大根因並徹底修復**：<br>1. **頭頂名牌顏色反轉**：原 `createNameTagSprite(text, isAlly, paintHex)` 以「是否為我方隊友 (`isAlly`)」決定名牌藍框 (`#38bdf8`) 或紅框 (`#ef4444`)，導致當玩家身為紅隊 (`team === 1`) 時，**紅隊隊友 (`isAlly = true`) 頭頂顯示藍色名牌**、**藍隊敵人 (`isAlly = false`) 頭頂顯示紅色名牌**，讓紅隊玩家誤以為穿藍名牌的紅隊隊友是藍隊敵人、穿紅名牌的藍隊敵人是紅隊隊友！現已改為依單位實際 `teamIndex`（`0`=藍、`1`=紅）決定名牌顏色。<br>2. **`TEAM_COLORS.red_blue` 陣營色碼顛倒**：原 `red_blue` 將 `allyColor`（供 `teamIndex === 0` 使用）設為紅色、將 `enemyColor`（供 `teamIndex === 1` 使用）設為藍色，導致選「赤紅 vs 特警藍」時藍隊基地的兵穿紅臂章、紅隊基地的兵穿藍臂章！現已修正 `allyColor: 0x3b82f6, enemyColor: 0xef4444, hostTeam: 1`。<br>3. **換隊／開局時場上單位與 AI 名稱未刷新**：新增 `refreshAllUnitsTeamAffiliation()`，在 `team_switch`、`roster`、`welcome`、`match_start` 與 `enterWorld` 時強制同步所有 AI 與遠端玩家的名牌與敵我狀態，並修正 `spawnAIEnemyFromBase` 中 `slot.name` 殘留舊隊伍前綴的問題。 |
+| **#5** | 戰場爐子或者是自動機炮被打倒了，同一場遊戲中就不會復原，但是如果遊戲結束開一場新的，這兩個物件回覆後卻還是傾斜的，導致自動機炮的作動不正確，鍋子也是斜的 | 原版在爐子被打翻 (`s.group.rotation.z = ±1.25; s.group.position.y = 0.05`) 與哨戒砲被擊毀 (`t.group.rotation.x = 0.55; t.head.position.y = 0.55`) 後，開新局或回大廳時從未重置 3D 群組的 `rotation` 與 `position`，且爐子吊鍋 `potGroup.rotation.z` 仍殘留傾斜角。現已新增 `resetStovesAndTurrets()`，於同一局內維持打倒不復原，但在 `resetMatchRound()`、`enterWorld()` 與 `returnToLobby()` 開啟新局時，100% 重置 `s.group`、`s.potGroup`、`t.group`、`t.head` 的座標與旋轉角度為垂直正立，並恢復滿血、滿彈與火焰／蒸氣特效。 |
+| **#6** | 中間上方的遊戲功能按鈕應該要顏色相近，以降低視覺影響，但是有不同圖示 | 將 `#hud-system-bar` 內所有頂部功能按鈕統一為低視覺干擾的深石板半透明毛玻璃配色 (`bg-slate-900/85 border-slate-600/70 text-slate-200`)，並為每顆按鈕設計專屬辨識 SVG 圖示（撤離門標、獎盃排行榜、無線電麥克風、戰術面板、邀請連結、全螢幕展開）。 |
+| **#7** | 右邊的功能按鍵應該要有更一致的美術設計 | 將 `#action-cluster` 右側所有動作按鍵（開火、跳躍、蹲下、趴下、換彈、開鏡、切槍、姿勢、補彈、炸彈）統一為高質感深色金屬戰術玻璃風格 (`bg-slate-900/90`)，搭配細緻功能導向微光邊框與一致的現代軍武 UI 視覺語言。 |
+| **#8** | 觀察者/電競播報模式不要放在房間設定，應該要在外面給每個加入的人都要可以調整觀察者模式 | 將「觀察者 / 電競播報模式」從摺疊的房間進階設定 (`#adv-settings`) 移出，在大廳主畫面外層建立醒目的 `#lobby-spectator-card` (`#spectator-mode-select`)，並在加入房間選隊視窗新增 `#btn-pick-spectator`、在等待室新增 `#btn-wait-toggle-spectator`，讓每位加入的玩家都能隨時獨立切換觀察者身分。 |
+| **#9** | 遊戲大廳應該就要可以打開麥克風，有音量條，讓大家跟開房間的關主嘴巴溝通 | 於遊戲大廳建立 `#lobby-radio-panel`、於等待室建立 `#waiting-room-radio-panel`，內建麥克風開關與即時「🎙️ 自己音量條 / 🔊 收聽音量條」，讓玩家在大廳與等待室階段就能直接與房主（關主）即時語音溝通。 |
+| **#10** | 遊戲大廳先打好名字之後，換角色應該就不會覆蓋名字 | 新增 `window.playerNameCustomized` 狀態追蹤：當玩家在 `#player-name-input` 手動輸入自訂名稱後，點擊切換 6 款 Q 版動物角色只會更換角色外觀與天賦，不再覆蓋玩家已輸入的名字。 |
+| **#11** | 遊戲等待室也可以改名字 | 在 `#waiting-room-modal` 新增 `#wait-name-edit-bar`（`#wait-name-input` + `#btn-wait-save-name`），支援隨時輸入新名字並透過 `commitWaitingRoomNameChange()` 即時同步至 `playerState.name`、`Net.roster`、`scoreboard`、`RoomRegistry` 與戰場無線電名冊。 |
+| **#12** | 死掉的時候不要原地快速旋轉，看起來有點奇怪，應該視角是倒在地上，然後環繞視角追蹤被誰擊殺，再回到基地重生的視角 | 重構 `updateDeathCam(delta)` 為三階段運鏡：<br>1. **第一階段 (`0 ~ 1.8s`, `phase = 'self'`)**：取消原地旋轉，改為固定朝向平緩下沉並側傾 (`camera.rotation.z = 0.34 * fallProgress`) 的真實倒地視角。<br>2. **第二階段 (`1.8 ~ 4.1s`, `phase = 'killer'`)**：鏡頭平滑環繞 (`orbitAngle`) 追蹤擊殺者。<br>3. **第三階段 (`4.1 ~ 5.0s`, `phase = 'base_return'`)**：鏡頭平滑拉回我方基地重生點視角，銜接原地彈跳復活。 |
+| **#13** | 如果蹲著趴著被打死，重生之後應該是回復到站立開始 | 於 `respawnPlayer()` 與 `resetMatchRound()` 強制重設 `isCrouched = false; isProne = false; isCovered = false; isPeeking = false; eyeOffsetCurrent = STAND_HEIGHT; camera.rotation.z = 0;`，並同步更新隱匿狙擊狀態與姿勢按鈕 UI。 |
+| **#14** | 希望有慷慨激昂的遊戲大廳音樂，以及遊戲音樂，我不要簡單的合成音，請告訴我如何AI生成主題曲 | 於遊戲內建構 `BGMManager` 外部音樂播放與掛載系統 (`#lobby-bgm-panel`)，不採用單調合成音，支援自動讀取 `bgm_lobby.mp3` / `bgm_battle.mp3` 或由玩家直接選取本機 AI 生成音檔播放；並提供完整的 Suno / Udio / Google Lyria AI 主題曲生成指南與專業 Prompt 模板。 |
