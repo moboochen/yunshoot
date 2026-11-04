@@ -8,7 +8,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="現代突擊3D">
-  <title>Q版特種部隊：現代突擊 3D v9.2 - 陽光國小＆軍事基地雙戰場</title>
+  <title>Q版特種部隊：現代突擊 3D v9.3 - 陽光國小＆軍事基地雙戰場</title>
   <!-- Tailwind CSS (支援 Jetski 官方與外部 CDN) -->
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -647,7 +647,7 @@
           <span class="text-[11px] text-cyan-300 font-semibold" id="wait-broadcast-hint">📡 正在向大廳持續廣播「等待中」狀態…</span>
         </div>
         <div id="wait-ai-mode-hint" class="hidden text-[11px] font-bold px-3 py-1.5 rounded-xl mb-2 bg-emerald-500/15 border border-emerald-400/40 text-emerald-300"></div>
-        <div id="wait-player-list" class="space-y-1.5 max-h-44 overflow-y-auto custom-scroll"></div>
+        <div id="wait-player-list" class="space-y-2.5 max-h-64 overflow-y-auto custom-scroll"></div>
       </div>
 
       <!-- 房主專用控制按鈕 -->
@@ -715,7 +715,7 @@
           <span id="hud-fps" class="px-1.5 py-0.5 rounded text-[11px] font-mono text-slate-400 bg-slate-900/80 border border-slate-800">
             60 FPS
           </span>
-          <span id="hud-build" class="px-1.5 py-0.5 rounded text-[10px] font-mono text-amber-300/90 bg-slate-900/80 border border-slate-800">v9.2</span>
+          <span id="hud-build" class="px-1.5 py-0.5 rounded text-[10px] font-mono text-amber-300/90 bg-slate-900/80 border border-slate-800">v9.3</span>
         </div>
         <div id="hud-left-stats-row" class="text-xs text-slate-300 font-semibold bg-slate-900/80 border border-slate-800 px-2.5 py-1 rounded-lg backdrop-blur-sm flex items-center gap-2 whitespace-nowrap">
           <span>擊倒: <b id="kills-count" class="text-amber-400">0</b></span>
@@ -1058,7 +1058,35 @@
   <!-- 啟動大廳 / 動漫電競戰術指揮中心 (v9.1 #7 頂部醒目房間設定與連線房間、底部戰場無線電與精簡遊戲音樂開關) -->
   <div id="lobby-modal" class="absolute inset-0 z-40 flex items-center justify-center bg-slate-950/90 backdrop-blur-md p-2 sm:p-4 overflow-y-auto">
     <div id="lobby-card" class="max-w-4xl w-full cyber-lobby-shell cyber-grid-bg rounded-3xl p-4 sm:p-5 shadow-2xl text-center my-auto custom-scroll overflow-y-auto">
-      <div id="lobby-scroll-hint" class="text-[11px] font-bold text-cyan-300 bg-cyan-950/70 border border-cyan-500/40 rounded-xl px-3 py-1.5 mb-2">📱 手指上下滑動可檢視角色與底部無線電；房間設定與連線房間已置頂 ↓</div>
+      <!-- [v9.3 最頂端快捷控制霸] 交響軍歌音樂開關＋音量滑桿 ＆ 戰場無線電麥克風開關＋即時音量條 置於大廳畫面最上方最明顯處 -->
+      <div id="lobby-top-audio-bar" class="rounded-2xl px-3.5 py-2.5 mb-2.5 flex flex-wrap items-center justify-between gap-2.5 shadow-xl text-left" style="background: linear-gradient(90deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.96) 50%, rgba(6, 78, 59, 0.72) 100%); border: 2px solid #fbbf24;">
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" id="btn-lobby-top-bgm" class="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs sm:text-sm font-black shadow active:scale-95 transition whitespace-nowrap" title="開關交響軍歌大廳音樂 / 戰場主題曲 [N]">
+            🎺 交響軍歌：開啟 [N]
+          </button>
+          <div class="flex items-center gap-1.5 bg-slate-950/90 border border-amber-400/40 rounded-xl px-2.5 py-1">
+            <span class="text-[11px] font-black text-amber-200">🔊 音樂音量</span>
+            <input id="bgm-top-volume-slider" type="range" min="0" max="100" value="55" class="w-20 sm:w-24 accent-amber-400 cursor-pointer" title="調整大廳交響軍歌與戰場音樂音量">
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" id="btn-lobby-top-mic" class="mic-state-on px-3 py-1.5 rounded-xl text-xs sm:text-sm font-black shadow active:scale-95 transition whitespace-nowrap" title="開關戰場無線電麥克風 [M]">
+            🎙️ 麥克風：開麥中 [M]
+          </button>
+          <div class="flex items-center gap-2 bg-slate-950/90 border border-emerald-400/40 rounded-xl px-2.5 py-1 text-[10px] font-bold">
+            <div class="w-16">
+              <div class="text-emerald-300 leading-none mb-0.5">發話 TX</div>
+              <div class="radio-meter-track"><div id="lobby-top-tx-bar" class="radio-meter-fill-tx" style="width:0%"></div></div>
+            </div>
+            <div class="w-16">
+              <div class="text-cyan-300 leading-none mb-0.5">收聽 RX</div>
+              <div class="radio-meter-track"><div id="lobby-top-rx-bar" class="radio-meter-fill-rx" style="width:0%"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="lobby-scroll-hint" class="text-[11px] font-bold text-cyan-300 bg-cyan-950/70 border border-cyan-500/40 rounded-xl px-3 py-1.5 mb-2">📱 最上方可隨時開關「🎺 交響軍歌」與「🎙️ 麥克風」；目前開放房間數即時顯示於上方 ↓</div>
 
       <!-- 頂部電競指揮中心標題橫幅 -->
       <div class="flex flex-col sm:flex-row items-center justify-between gap-2 pb-2.5 mb-3 border-b border-cyan-500/25 text-left">
@@ -1067,10 +1095,10 @@
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> ANIME TACTICAL ARENA · P2P 零延遲連線指揮中心
           </div>
           <h1 class="text-xl sm:text-2xl font-black tracking-wider bg-gradient-to-r from-white via-cyan-200 to-amber-300 bg-clip-text text-transparent">
-            Q版特種部隊：現代突擊 3D v9.2
+            Q版特種部隊：現代突擊 3D v9.3
           </h1>
         </div>
-        <div id="build-stamp" class="text-[11px] font-mono font-bold text-amber-300 bg-slate-950 border border-amber-400/45 rounded-lg px-2.5 py-1 shrink-0">🏷️ 版本 v9.2 · 建置 2026-11-03 10:30 (台北)</div>
+        <div id="build-stamp" class="text-[11px] font-mono font-bold text-amber-300 bg-slate-950 border border-amber-400/45 rounded-lg px-2.5 py-1 shrink-0">🏷️ 版本 v9.3 · 建置 2026-11-04 08:50 (台北)</div>
       </div>
 
       <!-- [置頂核心區 1] 模式選擇 + 房號/呼號/觀察者身分 -->
@@ -1113,10 +1141,28 @@
         </div>
       </div>
 
-      <!-- [置頂核心區 2] v9.1 #7 最顯眼的「房間設定」與「連線房間列表」置於最上方，大字樣與鮮明配色 -->
-      <div id="lobby-top-room-hub" class="grid grid-cols-1 lg:grid-cols-12 gap-3 text-left mb-3.5">
-        <!-- 左上 (6/12)：⚙️ 房間設定 (醒目琥珀金框與明顯大字) -->
-        <div id="lobby-room-settings-card" class="lg:col-span-6 rounded-2xl p-3.5 shadow-xl" style="background: linear-gradient(145deg, rgba(120, 53, 15, 0.42) 0%, rgba(15, 23, 42, 0.96) 65%); border: 2px solid #f59e0b;">
+      <!-- [v9.3 獨立置頂連線房間即時看板] 與場地細部設定徹底分開，隨時在上方顯示目前開放房間數量 -->
+      <div id="lobby-active-rooms-card" class="rounded-2xl p-3.5 mb-3 text-left shadow-xl" style="background: linear-gradient(145deg, rgba(8, 47, 73, 0.65) 0%, rgba(15, 23, 42, 0.97) 68%); border: 2px solid #38bdf8;">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <div class="flex flex-wrap items-center gap-2 min-w-0">
+            <span class="px-2.5 py-1 rounded-lg text-xs sm:text-sm font-black shrink-0" style="background: #38bdf8; color: #0f172a;">📡 線上開放房間列表</span>
+            <span id="active-rooms-count-badge" class="px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-500/20 border border-emerald-400/70 text-emerald-300 shrink-0">目前開放房間：0 間</span>
+            <span id="directory-status" class="text-[11px] font-bold text-cyan-200 truncate">🟢 房間雷達就緒（可隨時開房或輸入房號加入）</span>
+          </div>
+          <button type="button" id="btn-refresh-rooms" class="text-xs font-black px-3 py-1 rounded-xl shrink-0 active:scale-95 transition" style="background: #0284c7; color: #ffffff; border: 1.5px solid #7dd3fc;">
+            🔄 掃描刷新
+          </button>
+        </div>
+        <div id="active-rooms-list" class="space-y-1.5 max-h-28 overflow-y-auto custom-scroll text-xs">
+          <div class="p-2.5 rounded-xl bg-slate-950/95 border border-cyan-500/30 text-cyan-100 font-semibold text-center">
+            目前尚無開放中的房間 — 點擊「🚀 建立新房間」開房（支援觀察者開房當導播），或輸入房號點「🔍 搜尋並加入房間」！
+          </div>
+        </div>
+      </div>
+
+      <!-- [獨立置頂區 2] ⚙️ 場地與對戰細部房間設定（獨立收合面板，不與連線列表混放） -->
+      <div id="lobby-top-room-hub" class="text-left mb-3.5">
+        <div id="lobby-room-settings-card" class="rounded-2xl p-3.5 shadow-xl" style="background: linear-gradient(145deg, rgba(120, 53, 15, 0.42) 0%, rgba(15, 23, 42, 0.96) 65%); border: 2px solid #f59e0b;">
           <details id="adv-settings">
             <summary class="cursor-pointer list-none select-none rounded-xl px-3 py-2.5 flex items-center justify-between gap-2" style="background: rgba(2, 6, 23, 0.88); border: 1.5px solid rgba(251, 191, 36, 0.7);">
               <div class="flex items-center gap-2 min-w-0">
@@ -1233,26 +1279,6 @@
           </details>
           <div class="mt-2 text-[11px] font-bold text-amber-200/90">💡 關主開房前可點上方展開調整生命數、AI 人數、回合秒數與預設開關麥</div>
         </div>
-
-        <!-- 右上 (6/12)：📡 連線房間列表 (醒目電光藍框與明顯大字，點選直接加入) -->
-        <div id="lobby-active-rooms-card" class="lg:col-span-6 rounded-2xl p-3.5 shadow-xl flex flex-col justify-between" style="background: linear-gradient(145deg, rgba(8, 47, 73, 0.58) 0%, rgba(15, 23, 42, 0.96) 65%); border: 2px solid #38bdf8;">
-          <div>
-            <div class="flex items-center justify-between gap-2 mb-2">
-              <div class="flex items-center gap-2 min-w-0">
-                <span class="px-2.5 py-1 rounded-lg text-xs sm:text-sm font-black shrink-0" style="background: #38bdf8; color: #0f172a;">📡 連線房間</span>
-                <span id="directory-status" class="text-[11px] font-bold text-cyan-200 truncate">（即時房間掃描就緒）</span>
-              </div>
-              <button type="button" id="btn-refresh-rooms" class="text-xs font-black px-3 py-1 rounded-xl shrink-0 active:scale-95 transition" style="background: #0284c7; color: #ffffff; border: 1.5px solid #7dd3fc;">
-                🔄 掃描刷新
-              </button>
-            </div>
-            <div id="active-rooms-list" class="space-y-1.5 max-h-28 overflow-y-auto custom-scroll text-xs">
-              <div class="p-2.5 rounded-xl bg-slate-950/95 border border-cyan-500/30 text-cyan-100 font-semibold text-center">
-                目前尚無開放中的房間 — 點擊「🚀 建立新房間」開房，或輸入房號點「🔍 搜尋並加入房間」！
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- [戰場地圖選擇區] v9.2 🗺️ 戰場地圖選擇：軍事訓練基地 ／ 陽光國小校園 (附即時渲染 3D 立體預覽縮圖) -->
@@ -1269,7 +1295,8 @@
           <div id="map-card-military" data-map-id="military" class="map-select-card map-active" role="button" tabindex="0">
             <div class="map-thumb-wrap mb-2">
               <canvas id="map-thumb-military" width="360" height="180"></canvas>
-              <span class="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-md text-[10px] font-black bg-slate-950/85 text-amber-300 border border-amber-400/50">3D 戰場縮圖</span>
+              <img id="map-thumb-img-military" alt="軍事訓練基地 3D 預覽" class="absolute inset-0 w-full h-full object-cover pointer-events-none hidden" />
+              <span class="absolute z-10 top-1.5 left-1.5 px-2 py-0.5 rounded-md text-[10px] font-black bg-slate-950/85 text-amber-300 border border-amber-400/50">3D 戰場縮圖</span>
               <span id="map-check-military" class="absolute top-1.5 right-1.5 px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-400 text-slate-950 shadow">✓ 已選擇</span>
             </div>
             <div class="flex items-center justify-between gap-1">
@@ -1282,7 +1309,8 @@
           <div id="map-card-school" data-map-id="school" class="map-select-card" role="button" tabindex="0">
             <div class="map-thumb-wrap mb-2">
               <canvas id="map-thumb-school" width="360" height="180"></canvas>
-              <span class="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-md text-[10px] font-black bg-slate-950/85 text-emerald-300 border border-emerald-400/50">NEW 3D 校園縮圖</span>
+              <img id="map-thumb-img-school" alt="陽光國小校園 3D 預覽" class="absolute inset-0 w-full h-full object-cover pointer-events-none hidden" />
+              <span class="absolute z-10 top-1.5 left-1.5 px-2 py-0.5 rounded-md text-[10px] font-black bg-slate-950/85 text-emerald-300 border border-emerald-400/50">NEW 3D 校園縮圖</span>
               <span id="map-check-school" class="hidden absolute top-1.5 right-1.5 px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-400 text-slate-950 shadow">✓ 已選擇</span>
             </div>
             <div class="flex items-center justify-between gap-1">
@@ -2191,6 +2219,7 @@
                 target: data.sender,
                 hostName: playerState.name,
                 hostTeam: playerState.team,
+                hostBroadcast: !!playerState.isBroadcaster,
                 aiEnabled: aiEnabled,
                 gameMode: gameModeSetting,
                 combatMode: combatModeSetting,
@@ -2248,7 +2277,7 @@
           case 'team_switch':  // 玩家在等待室或遊戲中切換隊伍 (同隊合作 vs 不同隊兩邊都有 AI)
             if (this.isHost && data.sender && this.roster[data.sender]) {
               this.roster[data.sender].team = (data.team === 1) ? 1 : 0;
-              this.sendAll({ type: 'roster', roster: this.roster, hostName: playerState.name, hostTeam: playerState.team, hostPaint: playerState.paintColor, hostStyle: playerState.style, hostSpec: playerState.spec, sender: this.myId });
+              this.sendAll({ type: 'roster', roster: this.roster, hostName: playerState.name, hostTeam: playerState.team, hostPaint: playerState.paintColor, hostStyle: playerState.style, hostSpec: playerState.spec, hostBroadcast: !!playerState.isBroadcaster, sender: this.myId });
               if (scoreboard[this.roster[data.sender].name]) scoreboard[this.roster[data.sender].name].team = this.roster[data.sender].team;
               renderWaitingRoomUI();
               if (typeof ensureAITeamsSpawned === 'function') ensureAITeamsSpawned();
@@ -2287,7 +2316,8 @@
                   team: (data.hostTeam === 0 || data.hostTeam === 1) ? data.hostTeam : ((prevHost && prevHost.team) ?? 0),
                   paint: data.hostPaint ?? (prevHost && prevHost.paint),
                   style: data.hostStyle || (prevHost && prevHost.style),
-                  spec: data.hostSpec || (prevHost && prevHost.spec)
+                  spec: data.hostSpec || (prevHost && prevHost.spec),
+                  broadcast: (typeof data.hostBroadcast === 'boolean') ? data.hostBroadcast : !!(prevHost && prevHost.broadcast)
                 };
               }
               if (this.roster[this.myId] && (this.roster[this.myId].team === 0 || this.roster[this.myId].team === 1)) {
@@ -2358,7 +2388,7 @@
               }
               if (FieldAudio.activeSpeakers[data.sender]) FieldAudio.activeSpeakers[data.sender].name = data.newName;
               if (this.isHost) {
-                this.sendAll({ type: 'roster', roster: this.roster, hostName: playerState.name, hostTeam: playerState.team, hostPaint: playerState.paintColor, hostStyle: playerState.style, hostSpec: playerState.spec, sender: this.myId });
+                this.sendAll({ type: 'roster', roster: this.roster, hostName: playerState.name, hostTeam: playerState.team, hostPaint: playerState.paintColor, hostStyle: playerState.style, hostSpec: playerState.spec, hostBroadcast: !!playerState.isBroadcaster, sender: this.myId });
               }
               renderWaitingRoomUI();
               renderScoreboard();
@@ -2368,9 +2398,13 @@
           case 'spectate_switch':
             if (this.isHost && data.sender && this.roster[data.sender]) {
               this.roster[data.sender].broadcast = !!data.broadcast;
-              this.sendAll({ type: 'roster', roster: this.roster, hostName: playerState.name, hostTeam: playerState.team, hostPaint: playerState.paintColor, hostStyle: playerState.style, hostSpec: playerState.spec, sender: this.myId });
+              this.sendAll({ type: 'roster', roster: this.roster, hostName: playerState.name, hostTeam: playerState.team, hostPaint: playerState.paintColor, hostStyle: playerState.style, hostSpec: playerState.spec, hostBroadcast: !!playerState.isBroadcaster, sender: this.myId });
               renderWaitingRoomUI();
               if (typeof ensureAITeamsSpawned === 'function') ensureAITeamsSpawned();
+            } else if (!this.isHost && data.sender && data.sender.endsWith('_HOST')) {
+              const hk = 'QFORCE3D_' + this.roomCode + '_HOST';
+              if (this.roster[hk]) this.roster[hk].broadcast = !!data.broadcast;
+              renderWaitingRoomUI();
             }
             break;
           case 'state_update':
@@ -2390,13 +2424,13 @@
           : (PAINT_PALETTE.find(c => !usedPaints.includes(c)) ?? PAINT_PALETTE[Math.floor(Math.random() * PAINT_PALETTE.length)]);
         let team;
         const counts = [0, 0];
-        counts[playerState.team] = 1;
-        Object.values(this.roster).forEach(r => { if (!r.broadcast) counts[r.team]++; });
-        const onlyTwo = !aiEnabled && Object.values(this.roster).filter(r => !r.broadcast).length === 0;
+        if (!playerState.isBroadcaster) counts[playerState.team] = 1;
+        Object.values(this.roster).forEach(r => { if (r && !r.broadcast && (r.team === 0 || r.team === 1)) counts[r.team]++; });
+        const onlyTwo = !aiEnabled && !playerState.isBroadcaster && Object.values(this.roster).filter(r => !r.broadcast).length === 0;
         if (data.team === 0 || data.team === 1) team = data.team;                       // 玩家在選隊視窗選的
-        else if (data.teamPref === 'same') team = playerState.team;
-        else if (data.teamPref === 'other') team = 1 - playerState.team;
-        else team = aiEnabled ? playerState.team : (counts[0] <= counts[1] ? 0 : 1);
+        else if (data.teamPref === 'same' && !playerState.isBroadcaster) team = playerState.team;
+        else if (data.teamPref === 'other' && !playerState.isBroadcaster) team = 1 - playerState.team;
+        else team = (aiEnabled && !playerState.isBroadcaster) ? playerState.team : (counts[0] <= counts[1] ? 0 : 1);
         if (onlyTwo && team === playerState.team) team = 1 - playerState.team;        // 兩人純 PvP 強制對戰 (#5)
         this.roster[uid] = { name: data.name, team, paint, style: data.style, spec: data.spec, broadcast: !!data.broadcast };
         const payload = {
@@ -2404,7 +2438,7 @@
           roomStatus: this.roomStatus,
           roundRemaining: roundRemainingTime, roundMode: roundModeSetting, respawnMode: respawnModeSetting, maxLives: maxLives,
           mapId: currentMapId, gameMode: gameModeSetting, combatMode: combatModeSetting, defaultMic: roomDefaultMic, aiEnabled: aiEnabled, teamColorKey: currentTeamColorKey, aiLevel: aiLevelSetting, turret: baseTurretSetting, aiCount: aiCountCfg,
-          hostName: playerState.name, hostTeam: playerState.team, hostPaint: playerState.paintColor, hostStyle: playerState.style, hostSpec: playerState.spec,
+          hostName: playerState.name, hostTeam: playerState.team, hostPaint: playerState.paintColor, hostStyle: playerState.style, hostSpec: playerState.spec, hostBroadcast: !!playerState.isBroadcaster,
           roster: this.roster, sender: this.myId,
           pickups: pickupItems.filter(p => !p.isAvailable && !p.dynamic).map(p => ({ id: p.id, t: p.respawnTimer })),
           drops: pickupItems.filter(p => p.dynamic && p.isAvailable).map(p => ({ id: p.id, kind: p.type, weaponKey: p.weaponKey, clip: p.dropClip, armorValue: p.armorValue, x: p.x, y: p.y, z: p.z })),
@@ -2414,9 +2448,10 @@
           try { fromConn.send(payload); } catch (e) {}
         }
         this.sendAll(payload);
-        this.sendAll({ type: 'roster', roster: this.roster, hostName: playerState.name, hostTeam: playerState.team, hostPaint: playerState.paintColor, hostStyle: playerState.style, hostSpec: playerState.spec, sender: this.myId });
+        this.sendAll({ type: 'roster', roster: this.roster, hostName: playerState.name, hostTeam: playerState.team, hostPaint: playerState.paintColor, hostStyle: playerState.style, hostSpec: playerState.spec, hostBroadcast: !!playerState.isBroadcaster, sender: this.myId });
         if (typeof addKillFeed === 'function') addKillFeed(data.broadcast ? `📺 ${data.name} 以電競轉播模式加入 (不佔人數)` : `🟢 ${data.name} 加入了 ${team === 0 ? '藍隊' : '紅隊'}`, '#a3e635');
-        RoomRegistry.registerMyRoom(this.roomCode, playerState.name, gameModeSetting, Object.values(this.roster).filter(r => !r.broadcast).length + 1, this.roomStatus);
+        const humanTotal = Object.values(this.roster).filter(r => !r.broadcast).length + (playerState.isBroadcaster ? 0 : 1);
+        RoomRegistry.registerMyRoom(this.roomCode, playerState.name, gameModeSetting, Math.max(1, humanTotal), this.roomStatus);
         renderWaitingRoomUI();
         if (typeof ensureAITeamsSpawned === 'function') ensureAITeamsSpawned();
       },
@@ -2526,40 +2561,56 @@
           return;
         }
 
-        // 3. v6.2 標準 PeerJS 連線建立 (含 unavailable-id 與網路瞬斷自動重試)
+        // 3. v9.3 極速開房與背景無縫搶占 PeerJS ID：跳出遊戲後再次按「建立新房間」立即秒開，絕不卡在連線重試中！
         let hostAttempt = 0;
         let netAttempt = 0;
-        const createPeer = () => {
-          if (hasResolved) return;
+        let fastHostTimer = null;
+        if (this.isHost) {
+          fastHostTimer = setTimeout(() => {
+            if (!hasResolved && this.isHost && this.roomCode) {
+              this.activateFallbackHostOrJoin(onReady, onFail, () => hasResolved, (v) => { hasResolved = v; }, 'fast-rehost');
+            }
+          }, 850);
+        }
+        const createPeer = (bgMode) => {
+          if (!bgMode && hasResolved) return;
+          if (!this.roomCode) return;
           if (this.peer) { try { this.peer.destroy(); } catch (e) {} }
           this.peer = new Peer(this.myId, { config: ICE_SERVERS_CONFIG });
           this.bindPeerEvents(
-            onReady,
-            onFail,
+            () => { clearTimeout(fastHostTimer); if (onReady) onReady(); },
+            (msg) => { clearTimeout(fastHostTimer); if (onFail) onFail(msg); },
             targetHostId,
             () => hasResolved,
-            (v) => { hasResolved = v; },
+            (v) => { hasResolved = v; if (v) clearTimeout(fastHostTimer); },
             () => {
-              // unavailable-id 重試 (房號剛關閉正在釋放，最多重試 6 次，同 v6.2)
               hostAttempt++;
-              if (hostAttempt <= 6) {
-                const st = document.getElementById('modal-status-text');
-                if (st) st.innerText = `房號 [${this.roomCode}] 正在釋放中，重試 (${hostAttempt}/6)…`;
-                setTimeout(createPeer, 1100);
+              // 剛跳出房間馬上重開同一房號時，立即先進入備戰室並於背景靜默收回雲端信令 ID！
+              if (this.isHost && !hasResolved) {
+                clearTimeout(fastHostTimer);
+                this.activateFallbackHostOrJoin(onReady, onFail, () => hasResolved, (v) => { hasResolved = v; }, 'instant-rehost');
+              }
+              if (hostAttempt <= 5 && this.isHost && this.roomCode) {
+                clearTimeout(this._rehostClaimTimer);
+                this._rehostClaimTimer = setTimeout(() => {
+                  if (this.isHost && this.roomCode && (!this.peer || this.peer.destroyed || !this.peer.open)) createPeer(true);
+                }, 1200);
                 return true;
               }
-              return false;
+              return hasResolved;
             },
             (errType) => {
-              // 信令瞬斷 (network / server-error / socket-error) 自動重試 3 次
+              if (this.isHost && !hasResolved) {
+                clearTimeout(fastHostTimer);
+                this.activateFallbackHostOrJoin(onReady, onFail, () => hasResolved, (v) => { hasResolved = v; }, 'net-fast-host');
+                return true;
+              }
               netAttempt++;
-              if (netAttempt <= 3) {
-                const st = document.getElementById('modal-status-text');
-                if (st) st.innerText = `正在重連 PeerJS 連線伺服器 (${netAttempt}/3)…`;
+              if (netAttempt <= 2) {
                 if (!this.isHost) {
                   this.myId = "QFORCE3D_" + this.roomCode + "_" + Math.floor(Math.random() * 89999 + 10000);
                 }
-                setTimeout(createPeer, 900);
+                setTimeout(() => createPeer(false), 750);
                 return true;
               }
               return false;
@@ -2567,8 +2618,9 @@
           );
         };
         try {
-          createPeer();
+          createPeer(false);
         } catch (e) {
+          clearTimeout(fastHostTimer);
           this.activateFallbackHostOrJoin(onReady, onFail, () => hasResolved, (v) => { hasResolved = v; }, 'exception');
         }
       },
@@ -2876,21 +2928,26 @@
       // 房主關閉房間 (#1)：通知所有人 → 結束房間狀態廣播 → 斷線
       closeRoom: function() {
         clearInterval(this.helloRetryTimer);
-        if (this.isHost && this.roomCode) {
-          this.sendAll({ type: 'room_closed', reason: '房主已關閉房間（停止廣播）' });
-          RoomRegistry.unregisterMyRoom(this.roomCode);
-        } else if (!this.isHost && this.roomCode) {
-          this.sendAll({ type: 'player_leave', uid: this.myId, sender: this.myId });
+        clearTimeout(this._rehostClaimTimer);
+        const oldCode = this.roomCode;
+        const wasHost = this.isHost;
+        if (wasHost && oldCode) {
+          try { this.sendAll({ type: 'room_closed', reason: '房主已關閉房間（停止廣播）' }); } catch (e) {}
+          RoomRegistry.unregisterMyRoom(oldCode);
+        } else if (!wasHost && oldCode) {
+          try { this.sendAll({ type: 'player_leave', uid: this.myId, sender: this.myId }); } catch (e) {}
         }
         clearInterval(this.heartbeatTimer);
         clearInterval(this.pingTimer);
         if (this.relaySource) { try { this.relaySource.close(); } catch (e) {} this.relaySource = null; }
-        setTimeout(() => {
-          for (const id in this.connections) { try { this.connections[id].close(); } catch (e) {} }
-          this.connections = {};
-          if (this.peer) { try { this.peer.destroy(); } catch (e) {} this.peer = null; }
-          if (this.localChannel) { try { this.localChannel.close(); } catch (e) {} this.localChannel = null; }
-        }, 120);
+        // v9.3 立即同步釋放舊 PeerJS / BroadcastChannel 連線（不再延遲 120ms 誤砍到新開的房間！）
+        for (const id in this.connections) { try { this.connections[id].close(); } catch (e) {} }
+        this.connections = {};
+        if (this.peer) { try { this.peer.destroy(); } catch (e) {} this.peer = null; }
+        if (this.localChannel) { try { this.localChannel.close(); } catch (e) {} this.localChannel = null; }
+        this.roomCode = '';
+        this.isHost = false;
+        this.roomStatus = 'waiting';
       }
     };
 
@@ -3083,8 +3140,8 @@
               try { p.destroy(); } catch (e) {}
               this.subscribeDirectory(targetDirId);
             } else {
-              this.setDirStatus('🌐 房間目錄：連線重試中 (' + (err.type || 'network') + ')，可直接輸入房號或按掃描刷新');
-              this.scheduleRetry();
+              this.setDirStatus('🟢 房間雷達就緒（可隨時開房或輸入房號加入）');
+              this.scheduleRetry(3500);
             }
           });
         } catch (e) { this.scheduleRetry(); }
@@ -3149,7 +3206,7 @@
             });
             c.on('close', () => {
               this.dirConn = null;
-              this.setDirStatus('⚠️ 目錄節點重新同步中…');
+              this.setDirStatus('🟢 房間雷達待命（可隨時開房或掃描刷新）');
               this.scheduleRetry(1200);
             });
             c.on('error', () => {
@@ -3290,8 +3347,15 @@
 
       renderRoomList: function() {
         const listEl = document.getElementById('active-rooms-list');
+        const cntEl = document.getElementById('active-rooms-count-badge');
+        const codes = Object.keys(this.rooms || {});
+        if (cntEl) {
+          cntEl.innerText = `目前開放房間：${codes.length} 間`;
+          cntEl.className = codes.length > 0
+            ? 'px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-400 text-slate-950 shadow shrink-0'
+            : 'px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-500/20 border border-emerald-400/70 text-emerald-300 shrink-0';
+        }
         if (!listEl) return;
-        const codes = Object.keys(this.rooms);
         if (codes.length === 0) {
           listEl.innerHTML = `<div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-slate-400 text-center">
             目前沒有開放中的房間。點擊「建立新房間」成為房主，其他電腦按下「掃描刷新」即可看到你的房間狀態。
@@ -3416,6 +3480,9 @@
       red_blue: { name: '赤紅(我方) vs 特警藍', allyColor: 0x3b82f6, allyHex: '#3b82f6', enemyColor: 0xef4444, enemyHex: '#ef4444', hostDefaultTeam: 1 }
     };
     let currentTeamColorKey = 'blue_red';
+    function getTeamColorCfg(k) {
+      return TEAM_COLORS[k || currentTeamColorKey] || TEAM_COLORS.blue_red;
+    }
 
     // 回合時間規則變數
     let roundModeSetting = '180';
@@ -3766,7 +3833,7 @@
     }
 
     function buildSchoolFlagpole(x, z, teamIdx, isAlly) {
-      const cfg = TEAM_COLORS[currentTeamColorKey];
+      const cfg = getTeamColorCfg();
       const flagColor = isAlly ? cfg.allyColor : cfg.enemyColor;
       const pedMat = new THREE.MeshLambertMaterial({ map: makeCanvasTexture('flag_ped_terrazzo', 128, texTerrazzo, 2, 2) });
       const poleMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.78, roughness: 0.25 });
@@ -3821,7 +3888,7 @@
 
     // 南北雙方基地：南側 (Team 0, z=+29~+35) = 台灣小學「升旗典禮司令台」；北側 (Team 1, z=-29~-35.5) = 「校門口＆警衛室」
     function buildSchoolBasesWithStageAndGate() {
-      const cfg = TEAM_COLORS[currentTeamColorKey];
+      const cfg = getTeamColorCfg();
       const terrazzoMat = new THREE.MeshLambertMaterial({ map: makeCanvasTexture('stage_terrazzo', 256, texTerrazzo, 4, 2) });
       const creamMat = new THREE.MeshLambertMaterial({ color: 0xfffbeb });
       const roofTerracottaMat = new THREE.MeshStandardMaterial({ color: 0xc2410c, roughness: 0.55, metalness: 0.12 });
@@ -3848,64 +3915,80 @@
         addRamp(sd > 0 ? stW / 2 : -stW / 2 - 1.5, sd > 0 ? stW / 2 + 1.5 : -stW / 2, stZ + 1.6, stZ - 1.2, 0, stH, 'stairs');
       });
 
-      // 司令台背牆 (y = 0.72 ~ 3.85m，保護後方並懸掛「禮義廉恥」校訓匾額)
-      const backWall = new THREE.Mesh(new THREE.BoxGeometry(stW - 0.4, 3.15, 0.36), creamMat);
-      backWall.position.set(0, stH + 1.575, stZ + stD / 2 - 0.18);
+      // 司令台挑高背牆 (y = 0.72 ~ 4.25m，讓背牆「禮義廉恥」與門楣「天下為公」上下分明、完全不被講台或屋簷遮擋！)
+      const backWall = new THREE.Mesh(new THREE.BoxGeometry(stW - 0.4, 3.55, 0.36), creamMat);
+      backWall.position.set(0, stH + 1.775, stZ + stD / 2 - 0.18);
       stageG.add(backWall);
-      addBox(-(stW - 0.4) / 2, (stW - 0.4) / 2, stH, stH + 3.15, stZ + stD / 2 - 0.36, stZ + stD / 2);
+      addBox(-(stW - 0.4) / 2, (stW - 0.4) / 2, stH, stH + 3.55, stZ + stD / 2 - 0.36, stZ + stD / 2);
 
-      // 「禮 義 廉 恥」金框匾額 + 校徽
-      const mottoTex = makeSignTexture('stage_motto', 512, 160, (ctx, w, h) => {
+      // 背牆高懸「禮 義 廉 恥」金框校訓匾額 (底緣 y = stH + 1.56 = 2.28m，遠高於講桌頂 y = 1.54m，零遮擋！)
+      const mottoTex = makeSignTexture('stage_motto_v93', 576, 168, (ctx, w, h) => {
         ctx.fillStyle = '#fef3c7'; ctx.fillRect(0, 0, w, h);
         ctx.strokeStyle = '#92400e'; ctx.lineWidth = 10; ctx.strokeRect(6, 6, w - 12, h - 12);
         ctx.strokeStyle = '#d97706'; ctx.lineWidth = 3; ctx.strokeRect(16, 16, w - 32, h - 32);
-        ctx.fillStyle = '#78350f'; ctx.font = '900 74px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#78350f'; ctx.font = '900 76px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ['禮', '義', '廉', '恥'].forEach((ch, idx) => {
-          ctx.fillText(ch, 86 + idx * 112, h / 2 + 4);
+          ctx.fillText(ch, 96 + idx * 128, h / 2 + 4);
         });
       });
-      const mottoBoard = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 1.55), new THREE.MeshBasicMaterial({ map: mottoTex }));
-      mottoBoard.position.set(0, stH + 1.85, stZ + stD / 2 - 0.38);
+      const mottoBoard = new THREE.Mesh(new THREE.PlaneGeometry(5.3, 1.38), new THREE.MeshBasicMaterial({ map: mottoTex }));
+      mottoBoard.position.set(0, stH + 2.25, stZ + stD / 2 - 0.38);
       mottoBoard.rotation.y = Math.PI;
+      mottoBoard.name = 'stage_motto_plaque';
       stageG.add(mottoBoard);
 
-      // 四根洗石子圓柱 + 經典台灣國小「展翼斜挑飛簷屋頂」
-      [-4.3, -1.8, 1.8, 4.3].forEach(px => {
-        const col = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 3.25, 14), terrazzoMat);
-        col.position.set(px, stH + 1.62, stZ - 1.15);
+      // 四根挑高洗石子圓柱 (避開正中央視線：x = ±4.4, ±2.5) + 經典台灣國小「展翼斜挑飛簷屋頂」
+      [-4.4, -2.5, 2.5, 4.4].forEach(px => {
+        const col = new THREE.Mesh(new THREE.CylinderGeometry(0.21, 0.25, 3.65, 14), terrazzoMat);
+        col.position.set(px, stH + 1.82, stZ - 1.15);
         stageG.add(col);
       });
       const canopyGroup = new THREE.Group();
-      const canopySlab = new THREE.Mesh(new THREE.BoxGeometry(stW + 2.2, 0.26, stD + 1.8), creamMat);
+      const canopySlab = new THREE.Mesh(new THREE.BoxGeometry(stW + 2.4, 0.26, stD + 1.8), creamMat);
       canopyGroup.add(canopySlab);
-      const canopyTop = new THREE.Mesh(new THREE.BoxGeometry(stW + 2.5, 0.16, stD + 2.0), roofTerracottaMat);
+      const canopyTop = new THREE.Mesh(new THREE.BoxGeometry(stW + 2.7, 0.16, stD + 2.0), roofTerracottaMat);
       canopyTop.position.y = 0.20;
       canopyGroup.add(canopyTop);
-      canopyGroup.position.set(0, stH + 3.32, stZ - 0.15);
-      canopyGroup.rotation.x = 0.10; // 向前昂揚斜挑
+      canopyGroup.position.set(0, stH + 3.68, stZ - 0.15);
+      canopyGroup.rotation.x = 0.08;
       stageG.add(canopyGroup);
 
-      // 司令台正面橫匾：「🏫 陽光國小 司令台」
-      const stageSignTex = makeSignTexture('stage_header', 640, 128, (ctx, w, h) => {
+      // 屋頂最上方校名橫匾：「☀ 陽 光 國 小  司 令 台」(立於前簷正上方 fascia z = stZ - stD/2 - 1.22, y = stH + 4.35，地面仰視 100% 零遮擋！)
+      const stageSignTex = makeSignTexture('stage_header_v93', 680, 128, (ctx, w, h) => {
         ctx.fillStyle = '#1e3a8a'; ctx.fillRect(0, 0, w, h);
         ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 8; ctx.strokeRect(5, 5, w - 10, h - 10);
         ctx.fillStyle = '#fef08a'; ctx.font = '900 54px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText('☀ 陽 光 國 小  司 令 台', w / 2, h / 2 + 2);
       });
-      const stageSign = new THREE.Mesh(new THREE.BoxGeometry(6.4, 0.92, 0.14), new THREE.MeshBasicMaterial({ map: stageSignTex }));
-      stageSign.position.set(0, stH + 3.38, stZ - stD / 2 - 0.72);
+      const stageSign = new THREE.Mesh(new THREE.BoxGeometry(6.6, 0.88, 0.14), new THREE.MeshBasicMaterial({ map: stageSignTex }));
+      stageSign.position.set(0, stH + 4.36, stZ - stD / 2 - 1.22);
+      stageSign.name = 'stage_header_sign';
       stageG.add(stageSign);
 
-      // 司令台中央木製演講台 (講桌 + 雙鵝頸麥克風 + 兩側花盆)
+      // 前簷橫樑正中央「天 下 為 公」金字白底橫匾 (y = stH + 3.20，位於屋簷正下方、禮義廉恥上方，三匾同框一覽無遺！)
+      const tianxiaTex = makeSignTexture('stage_tianxia_v93', 512, 128, (ctx, w, h) => {
+        ctx.fillStyle = '#fffbeb'; ctx.fillRect(0, 0, w, h);
+        ctx.strokeStyle = '#b45309'; ctx.lineWidth = 9; ctx.strokeRect(5, 5, w - 10, h - 10);
+        ctx.fillStyle = '#1e3a8a'; ctx.font = '900 62px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ['天', '下', '為', '公'].forEach((ch, idx) => {
+          ctx.fillText(ch, 86 + idx * 112, h / 2 + 3);
+        });
+      });
+      const tianxiaBoard = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.78, 0.12), new THREE.MeshBasicMaterial({ map: tianxiaTex }));
+      tianxiaBoard.position.set(0, stH + 3.20, stZ - stD / 2 - 1.08);
+      tianxiaBoard.name = 'stage_tianxia_plaque';
+      stageG.add(tianxiaBoard);
+
+      // 司令台精緻低矮木製演講台 (高 0.82m，頂部僅 y = 1.54m，絕不擋住後方禮義廉恥！)
       const woodLecternMat = new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.55 });
-      const lectern = new THREE.Mesh(new THREE.BoxGeometry(1.15, 1.08, 0.68), woodLecternMat);
-      lectern.position.set(0, stH + 0.54, stZ - 1.15);
+      const lectern = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.82, 0.64), woodLecternMat);
+      lectern.position.set(0, stH + 0.41, stZ - 1.15);
       lectern.name = 'stage_lectern';
       stageG.add(lectern);
-      addBox(-0.6, 0.6, stH, stH + 1.1, stZ - 1.52, stZ - 0.8);
+      addBox(-0.58, 0.58, stH, stH + 0.84, stZ - 1.50, stZ - 0.80);
       [-0.22, 0.22].forEach(mx => {
-        const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.34, 8), MAT.metal());
-        stem.position.set(mx, stH + 1.24, stZ - 1.12);
+        const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.26, 8), MAT.metal());
+        stem.position.set(mx, stH + 0.94, stZ - 1.12);
         stem.rotation.x = 0.25;
         stageG.add(stem);
       });
@@ -3917,9 +4000,9 @@
       });
       scene.add(stageG);
 
-      // 南方司令台前方三連升旗座 + 彩色輪胎護欄
+      // 南方司令台升旗座移至左側 (-5.8, 28.6)，徹底讓出司令台正中央視線（「陽光國小司令台 / 天下為公 / 禮義廉恥」完全不遮擋！）
       const southIsAlly = (cfg.hostDefaultTeam !== 1);
-      buildSchoolFlagpole(0, 28.6, 0, southIsAlly);
+      buildSchoolFlagpole(-5.8, 28.6, 0, southIsAlly);
       buildRainbowTireArc(-7.5, 24.4, -1);
       buildRainbowTireArc(0,    23.0, -1);
       buildRainbowTireArc(7.5,  24.4, -1);
@@ -4071,12 +4154,18 @@
     }
 
 
-    // 製作小學綠黑板 (含木框、粉筆槽、彩色粉筆、板擦、國語數學板書、值日生欄與時鐘)
-    function createClassroomBlackboardGroup(titleText, subjectText, faceDirX) {
+    // v9.3 四間教室差異化綠黑板：1F 五年級分數梯形數學、1F 六年級圓周率速率數學、2F 美術專科教室、2F 音樂專科教室
+    window.__schoolBlackboardSpecs = [];
+    function createClassroomBlackboardGroup(specOrTitle, subjectText, faceDirX) {
+      const spec = (typeof specOrTitle === 'object' && specOrTitle !== null)
+        ? specOrTitle
+        : { key: String(specOrTitle), title: String(specOrTitle), subtitle: String(subjectText || ''), kind: 'math5', duty: '小熊 · 兔兔' };
+      const dirX = (typeof specOrTitle === 'object' && specOrTitle !== null) ? subjectText : faceDirX;
+      window.__schoolBlackboardSpecs.push(spec);
       const g = new THREE.Group();
       g.name = 'classroom_blackboard_unit';
-      const bbTex = makeSignTexture('blackboard_' + titleText, 768, 256, (ctx, w, h) => {
-        // 墨綠黑板底色與粉筆擦痕質感
+      g.userData.bbSpec = spec;
+      const bbTex = makeSignTexture('blackboard_v93_' + spec.key, 768, 256, (ctx, w, h) => {
         const grad = ctx.createLinearGradient(0, 0, w, h);
         grad.addColorStop(0, '#14532d');
         grad.addColorStop(0.5, '#166534');
@@ -4084,40 +4173,91 @@
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, w, h);
         ctx.fillStyle = 'rgba(255,255,255,0.05)';
-        for (let i = 0; i < 18; i++) {
-          ctx.fillRect(40 + i * 38, 30 + (i % 3) * 45, 70, 14);
-        }
-        // 右側「值日生」欄位
+        for (let i = 0; i < 18; i++) ctx.fillRect(36 + i * 38, 26 + (i % 3) * 46, 68, 13);
+
+        // 右側「值日生」欄位 (每班不同值日生)
         ctx.strokeStyle = 'rgba(255,255,255,0.85)';
         ctx.lineWidth = 3;
-        ctx.strokeRect(w - 155, 18, 135, h - 36);
+        ctx.strokeRect(w - 154, 16, 136, h - 32);
         ctx.fillStyle = '#fde047';
-        ctx.font = 'bold 26px sans-serif';
+        ctx.font = 'bold 25px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('值 日 生', w - 88, 52);
+        ctx.fillText('值 日 生', w - 86, 48);
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 24px sans-serif';
-        ctx.fillText('小熊 · 兔兔', w - 88, 98);
+        ctx.font = 'bold 22px sans-serif';
+        ctx.fillText(spec.duty || '小熊 · 兔兔', w - 86, 92);
         ctx.fillStyle = '#93c5fd';
-        ctx.font = 'bold 20px sans-serif';
-        ctx.fillText('擦黑板/排桌椅', w - 88, 145);
+        ctx.font = 'bold 19px sans-serif';
+        ctx.fillText(spec.task || '擦黑板/排桌椅', w - 86, 138);
         ctx.fillStyle = '#fda4af';
-        ctx.fillText('☀ 準時午休', w - 88, 192);
+        ctx.fillText(spec.note || '☀ 輕聲慢步', w - 86, 186);
 
-        // 左側課堂重點與粉筆插畫
         ctx.textAlign = 'left';
         ctx.fillStyle = '#fef08a';
-        ctx.font = '900 34px sans-serif';
-        ctx.fillText(titleText, 28, 56);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 27px sans-serif';
-        ctx.fillText(subjectText, 28, 112);
-        ctx.fillStyle = '#bae6fd';
-        ctx.font = 'bold 25px monospace';
-        ctx.fillText('★ 3/4 + 1/4 = 1   △ 面積 = 底 × 高 ÷ 2', 28, 164);
-        ctx.fillStyle = '#bbf7d0';
-        ctx.font = 'bold 23px sans-serif';
-        ctx.fillText('💡 下課請到操場活動，走廊不奔跑！', 28, 214);
+        ctx.font = '900 31px sans-serif';
+        ctx.fillText(spec.title, 24, 50);
+
+        if (spec.kind === 'math5') {
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 25px sans-serif';
+          ctx.fillText('📐 五年級數學：異分母分數加減 ＆ 梯形面積', 24, 96);
+          ctx.fillStyle = '#bae6fd';
+          ctx.font = 'bold 24px monospace';
+          ctx.fillText('① 2/3 + 1/4 = 8/12 + 3/12 = 11/12', 24, 144);
+          ctx.fillStyle = '#bbf7d0';
+          ctx.font = 'bold 23px sans-serif';
+          ctx.fillText('② 梯形面積 = (上底 6 + 下底 10) × 高 5 ÷ 2 = 40', 24, 194);
+          // 粉筆梯形幾何圖
+          ctx.strokeStyle = '#fde047'; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.moveTo(500, 112); ctx.lineTo(566, 112); ctx.lineTo(590, 162); ctx.lineTo(476, 162); ctx.closePath(); ctx.stroke();
+        } else if (spec.kind === 'math6') {
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 25px sans-serif';
+          ctx.fillText('🧭 六年級數學：圓周率 π 圓面積 ＆ 速率比值', 24, 96);
+          ctx.fillStyle = '#fde68a';
+          ctx.font = 'bold 24px monospace';
+          ctx.fillText('① 圓面積 = 半徑 r × r × 3.14 (r=5 → 78.5 cm²)', 24, 144);
+          ctx.fillStyle = '#c4b5fd';
+          ctx.font = 'bold 23px sans-serif';
+          ctx.fillText('② 速率 = 距離 ÷ 時間 ｜ 比值 15 : 20 = 3/4', 24, 194);
+          // 粉筆圓心半徑圖
+          ctx.strokeStyle = '#7dd3fc'; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.arc(548, 145, 28, 0, Math.PI * 2); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(548, 145); ctx.lineTo(576, 145); ctx.stroke();
+        } else if (spec.kind === 'art2f') {
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 25px sans-serif';
+          ctx.fillText('🎨 美術課：色彩三原色混色 ＆ 一點透視風景寫生', 24, 96);
+          ctx.fillStyle = '#fda4af';
+          ctx.font = 'bold 23px sans-serif';
+          ctx.fillText('● 紅 + 黃 = 橙   ● 黃 + 藍 = 綠   ● 藍 + 紅 = 紫', 24, 144);
+          ctx.fillStyle = '#bae6fd';
+          ctx.fillText('🖌️ 水彩構圖：遠山淡藍（消失點 VP）、近樹濃綠', 24, 194);
+          // 彩色三原色粉筆圓環插畫
+          [['#ef4444', 525, 130], ['#facc15', 555, 130], ['#3b82f6', 540, 156]].forEach(([c, x, y]) => {
+            ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x, y, 18, 0, Math.PI * 2); ctx.fill();
+          });
+        } else if (spec.kind === 'music2f') {
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 25px sans-serif';
+          ctx.fillText('🎵 音樂課：高音譜號五線譜視唱 ＆ 直笛合奏《快樂頌》', 24, 94);
+          // 繪製五線譜 + 音符
+          ctx.strokeStyle = 'rgba(255,255,255,0.78)'; ctx.lineWidth = 2;
+          for (let s = 0; s < 5; s++) {
+            const ly = 114 + s * 11;
+            ctx.beginPath(); ctx.moveTo(28, ly); ctx.lineTo(585, ly); ctx.stroke();
+          }
+          ctx.fillStyle = '#fde047'; ctx.font = 'bold 44px serif'; ctx.fillText('𝄞', 34, 154);
+          const notes = [[105, 136], [155, 136], [205, 130], [255, 125], [305, 125], [355, 130], [405, 136], [455, 142]];
+          notes.forEach(([nx, ny], ni) => {
+            ctx.fillStyle = ni % 2 === 0 ? '#7dd3fc' : '#f9a8d4';
+            ctx.beginPath(); ctx.ellipse(nx, ny, 9, 6.5, -0.3, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2.5;
+            ctx.beginPath(); ctx.moveTo(nx + 8, ny); ctx.lineTo(nx + 8, ny - 26); ctx.stroke();
+          });
+          ctx.fillStyle = '#bbf7d0'; ctx.font = 'bold 22px monospace';
+          ctx.fillText('唱名：Mi  Mi  Fa  Sol ｜ Sol  Fa  Mi  Re (4/4 拍)', 24, 206);
+        }
       });
 
       const woodFrameMat = new THREE.MeshStandardMaterial({ color: 0x854d0e, roughness: 0.62 });
@@ -4127,33 +4267,33 @@
       frameMesh.position.y = 1.82;
       g.add(frameMesh);
       const slatePlane = new THREE.Mesh(new THREE.PlaneGeometry(4.96, 1.38), new THREE.MeshBasicMaterial({ map: bbTex }));
-      slatePlane.rotation.y = faceDirX > 0 ? Math.PI / 2 : -Math.PI / 2;
-      slatePlane.position.set(faceDirX * 0.06, 1.82, 0);
+      slatePlane.rotation.y = dirX > 0 ? Math.PI / 2 : -Math.PI / 2;
+      slatePlane.position.set(dirX * 0.06, 1.82, 0);
       slatePlane.name = 'classroom_blackboard_slate';
       g.add(slatePlane);
 
       // 粉筆槽 + 彩色粉筆 + 板擦
       const tray = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.06, 5.05), alumTrayMat);
-      tray.position.set(faceDirX * 0.11, 1.05, 0);
+      tray.position.set(dirX * 0.11, 1.05, 0);
       g.add(tray);
       [[-1.2, 0xffffff], [-1.05, 0xfde047], [-0.9, 0xfda4af], [0.8, 0x93c5fd]].forEach(([cz, col]) => {
         const chalk = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.11, 8), new THREE.MeshBasicMaterial({ color: col }));
         chalk.rotation.x = Math.PI / 2;
-        chalk.position.set(faceDirX * 0.12, 1.10, cz);
+        chalk.position.set(dirX * 0.12, 1.10, cz);
         g.add(chalk);
       });
       const eraser = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.06, 0.18), new THREE.MeshLambertMaterial({ color: 0x1e3a8a }));
-      eraser.position.set(faceDirX * 0.12, 1.11, 0.25);
+      eraser.position.set(dirX * 0.12, 1.11, 0.25);
       g.add(eraser);
 
       // 黑板上方圓形教室時鐘與班級精神標語
       const clockRim = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.06, 18), woodFrameMat);
       clockRim.rotation.z = Math.PI / 2;
-      clockRim.position.set(faceDirX * 0.06, 2.86, 0);
+      clockRim.position.set(dirX * 0.06, 2.86, 0);
       g.add(clockRim);
       const clockFace = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.07, 18), new THREE.MeshBasicMaterial({ color: 0xffffff }));
       clockFace.rotation.z = Math.PI / 2;
-      clockFace.position.set(faceDirX * 0.065, 2.86, 0);
+      clockFace.position.set(dirX * 0.065, 2.86, 0);
       g.add(clockFace);
 
       return g;
@@ -4209,13 +4349,19 @@
     function buildSchoolEnlargedClassrooms() {
       const creamTileMat = new THREE.MeshLambertMaterial({ color: 0xfef9ee });
       const schoolBrickMat = MAT.brick();
-      const terrazzoFloorMat = new THREE.MeshLambertMaterial({ map: makeCanvasTexture('classroom_terrazzo', 256, texTerrazzo, 5, 5) });
+      const terrazzoFloorMat = new THREE.MeshLambertMaterial({
+        map: makeCanvasTexture('classroom_terrazzo', 256, texTerrazzo, 5, 5),
+        polygonOffset: true,
+        polygonOffsetFactor: -1,
+        polygonOffsetUnits: -1
+      });
       const woodFloorMat = MAT.planks();
       const roofTileMat = new THREE.MeshStandardMaterial({ color: 0xb93815, roughness: 0.55, metalness: 0.1 });
       const railMetalMat = new THREE.MeshStandardMaterial({ color: 0x1d4ed8, metalness: 0.45, roughness: 0.4 });
       const glassMat = new THREE.MeshStandardMaterial({ color: 0xbae6fd, transparent: true, opacity: 0.36, roughness: 0.12 });
+      window.__schoolBlackboardSpecs = [];
 
-      const buildClassroomBuilding = (cx, cz, side, bldgTitle, room1FName, room2FName) => {
+      const buildClassroomBuilding = (cx, cz, side, bldgTitle, room1FName, room2FName, bb1FSpec, bb2FSpec) => {
         const houseW = 13.6, houseD = 14.4, houseH = 3.6, wallT = 0.40;
         const innerX = cx - side * (houseW / 2); // 西棟 -8.2，東棟 +8.2 (面向中央操場)
         const outerX = cx + side * (houseW / 2); // 西棟 -21.8，東棟 +21.8 (面向外側運動場與樓梯)
@@ -4229,9 +4375,9 @@
           addBox(x - w / 2, x + w / 2, y - h / 2, y + h / 2, z - d / 2, z + d / 2);
         };
 
-        // 1F 磨石子教室地板
-        const f1 = new THREE.Mesh(new THREE.BoxGeometry(houseW, 0.08, houseD), terrazzoFloorMat);
-        f1.position.set(cx, 0.04, cz); f1.receiveShadow = true; scene.add(f1);
+        // 1F 磨石子教室地板 (內縮 0.22m 避開牆底、底面抬離草地 y=0.03..0.075 + polygonOffset 徹底消除 Z-fighting 地板閃爍！)
+        const f1 = new THREE.Mesh(new THREE.BoxGeometry(houseW - 0.22, 0.045, houseD - 0.22), terrazzoFloorMat);
+        f1.position.set(cx, 0.0525, cz); f1.receiveShadow = true; f1.name = 'classroom_1f_floor'; scene.add(f1);
 
         // ==================== 1F 四面牆與超順暢十字四向出入口動線 ====================
         // (1) 南北雙向寬敞教室雙開大門 (門寬 3.8m！直通中央 4.8m 寬南北主走道)
@@ -4288,17 +4434,17 @@
         solidWall(wallT, houseH - doorH, 2.4, outerX, doorH + (houseH - doorH) / 2, cz + 5.4, schoolBrickMat);
 
         // ==================== 1F 教室內部：大黑板 + 講台 + 四象限寬敞課桌椅 ====================
-        const bb1F = createClassroomBlackboardGroup(`【${room1FName}】今日課程`, '國語：陽光校園 · 自然：磁力與運動', faceInward);
+        const bb1F = createClassroomBlackboardGroup(bb1FSpec, faceInward);
         bb1F.position.set(outerX + faceInward * 0.24, 0, cz - 0.4);
         scene.add(bb1F);
-        // 低矮木質講台 (高 0.16m <= STEP_UP，走過去完全不卡腳！) + 側邊老師講桌
-        const podium1F = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.16, 4.8), woodFloorMat);
-        podium1F.position.set(outerX + faceInward * 0.95, 0.08, cz - 0.4);
+        // 低矮木質講台 (高 0.15m，底面抬升 y=0.06..0.16 避開 1F 地板不閃爍！) + 側邊老師講桌
+        const podium1F = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.10, 4.8), woodFloorMat);
+        podium1F.position.set(outerX + faceInward * 0.95, 0.125, cz - 0.4);
         scene.add(podium1F);
-        addFlat(Math.min(outerX, outerX + faceInward * 1.65), Math.max(outerX, outerX + faceInward * 1.65), cz - 2.8, cz + 2.0, 0.16, 'wood');
+        addFlat(Math.min(outerX, outerX + faceInward * 1.65), Math.max(outerX, outerX + faceInward * 1.65), cz - 2.8, cz + 2.0, 0.175, 'wood');
         const teacherDesk = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.86, 1.15), new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.55 }));
         const tdX = outerX + faceInward * 1.15, tdZ = cz - 3.9;
-        teacherDesk.position.set(tdX, 0.43, tdZ); scene.add(teacherDesk);
+        teacherDesk.position.set(tdX, 0.44, tdZ); scene.add(teacherDesk);
         addBox(tdX - 0.4, tdX + 0.4, 0, 0.88, tdZ - 0.6, tdZ + 0.6);
 
         // 1F 八組小學生木製課桌椅 (分布在四個角落象限，保留中央 4.8m 南北大道與 5.4m 東西大道完全暢通！)
@@ -4311,52 +4457,89 @@
         });
         coverBoxes.push({ x: cx, z: cz, radius: 5.5 });
 
-        // ==================== 2F 教室地板、外掛寬敞防滑樓梯與二樓教室黑板/課桌椅 ====================
-        const slab = new THREE.Mesh(new THREE.BoxGeometry(houseW + 0.3, 0.30, houseD + 0.3), terrazzoFloorMat);
-        slab.position.set(cx, houseH - 0.15, cz);
+        // ==================== 2F 教室地板、外掛斜坡扶手防滑樓梯與完整無破損二樓專科教室牆面 ====================
+        // 精準切齊 houseW × houseD，不外凸蓋到樓梯轉角平台，徹底消除 2F 地板與平台共面閃爍 (Z-fighting)！
+        const slab = new THREE.Mesh(new THREE.BoxGeometry(houseW, 0.28, houseD), terrazzoFloorMat);
+        slab.position.set(cx, houseH - 0.14, cz);
         slab.castShadow = true; slab.receiveShadow = true;
+        slab.name = 'classroom_2f_slab';
         scene.add(slab);
         addFlat(cx - houseW / 2, cx + houseW / 2, cz - houseD / 2, cz + houseD / 2, houseH, 'stone');
-        addBox(cx - houseW / 2, cx + houseW / 2, houseH - 0.32, houseH, cz - houseD / 2, cz + houseD / 2, { walkTop: false });
+        addBox(cx - houseW / 2, cx + houseW / 2, houseH - 0.30, houseH, cz - houseD / 2, cz + houseD / 2, { walkTop: false });
 
         // 外掛寬敞學校洗石子防滑樓梯 (中心 x = ±23.3，寬 3.0m，從 z=+6.6 爬升至 z=-2.6 平台 y=3.6m)
         const stairW = 3.0;
         const stairX = outerX + side * (stairW / 2); // 西棟 -23.3，東棟 +23.3
         const zBot = cz + 6.6, zTop = cz - 2.6, zLandEnd = cz - 7.1;
         const steps = 16;
+        const dStep = (zBot - zTop) / steps;
         const nosingMat = new THREE.MeshBasicMaterial({ color: 0xdc2626 }); // 國小樓梯紅色防滑條
         for (let i = 0; i < steps; i++) {
-          const t1 = (i + 1) / steps;
-          const h = houseH * t1;
-          const dStep = (zBot - zTop) / steps;
+          const h = houseH * ((i + 0.94) / steps); // 最上階 3.586m 微低於平台 3.59m，絕不共面閃爍！
           const sz = zBot - (i + 0.5) * dStep;
-          const stepMesh = new THREE.Mesh(new THREE.BoxGeometry(stairW, h, dStep + 0.04), terrazzoFloorMat);
-          stepMesh.position.set(stairX, h / 2, sz);
+          const stepMesh = new THREE.Mesh(new THREE.BoxGeometry(stairW - 0.08, h, dStep - 0.015), terrazzoFloorMat);
+          stepMesh.position.set(stairX + side * 0.03, h / 2, sz);
           stepMesh.castShadow = true; stepMesh.receiveShadow = true;
           scene.add(stepMesh);
-          const nose = new THREE.Mesh(new THREE.BoxGeometry(stairW - 0.06, 0.04, 0.06), nosingMat);
-          nose.position.set(stairX, h + 0.01, sz + dStep * 0.42);
+          const nose = new THREE.Mesh(new THREE.BoxGeometry(stairW - 0.12, 0.032, 0.055), nosingMat);
+          nose.position.set(stairX + side * 0.03, h + 0.016, sz + dStep * 0.42);
           scene.add(nose);
         }
         addRamp(stairX - stairW / 2, stairX + stairW / 2, zBot, zTop, 0, houseH, 'stairs');
 
-        // 樓梯頂部超寬敞轉角平台 (3.0m × 4.5m，直接無縫走進 2F 教室走廊！)
+        // 樓梯頂部寬敞轉角平台 (頂高 3.59m 與 2F 主樓板外緣切齊零重疊，走進 2F 教室絲滑無閃爍！)
         const landD = zTop - zLandEnd;
-        const landing = new THREE.Mesh(new THREE.BoxGeometry(stairW, houseH, landD), terrazzoFloorMat);
-        landing.position.set(stairX, houseH / 2, (zTop + zLandEnd) / 2);
+        const landH = houseH - 0.01;
+        const landing = new THREE.Mesh(new THREE.BoxGeometry(stairW - 0.08, landH, landD - 0.04), terrazzoFloorMat);
+        landing.position.set(stairX + side * 0.04, landH / 2, (zTop + zLandEnd) / 2);
+        landing.name = 'classroom_stair_landing';
         scene.add(landing);
-        addFlat(stairX - stairW / 2 - 0.3, stairX + stairW / 2, zLandEnd, zTop + 0.25, houseH, 'stone');
-        // 樓梯與平台外側藍色學校鐵欄杆 (防止跌落)
-        const outerRailX = stairX + side * (stairW / 2 + 0.06);
-        const stairRail = new THREE.Mesh(new THREE.BoxGeometry(0.10, 1.05, zBot - zLandEnd), railMetalMat);
-        stairRail.position.set(outerRailX, houseH + 0.52, (zBot + zLandEnd) / 2);
-        scene.add(stairRail);
-        addBox(outerRailX - 0.12, outerRailX + 0.12, 0, houseH + 1.25, zLandEnd, zBot, { blocksBullets: false, walkTop: false });
-        addBox(stairX - stairW / 2, stairX + stairW / 2, houseH, houseH + 1.25, zLandEnd - 0.15, zLandEnd + 0.08, { blocksBullets: false, walkTop: false });
+        addFlat(Math.min(stairX - stairW / 2 - 0.35, stairX + stairW / 2), Math.max(stairX - stairW / 2 - 0.35, stairX + stairW / 2), zLandEnd, zTop + 0.25, houseH, 'stone');
 
-        // ==================== 2F 走廊女兒牆 + 無縫狙擊看台 + 半開放斜頂紅瓦教室遮雨棚 ====================
-        const kickH = 0.45, railTotalH = 1.05;
-        // 面向中央操場的 2F 走廊女兒牆 (紅磚底座 + 藍色欄杆 + 透明採光板)
+        // v9.3 真實順著階梯斜度上升的「國小雙側斜坡扶手欄杆 + 頂部轉角平台護欄」(徹底修正原本懸空水平鐵塊！)
+        const railGroup = new THREE.Group();
+        railGroup.name = 'school_sloped_handrail';
+        const makePipeBetween = (p1, p2, r, mat) => {
+          const v = new THREE.Vector3().subVectors(p2, p1);
+          const len = v.length();
+          const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 10), mat);
+          m.position.copy(p1).addScaledVector(v, 0.5);
+          m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), v.normalize());
+          return m;
+        };
+        const outerRailX = stairX + side * (stairW / 2 - 0.06);
+        const innerRailX = outerX + side * 0.10;
+        // 外側雙層斜坡扶手 (上扶手 + 中橫桿) + 6 根垂直立柱
+        railGroup.add(makePipeBetween(new THREE.Vector3(outerRailX, 0.98, zBot), new THREE.Vector3(outerRailX, houseH + 0.98, zTop), 0.045, railMetalMat));
+        railGroup.add(makePipeBetween(new THREE.Vector3(outerRailX, 0.52, zBot), new THREE.Vector3(outerRailX, houseH + 0.52, zTop), 0.032, railMetalMat));
+        for (let p = 0; p <= 5; p++) {
+          const f = p / 5;
+          const pz = zBot + (zTop - zBot) * f;
+          const baseY = houseH * f;
+          const post = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.038, 1.02, 8), railMetalMat);
+          post.position.set(outerRailX, baseY + 0.50, pz);
+          railGroup.add(post);
+        }
+        // 內側靠牆斜坡輔助扶手 (僅走斜坡段 zBot -> zTop，不擋二樓門口！)
+        railGroup.add(makePipeBetween(new THREE.Vector3(innerRailX, 0.92, zBot), new THREE.Vector3(innerRailX, houseH + 0.92, zTop + 0.15), 0.036, railMetalMat));
+        // 頂部轉角平台外側與北端水平安全護欄
+        railGroup.add(makePipeBetween(new THREE.Vector3(outerRailX, houseH + 0.98, zTop), new THREE.Vector3(outerRailX, houseH + 0.98, zLandEnd), 0.045, railMetalMat));
+        railGroup.add(makePipeBetween(new THREE.Vector3(outerRailX, houseH + 0.52, zTop), new THREE.Vector3(outerRailX, houseH + 0.52, zLandEnd), 0.032, railMetalMat));
+        [zTop - 1.5, zTop - 3.0, zLandEnd + 0.06].forEach(pz => {
+          const post = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.038, 1.02, 8), railMetalMat);
+          post.position.set(outerRailX, houseH + 0.49, pz);
+          railGroup.add(post);
+        });
+        const northRailStart = outerX + side * 0.08;
+        railGroup.add(makePipeBetween(new THREE.Vector3(northRailStart, houseH + 0.98, zLandEnd), new THREE.Vector3(outerRailX, houseH + 0.98, zLandEnd), 0.045, railMetalMat));
+        railGroup.add(makePipeBetween(new THREE.Vector3(northRailStart, houseH + 0.52, zLandEnd), new THREE.Vector3(outerRailX, houseH + 0.52, zLandEnd), 0.032, railMetalMat));
+        scene.add(railGroup);
+        addBox(outerRailX - 0.12, outerRailX + 0.12, 0, houseH + 1.25, zLandEnd, zBot, { blocksBullets: false, walkTop: false });
+        addBox(Math.min(stairX - stairW / 2, stairX + stairW / 2), Math.max(stairX - stairW / 2, stairX + stairW / 2), houseH, houseH + 1.25, zLandEnd - 0.15, zLandEnd + 0.08, { blocksBullets: false, walkTop: false });
+
+        // ==================== 2F 完整無破損專科教室四面牆體 + 操場走廊女兒牆 + 全覆蓋斜頂紅瓦屋頂 ====================
+        const kickH = 0.45, railTotalH = 1.05, wall2FH = 3.08;
+        // (a) 面向中央操場的 2F 開放式走廊女兒牆 (保留二樓對操場狙擊與搶旗視野)
         const addBalustrade = (w, d, x, z) => {
           const kick = new THREE.Mesh(new THREE.BoxGeometry(w, kickH, d), schoolBrickMat);
           kick.position.set(x, houseH + kickH / 2, z); scene.add(kick);
@@ -4367,32 +4550,75 @@
           topBar.position.set(x, houseH + railTotalH, z); scene.add(topBar);
           addBox(x - w / 2, x + w / 2, houseH + kickH, houseH + railTotalH + 0.15, z - d / 2, z + d / 2, { blocksBullets: false, walkTop: false });
         };
-        addBalustrade(0.28, houseD, innerX, cz); // 內側操場看台欄杆
-        addBalustrade(houseW, 0.28, cx, cz + houseD / 2); // 南側欄杆
-        addBalustrade(houseW, 0.28, cx, cz - houseD / 2); // 北側欄杆
+        addBalustrade(0.28, houseD, innerX, cz);
 
-        // 2F 外側牆：南半段與中央 (z = -2.4 ~ +7.2) 建立高 2.8m 的二樓黑板背景牆，北段 (z = -7.2 ~ -2.4) 全開敞接樓梯平台！
-        const wall2FD = 9.4, wall2FCenterZ = cz + 2.5;
-        const wall2F = new THREE.Mesh(new THREE.BoxGeometry(0.32, 2.85, wall2FD), creamTileMat);
-        wall2F.position.set(outerX, houseH + 1.425, wall2FCenterZ);
+        // (b) 南北兩端完整二樓山牆與鋁框採光窗 (徹底補齊原本缺牆破損感！)
+        const buildIntact2FGableWall = (wz) => {
+          const gWall = new THREE.Group();
+          gWall.name = 'school_2f_intact_wall';
+          const sill2F = 1.08, winTop2F = 2.42, winW2F = 6.8, pierW = (houseW - winW2F) / 2;
+          // 下方紅磚腰牆 + 上方米白磁磚樑 + 左右實心磚柱
+          const lowM = new THREE.Mesh(new THREE.BoxGeometry(houseW, sill2F, 0.34), schoolBrickMat);
+          lowM.position.set(cx, houseH + sill2F / 2, wz); gWall.add(lowM);
+          const topM = new THREE.Mesh(new THREE.BoxGeometry(houseW, wall2FH - winTop2F, 0.34), creamTileMat);
+          topM.position.set(cx, houseH + winTop2F + (wall2FH - winTop2F) / 2, wz); gWall.add(topM);
+          [-1, 1].forEach(sx => {
+            const pier = new THREE.Mesh(new THREE.BoxGeometry(pierW, winTop2F - sill2F, 0.34), creamTileMat);
+            pier.position.set(cx + sx * (winW2F / 2 + pierW / 2), houseH + (sill2F + winTop2F) / 2, wz);
+            gWall.add(pier);
+          });
+          // 鋁窗玻璃與窗櫺
+          const pane = new THREE.Mesh(new THREE.BoxGeometry(winW2F, winTop2F - sill2F, 0.08), glassMat);
+          pane.position.set(cx, houseH + (sill2F + winTop2F) / 2, wz); gWall.add(pane);
+          [-winW2F / 4, 0, winW2F / 4].forEach(mx => {
+            const mull = new THREE.Mesh(new THREE.BoxGeometry(0.08, winTop2F - sill2F, 0.12), railMetalMat);
+            mull.position.set(cx + mx, houseH + (sill2F + winTop2F) / 2, wz); gWall.add(mull);
+          });
+          scene.add(gWall);
+          addBox(cx - houseW / 2, cx + houseW / 2, houseH, houseH + sill2F, wz - 0.18, wz + 0.18, { walkTop: false });
+          addBox(cx - houseW / 2, cx + houseW / 2, houseH + sill2F, houseH + wall2FH, wz - 0.18, wz + 0.18, { blocksBullets: false, walkTop: false });
+        };
+        buildIntact2FGableWall(cz + houseD / 2 - 0.17);
+        buildIntact2FGableWall(cz - houseD / 2 + 0.17);
+
+        // (c) 2F 外側完整黑板牆 + 樓梯入口標準教室門楣與門柱 + 專科教室門牌 (不缺角、不破損，保留 3.9m 寬敞入口動線！)
+        const wall2FD = 9.6, wall2FCenterZ = cz + 2.4; // z = -2.4 ~ +7.2
+        const wall2F = new THREE.Mesh(new THREE.BoxGeometry(0.34, wall2FH, wall2FD), creamTileMat);
+        wall2F.position.set(outerX, houseH + wall2FH / 2, wall2FCenterZ);
+        wall2F.name = 'school_2f_intact_wall';
         scene.add(wall2F);
-        addBox(outerX - 0.2, outerX + 0.2, houseH, houseH + 2.85, wall2FCenterZ - wall2FD / 2, wall2FCenterZ + wall2FD / 2, { walkTop: false });
+        addBox(outerX - 0.2, outerX + 0.2, houseH, houseH + wall2FH, wall2FCenterZ - wall2FD / 2, wall2FCenterZ + wall2FD / 2, { walkTop: false });
+        // 北段二樓入口門柱 (z = -7.2 ~ -6.4) 與門楣橫樑 (z = -7.2 ~ -2.4, y = houseH + 2.52 ~ houseH + 3.08)
+        const northJamb = new THREE.Mesh(new THREE.BoxGeometry(0.34, wall2FH, 0.8), schoolBrickMat);
+        northJamb.position.set(outerX, houseH + wall2FH / 2, cz - 6.8);
+        scene.add(northJamb);
+        addBox(outerX - 0.2, outerX + 0.2, houseH, houseH + wall2FH, cz - 7.2, cz - 6.4, { walkTop: false });
+        const doorHeader2F = new THREE.Mesh(new THREE.BoxGeometry(0.34, wall2FH - 2.52, 4.8), schoolBrickMat);
+        doorHeader2F.position.set(outerX, houseH + 2.52 + (wall2FH - 2.52) / 2, cz - 4.8);
+        scene.add(doorHeader2F);
+        const plate2FTex = makeSignTexture('doorplate_2f_' + bldgTitle, 320, 84, (ctx, w, h) => {
+          ctx.fillStyle = '#1e3a8a'; ctx.fillRect(0, 0, w, h);
+          ctx.strokeStyle = '#fde047'; ctx.lineWidth = 5; ctx.strokeRect(3, 3, w - 6, h - 6);
+          ctx.fillStyle = '#ffffff'; ctx.font = '900 32px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(room2FName, w / 2, h / 2 + 2);
+        });
+        const plate2F = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.46, 1.85), new THREE.MeshBasicMaterial({ map: plate2FTex }));
+        plate2F.position.set(outerX + side * 0.20, houseH + 2.78, cz - 4.4);
+        scene.add(plate2F);
 
-        // 2F 二樓斜頂紅瓦教室遮雨棚 (高 y = 6.6m，挑高 3.0m 完全不壓迫，既有二樓教室感又方便高空預覽辨識！)
-        const canopyW = 6.6;
-        const canopyX = outerX - side * (canopyW / 2 - 0.3);
-        const roof2F = new THREE.Mesh(new THREE.BoxGeometry(canopyW, 0.24, houseD + 0.6), roofTileMat);
-        roof2F.position.set(canopyX, houseH + 3.15, cz);
-        roof2F.rotation.z = side * 0.10;
+        // (d) 完整覆蓋整棟二樓的雙坡紅瓦教室屋頂 + 走廊圓柱 (挑高無壓迫，完整包覆不漏縫！)
+        const roof2F = new THREE.Mesh(new THREE.BoxGeometry(houseW + 0.7, 0.24, houseD + 0.7), roofTileMat);
+        roof2F.position.set(cx, houseH + wall2FH + 0.10, cz);
+        roof2F.name = 'classroom_2f_full_roof';
         scene.add(roof2F);
-        [cz - houseD / 2 + 0.4, cz + houseD / 2 - 0.4].forEach(pz => {
-          const col2F = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.18, 3.05, 10), creamTileMat);
-          col2F.position.set(outerX - side * 5.8, houseH + 1.52, pz);
+        [-houseD / 2 + 0.35, -2.4, 2.4, houseD / 2 - 0.35].forEach(pz => {
+          const col2F = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.17, wall2FH - railTotalH, 10), creamTileMat);
+          col2F.position.set(innerX, houseH + railTotalH + (wall2FH - railTotalH) / 2, pz);
           scene.add(col2F);
         });
 
-        // 2F 教室大黑板 + 4 組二樓課桌椅 (擺放在 z=+2.8..+5.6 區域，完全避開 z=-2.4..+2.0 的搶旗區與樓梯動線！)
-        const bb2F = createClassroomBlackboardGroup(`【${room2FName}】二樓專科教室`, '社會：認識我們的社區 · 美勞創作', faceInward);
+        // 2F 專科教室大黑板 + 4 組二樓課桌椅 (擺放在 z=+2.8..+5.6 區域，完全避開 z=-2.4..+2.0 的搶旗區與樓梯動線！)
+        const bb2F = createClassroomBlackboardGroup(bb2FSpec, faceInward);
         bb2F.position.set(outerX + faceInward * 0.22, houseH, cz + 2.6);
         scene.add(bb2F);
         [[3.2, -2.2], [4.7, -2.2], [3.2, 2.2], [4.7, 2.2]].forEach(([dz, dxOff], idx) => {
@@ -4452,8 +4678,16 @@
         clouds.push({ group: rflag, speed: 0, isFlag: true, baseX: ctfX + 0.98 });
       };
 
-      buildClassroomBuilding(-15.0, 0, -1, '忠孝樓', '六年甲班', '自然科學教室');
-      buildClassroomBuilding( 15.0, 0,  1, '仁愛樓', '六年乙班', '美勞音樂教室');
+      buildClassroomBuilding(
+        -15.0, 0, -1, '忠孝樓', '五年甲班', '🎨 美術專科教室',
+        { key: 'west_1f_math5', kind: 'math5', title: '【五年甲班】國小五年級數學課', duty: '小熊 · 柴柴', task: '擦黑板/發作業', note: '📐 帶量角器' },
+        { key: 'west_2f_art',   kind: 'art2f', title: '【二樓美術教室】水彩與透視寫生', duty: '兔兔 · 狐狸', task: '洗水彩筆桶', note: '🎨 穿畫畫衣' }
+      );
+      buildClassroomBuilding(
+         15.0, 0,  1, '仁愛樓', '六年乙班', '🎵 音樂專科教室',
+        { key: 'east_1f_math6', kind: 'math6', title: '【六年乙班】國小六年級數學課', duty: '熊貓 · 企鵝', task: '整理圓規教具', note: '🧭 隨堂小考' },
+        { key: 'east_2f_music', kind: 'music2f', title: '【二樓音樂教室】五線譜與直笛課', duty: '小熊 · 企鵝', task: '擦風琴/排譜架', note: '🎵 帶高音直笛' }
+      );
     }
 
     // ==================== 陽光國小特色遊樂設施、保健室、營養午餐餐車、發球機與運動器材 ====================
@@ -4887,27 +5121,97 @@
         window.flankOutpostProps.push(ob);
       });
 
-      // (G) 雙方基地「🏥 校園保健室醫護帳」(蹲/趴進入每秒回血 +6 HP/s) + 「🍱 營養午餐不鏽鋼保溫餐車」(HP 150 可擊翻，新局扶正！)
+      // (G) v9.3 雙方基地「👩‍⚕️ 保健阿姨診療桌（取代白色帳篷！靠近即回血 +6 HP/s）」+ 「🍱 營養午餐不鏽鋼保溫餐車＆便當盒飯」
       const buildNurseAndLunchForTeam = (team, sg) => {
-        // 1. 保健室醫護帳 (白底薄荷綠十字 + 視力檢查表 E + 身高體重計)
+        // 1. 陽光國小「保健阿姨診療桌區」(無帳篷！溫馨木白醫生看診桌 + 桌上與上方『👩‍⚕️ 保健阿姨』立牌 + 醫療屏風 + 保健休息床 + 視力表 + 身高體重計)
+        // 注意：中心點 (tx, tz) 保持完全淨空可站立，診療桌設於 z 偏移處，方便玩家與 T97 直接走近擦藥回血！
         const tx = 12.2 * sg, tz = 30.0 * sg;
-        const L = 3.6, W = 3.4, H = 2.05;
+        const L = 4.2, W = 3.8, H = 2.15;
         const openDir = -sg;
         const tg = new THREE.Group();
         tg.name = 'school_nurse_station';
-        const geo = makeTentGeometry(L, W, H);
-        const mintCanvas = new THREE.MeshStandardMaterial({ color: 0xecfdf5, roughness: 0.72, side: THREE.DoubleSide });
-        const slopes = new THREE.Mesh(geo.slopes, mintCanvas);
-        slopes.castShadow = true; tg.add(slopes);
-        const backGable = new THREE.Mesh(geo.gable, new THREE.MeshStandardMaterial({ color: 0xa7f3d0, roughness: 0.8, side: THREE.DoubleSide }));
-        backGable.position.x = -openDir * (L / 2); backGable.name = 'tent_back'; tg.add(backGable);
 
-        // 帳頂綠十字標誌與「🏥 保健室」牌
+        // 溫馨薄荷綠防滑地墊 (y = 0.025)
+        const matFloor = new THREE.Mesh(
+          new THREE.BoxGeometry(L, 0.03, W),
+          new THREE.MeshLambertMaterial({ color: 0xd1fae5, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 })
+        );
+        matFloor.position.set(0, 0.02, 0);
+        tg.add(matFloor);
+
+        // 後方薄荷綠三折醫院布簾屏風 (醫療隱私屏風)
+        const screenMat = new THREE.MeshStandardMaterial({ color: 0x6ee7b7, roughness: 0.65 });
+        const frameChrome = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.8, roughness: 0.25 });
+        [-1.1, 0, 1.1].forEach((sz, idx) => {
+          const panel = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.72, 1.02), screenMat);
+          panel.position.set(-openDir * 1.75, 0.92, sz);
+          panel.rotation.y = (idx === 1 ? 0 : (idx === 0 ? 0.14 : -0.14));
+          tg.add(panel);
+          const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.82, 8), frameChrome);
+          leg.position.set(-openDir * 1.75, 0.91, sz + 0.48);
+          tg.add(leg);
+        });
+
+        // 醫生看診辦公桌 (nurse_doctor_desk，位於 zOff = +1.18 * sg，讓 (tx, tz) 前方完全暢通！)
+        const deskZ = 1.18 * sg;
+        const deskG = new THREE.Group();
+        deskG.name = 'nurse_doctor_desk';
+        const whiteWood = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.45 });
+        const warmOak = new THREE.MeshStandardMaterial({ color: 0xd99b52, roughness: 0.55 });
+        const deskTop = new THREE.Mesh(new THREE.BoxGeometry(1.68, 0.08, 0.86), warmOak);
+        deskTop.position.set(0, 0.78, deskZ); deskG.add(deskTop);
+        const deskFront = new THREE.Mesh(new THREE.BoxGeometry(1.58, 0.74, 0.76), whiteWood);
+        deskFront.position.set(0, 0.38, deskZ); deskG.add(deskFront);
+        // 綠十字標誌鑲在看診桌正面
         const crossMat = new THREE.MeshBasicMaterial({ color: 0x10b981 });
-        const c1 = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.08, 0.28), crossMat); c1.position.set(0, H + 0.05, 0); tg.add(c1);
-        const c2 = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.08, 0.9), crossMat); c2.position.set(0, H + 0.05, 0); tg.add(c2);
+        const dc1 = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.10, 0.03), crossMat); dc1.position.set(0, 0.44, deskZ - 0.40 * sg); deskG.add(dc1);
+        const dc2 = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.36, 0.03), crossMat); dc2.position.set(0, 0.44, deskZ - 0.40 * sg); deskG.add(dc2);
+        // 醫生旋轉椅 + 桌上白鐵醫藥箱、聽診器、紅藥水瓶與病歷夾
+        const docChair = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.08, 14), new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.5 }));
+        docChair.position.set(0, 0.48, deskZ + 0.62 * sg); deskG.add(docChair);
+        const medBox = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.24, 0.26), whiteWood);
+        medBox.position.set(-0.46, 0.94, deskZ); deskG.add(medBox);
+        const bottle1 = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.18, 10), new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.3 }));
+        bottle1.position.set(0.45, 0.91, deskZ - 0.12 * sg); deskG.add(bottle1);
+        const bottle2 = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.16, 10), new THREE.MeshStandardMaterial({ color: 0x3b82f6, roughness: 0.3 }));
+        bottle2.position.set(0.58, 0.90, deskZ + 0.06 * sg); deskG.add(bottle2);
 
-        // 門口旁直立「視力檢查表 E」與「身高體重計」
+        // 桌上醒目雙面名牌立牌 + 桌上方橫幅：「👩‍⚕️ 保健阿姨」
+        const auntieTex = makeSignTexture('nurse_auntie_sign_' + team, 512, 160, (ctx, w, h) => {
+          ctx.fillStyle = '#ecfdf5'; ctx.fillRect(0, 0, w, h);
+          ctx.strokeStyle = '#059669'; ctx.lineWidth = 10; ctx.strokeRect(5, 5, w - 10, h - 10);
+          ctx.fillStyle = '#065f46'; ctx.font = '900 58px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText('👩‍⚕️ 保 健 阿 姨', w / 2, 64);
+          ctx.fillStyle = '#0284c7'; ctx.font = 'bold 28px sans-serif';
+          ctx.fillText('🏥 陽光保健室 · 擦藥休息回血站', w / 2, 124);
+        });
+        const deskPlaque = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.32, 0.08), new THREE.MeshBasicMaterial({ map: auntieTex }));
+        deskPlaque.position.set(0.02, 0.98, deskZ - 0.24 * sg);
+        deskPlaque.name = 'nurse_auntie_sign';
+        deskG.add(deskPlaque);
+        // 高架拱門招牌讓遠處一眼就看到「保健阿姨」
+        [-0.78, 0.78].forEach(px => {
+          const p = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.35, 8), frameChrome);
+          p.position.set(px, 1.45, deskZ + 0.28 * sg); deskG.add(p);
+        });
+        const topBanner = new THREE.Mesh(new THREE.BoxGeometry(1.88, 0.56, 0.10), new THREE.MeshBasicMaterial({ map: auntieTex }));
+        topBanner.position.set(0, 2.15, deskZ + 0.28 * sg);
+        topBanner.name = 'nurse_auntie_banner';
+        deskG.add(topBanner);
+        tg.add(deskG);
+
+        // 另一側保健室綠色皮革護理床 (zOff = -1.22 * sg，保留中央 1.6m 寬敞走道！)
+        const cotZ = -1.22 * sg;
+        const cot = new THREE.Mesh(new THREE.BoxGeometry(1.75, 0.14, 0.76), new THREE.MeshStandardMaterial({ color: 0x34d399, roughness: 0.55 }));
+        cot.position.set(-0.2, 0.52, cotZ); tg.add(cot);
+        const pillow = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.10, 0.56), whiteWood);
+        pillow.position.set(-0.82, 0.63, cotZ); tg.add(pillow);
+        [[-0.95, -0.32], [0.55, -0.32], [-0.95, 0.32], [0.55, 0.32]].forEach(([lx, lz]) => {
+          const cl = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.50, 8), frameChrome);
+          cl.position.set(lx, 0.25, cotZ + lz); tg.add(cl);
+        });
+
+        // 視力檢查表 E 與 身高體重計
         const eyeChartTex = makeSignTexture('nurse_eyechart', 128, 256, (ctx, w, h) => {
           ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, w, h);
           ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 4; ctx.strokeRect(4, 4, w - 8, h - 8);
@@ -4915,37 +5219,31 @@
           ctx.font = '900 58px monospace'; ctx.fillText('E', w / 2, 68);
           ctx.font = '900 38px monospace'; ctx.fillText('Ш  Ǝ', w / 2, 122);
           ctx.font = '900 26px monospace'; ctx.fillText('E ᗰ Ǝ Ш', w / 2, 168);
-          ctx.fillStyle = '#059669'; ctx.font = 'bold 20px sans-serif'; ctx.fillText('陽光保健室', w / 2, 224);
+          ctx.fillStyle = '#059669'; ctx.font = 'bold 20px sans-serif'; ctx.fillText('保健阿姨', w / 2, 224);
         });
         const eyeBoard = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.15, 0.56), new THREE.MeshBasicMaterial({ map: eyeChartTex }));
-        eyeBoard.position.set(openDir * (L / 2 + 0.15), 1.05, W / 2 + 0.35);
+        eyeBoard.position.set(-openDir * 1.66, 1.15, 0);
         eyeBoard.name = 'nurse_eye_chart';
         tg.add(eyeBoard);
         const scalePole = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.65, 0.12), new THREE.MeshStandardMaterial({ color: 0x93c5fd }));
-        scalePole.position.set(openDir * (L / 2 + 0.15), 0.82, -W / 2 - 0.35);
+        scalePole.position.set(-openDir * 1.45, 0.82, cotZ);
         tg.add(scalePole);
 
         tg.position.set(tx, 0, tz);
         scene.add(tg);
 
-        // 碰撞與蹲趴回血區 (與軍事醫療帳篷完全相容)
+        // 僅對看診桌、護理床與後屏風加碰撞盒，中央 (tx, tz) 完全開敞可站立/蹲下回血！
         const boxes = [];
-        [0, 1, 2].forEach(k => {
-          const zOff = (W / 2) * (1 - k * 0.28);
-          const hVis = tentCanvasHeightAt(zOff, W, H);
-          [-1, 1].forEach(sz => {
-            boxes.push(addBox(tx - L / 2, tx + L / 2, 0, Math.min(hVis, 1.22), tz + sz * (zOff - 0.18), tz + sz * (zOff + 0.18), { isTent: true, walkTop: false }));
-          });
-        });
-        // 帳篷中央頂棚限高 1.35m：站立 (1.75m) 擋住，蹲下 (1.2m) / 趴下 (0.6m) 可進入回血！
-        boxes.push(addBox(tx - L / 2, tx + L / 2, 1.32, H + 0.1, tz - W / 2 + 0.2, tz + W / 2 - 0.2, { isTent: true, walkTop: false, blocksBullets: false }));
-        const backX = tx - openDir * (L / 2);
-        boxes.push(addBox(backX - 0.15, backX + 0.15, 0, H, tz - W / 2, tz + W / 2, { isTent: true, walkTop: false }));
+        boxes.push(addBox(tx - 0.86, tx + 0.86, 0, 0.86, tz + deskZ - 0.45, tz + deskZ + 0.45, { isNurseFurniture: true, walkTop: false }));
+        boxes.push(addBox(tx - 1.10, tx + 0.70, 0, 0.62, tz + cotZ - 0.40, tz + cotZ + 0.40, { isNurseFurniture: true, walkTop: false }));
+        const backX = tx - openDir * 1.75;
+        boxes.push(addBox(backX - 0.14, backX + 0.14, 0, 1.82, tz - 1.65, tz + 1.65, { isNurseFurniture: true, walkTop: false }));
         window.campTents.push({
           team, x: tx, z: tz, L, W, H,
           minX: tx - L / 2, maxX: tx + L / 2, minZ: tz - W / 2, maxZ: tz + W / 2,
           healPerSec: 6,
-          group: tg, slopes, boxes
+          isNurseDesk: true,
+          group: tg, boxes
         });
 
         // 保健室急救箱補給
@@ -4997,7 +5295,7 @@
         const hpBar = makeWorldHpBar(cartG, 2.18, 1.6, '營養午餐車', 0x22c55e);
         cartG.position.set(sx, 0, sz);
         scene.add(cartG);
-        addBox(sx - 0.82, sx + 0.82, 0, 1.45, sz - 0.52, sz + 0.52);
+        addBox(sx - 0.82, sx + 0.82, 0, 1.45, sz - 0.52, sz + 0.52, { walkTop: false, isStove: true });
 
         window.campStoves.push({
           team, x: sx, z: sz,
@@ -5006,35 +5304,35 @@
           hpBar, label: null, labelTitle: '營養午餐車'
         });
 
-        // 餐車旁兩份「營養午餐便當」回血補給 (餐車被打翻後該局停止重生！)
-        [['a', 1.45, 0.55], ['b', 1.45, -0.55]].forEach(([suf, dx, dz]) => {
-          const rc = { id: `camp_ration_${team}_${suf}`, type: 'ration', x: sx + dx * sg, z: sz + dz, label: '營養午餐盒', respawnTime: 22 };
+        // v9.3 餐車旁兩份精緻「便當盒飯」回血補給（白飯芝麻＋炸排骨＋花椰菜＋滷蛋＋木筷，取代綠色軍用野戰包！）
+        [['a', 1.55, 0.62], ['b', 1.55, -0.62]].forEach(([suf, dx, dz]) => {
+          const rc = { id: `camp_ration_${team}_${suf}`, type: 'ration', isBento: true, x: sx + dx * sg, z: sz + dz, label: '便當盒飯', respawnTime: 22 };
           const rg = buildPickupModel(rc); rg.position.set(rc.x, 0.05, rc.z);
           const rl = createItemLabelSprite(rc.label, '#fbbf24'); rl.position.set(0, 1.35, 0); rl.userData.isItemLabel = true; rg.add(rl); scene.add(rg);
-          pickupItems.push({ id: rc.id, group: rg, labelSprite: rl, type: 'ration', label: rc.label, x: rc.x, y: 0, z: rc.z, baseY: 0.05, respawnTime: 22, isAvailable: true, respawnTimer: 0, stoveTeam: team });
+          pickupItems.push({ id: rc.id, group: rg, labelSprite: rl, type: 'ration', isBento: true, label: rc.label, x: rc.x, y: 0, z: rc.z, baseY: 0.05, respawnTime: 22, isAvailable: true, respawnTimer: 0, stoveTeam: team });
         });
       };
       buildNurseAndLunchForTeam(0,  1);
       buildNurseAndLunchForTeam(1, -1);
 
-      // (H) 雙方基地「⚾ 校園自動水彈發球機防衛塔」(取代軍事機砲：藍黃運動腳架 + 透明彩球漏斗 + 雙發射滾輪 + 手電筒光束 + 警示閃燈，前向對齊 +X 配合 -scanAngle！)
+      // (H) v9.3 雙方基地「🏞️ 公園景觀柱造型自動防禦水彈砲塔」(移除下方雜亂三腳細桿！改為台灣公園常見的八角洗石子花崗石底座＋鑄鐵古典景觀圓柱＋旋轉雙管防禦砲塔頭，一眼看出是基地防禦砲塔！)
       const buildSchoolPitchingMachine = (team, tx, tz, initScanAngle) => {
         const g = new THREE.Group();
-        g.name = 'school_pitching_turret';
-        const sportBlue = new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.5, roughness: 0.35 });
-        const sportGold = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.45, roughness: 0.35 });
+        g.name = 'park_style_defense_turret';
+        const parkTerrazzo = new THREE.MeshLambertMaterial({ map: makeCanvasTexture('turret_park_ped', 128, texTerrazzo, 2, 2) });
+        const parkGreenIron = new THREE.MeshStandardMaterial({ color: 0x14532d, metalness: 0.62, roughness: 0.38 });
+        const sportBlue = new THREE.MeshStandardMaterial({ color: team === 0 ? 0x0284c7 : 0xdc2626, metalness: 0.52, roughness: 0.35 });
+        const sportGold = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.48, roughness: 0.32 });
 
-        // 三腳運動發球機底座
-        for (let k = 0; k < 3; k++) {
-          const ang = (k / 3) * Math.PI * 2 + 0.5;
-          const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 1.15, 8), sportBlue);
-          leg.position.set(Math.cos(ang) * 0.38, 0.48, Math.sin(ang) * 0.38);
-          leg.rotation.z = -Math.cos(ang) * 0.42;
-          leg.rotation.x = Math.sin(ang) * 0.42;
-          g.add(leg);
-        }
-        const centerCol = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.14, 1.05, 12), sportGold);
-        centerCol.position.y = 0.52; g.add(centerCol);
+        // 公園常見八角洗石子穩重石墩 + 鑄鐵古典景觀燈柱式單柱基座 (零三腳細桿！)
+        const stonePlinth = new THREE.Mesh(new THREE.CylinderGeometry(0.64, 0.76, 0.32, 8), parkTerrazzo);
+        stonePlinth.position.y = 0.16; g.add(stonePlinth);
+        const stoneRing = new THREE.Mesh(new THREE.CylinderGeometry(0.50, 0.58, 0.16, 12), MAT.brick());
+        stoneRing.position.y = 0.40; g.add(stoneRing);
+        const parkPillar = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.30, 0.64, 14), parkGreenIron);
+        parkPillar.position.y = 0.78; g.add(parkPillar);
+        const brassCollar = new THREE.Mesh(new THREE.TorusGeometry(0.27, 0.045, 8, 18), sportGold);
+        brassCollar.rotation.x = Math.PI / 2; brassCollar.position.y = 1.08; g.add(brassCollar);
 
         // 旋轉機頭 (+X 為發射正前方)：雙金黃發球飛輪 + 發射導管 + 透明儲球大漏斗 (裝滿彩色水彈) + 探照鏡頭 + 頂部警示燈
         const head = new THREE.Group();
@@ -5118,7 +5416,24 @@
 
         g.position.set(tx, 0, tz);
         scene.add(g);
-        addBox(tx - 0.72, tx + 0.72, 0, 1.35, tz - 0.72, tz + 0.72, { walkTop: false, isTurret: true });
+        addBox(tx - 0.82, tx + 0.82, 0, 1.32, tz - 0.82, tz + 0.82, { walkTop: false, isTurret: true });
+
+        // v9.3 #10 在砲塔正前方 3.2m 設置「公園洗石子花台防禦矮牆障礙物」(阻擋遠距離對射並提供攻守掩護，使砲塔專注基地內近距離防禦！)
+        const signZ = tz >= 0 ? 1 : -1;
+        const bz = tz - signZ * 3.2;
+        const barG = new THREE.Group();
+        barG.name = 'turret_front_barrier';
+        const planterWall = new THREE.Mesh(new THREE.BoxGeometry(2.3, 1.12, 0.56), parkTerrazzo);
+        planterWall.position.set(tx, 0.56, bz); barG.add(planterWall);
+        const planterCap = new THREE.Mesh(new THREE.BoxGeometry(2.42, 0.10, 0.64), MAT.brick());
+        planterCap.position.set(tx, 1.11, bz); barG.add(planterCap);
+        [-0.7, 0, 0.7].forEach((bxOff, bi) => {
+          const shrub = new THREE.Mesh(new THREE.SphereGeometry(0.24, 8, 8), new THREE.MeshLambertMaterial({ color: bi === 1 ? 0x16a34a : 0x22c55e }));
+          shrub.position.set(tx + bxOff, 1.24, bz); barG.add(shrub);
+        });
+        scene.add(barG);
+        addBox(tx - 1.18, tx + 1.18, 0, 1.16, bz - 0.30, bz + 0.30, { walkTop: true, isTurretFrontBarrier: true });
+        addFlat(tx - 1.18, tx + 1.18, bz - 0.30, bz + 0.30, 1.16, 'stone');
 
         const tObj = {
           team, x: tx, z: tz,
@@ -5127,13 +5442,15 @@
           group: g, head, fanPivot, fan, beam, spotPool, sensor, beaconBulb, beaconHalo,
           beaconFlashing: false, strobeTick: 0, hpBar: wbar.fill, hpBg: wbar.bg, label: lbl,
           destroyed: false, lastShot: 0, target: null, targetLostTimer: 0, smoke: null,
+          frontBarrierZ: bz,
           search: { center: 0, amp: 0, sweeps: 0, maxSweeps: 3, dir: 1, phase: 0 }
         };
         window.baseTurrets.push(tObj);
         if (typeof updateTurretVisual === 'function') updateTurretVisual(tObj);
       };
-      buildSchoolPitchingMachine(0, -4.6,  25.6, -Math.PI / 2);
-      buildSchoolPitchingMachine(1,  4.6, -25.6,  Math.PI / 2);
+      // 退守基地內部 z = ±29.8，搭配 TURRET_RANGE = 9.6，射程僅涵蓋基地內部 (|z| >= 20.2)，絕不射到基地外面！
+      buildSchoolPitchingMachine(0,  4.6,  29.8, -Math.PI / 2);
+      buildSchoolPitchingMachine(1, -4.6, -29.8,  Math.PI / 2);
     }
 
 
@@ -5315,6 +5632,9 @@
       const nextId = (mapId === 'school') ? 'school' : 'military';
       rebuildWorldMap(nextId);
       try { localStorage.setItem('QFORCE3D_MAP', nextId); } catch (e) {}
+      if (typeof MusicEngine !== 'undefined' && typeof isGameRunning !== 'undefined' && isGameRunning && !isRoundEnded) {
+        MusicEngine.syncSceneTrack();
+      }
       if (!fromNetwork && typeof Net !== 'undefined' && Net.isHost && Net.roomCode) {
         Net.sendAll({
           type: 'round_sync',
@@ -5441,15 +5761,47 @@
           cam.lookAt(0, 1.4, -2);
         }
 
+        // v9.3 修正公仔透明渲染器 (setClearColor alpha=0) 導致回大廳重繪縮圖變透明空白 Bug，並同步寫入持久 <img> 永不消失！
+        previewRenderer.setClearColor(mapId === 'school' ? 0x38bdf8 : 0x3b82f6, 1);
         previewRenderer.render(sc, cam);
         const ctx2d = cv.getContext('2d');
+        let drewValid = false;
         if (ctx2d) {
-          ctx2d.clearRect(0, 0, cv.width, cv.height);
-          ctx2d.drawImage(previewRenderer.domElement, 0, 0, cv.width, cv.height);
+          ctx2d.fillStyle = mapId === 'school' ? '#38bdf8' : '#3b82f6';
+          ctx2d.fillRect(0, 0, cv.width, cv.height);
+          try {
+            ctx2d.drawImage(previewRenderer.domElement, 0, 0, cv.width, cv.height);
+            const px = ctx2d.getImageData(Math.floor(cv.width / 2), Math.floor(cv.height * 0.68), 1, 1).data;
+            drewValid = (px[3] > 200) && !(px[0] === 0 && px[1] === 0 && px[2] === 0);
+          } catch (e) {}
+          if (!drewValid) {
+            // 2D 高精細向量備援縮圖（即使行動裝置 WebGL Context Lost 也 100% 清晰顯示！）
+            const g = ctx2d.createLinearGradient(0, 0, 0, cv.height);
+            g.addColorStop(0, mapId === 'school' ? '#38bdf8' : '#2563eb');
+            g.addColorStop(0.45, mapId === 'school' ? '#bae6fd' : '#93c5fd');
+            g.addColorStop(0.46, mapId === 'school' ? '#22c55e' : '#64748b');
+            g.addColorStop(1, mapId === 'school' ? '#15803d' : '#334155');
+            ctx2d.fillStyle = g; ctx2d.fillRect(0, 0, cv.width, cv.height);
+            if (mapId === 'school') {
+              ctx2d.strokeStyle = '#c8432e'; ctx2d.lineWidth = 14;
+              ctx2d.beginPath(); ctx2d.ellipse(180, 122, 65, 34, 0, 0, Math.PI * 2); ctx2d.stroke();
+              ctx2d.fillStyle = '#fef3c7'; ctx2d.fillRect(28, 66, 68, 52); ctx2d.fillRect(264, 66, 68, 52);
+              ctx2d.fillStyle = '#c2410c'; ctx2d.fillRect(24, 58, 76, 12); ctx2d.fillRect(260, 58, 76, 12);
+            } else {
+              ctx2d.fillStyle = '#9a3412'; ctx2d.fillRect(36, 68, 62, 50); ctx2d.fillRect(262, 68, 62, 50);
+              ctx2d.fillStyle = '#4d5d3b'; ctx2d.fillRect(118, 98, 42, 24); ctx2d.fillRect(200, 98, 42, 24);
+            }
+          }
         }
+        previewRenderer.setClearColor(0x000000, 0);
+        previewRenderer.setSize(240, 240);
         const url = cv.toDataURL('image/png');
         window.__mapPreviewDataUrls[mapId] = url;
-        previewRenderer.setSize(240, 240);
+        const imgEl = document.getElementById(mapId === 'school' ? 'map-thumb-img-school' : 'map-thumb-img-military');
+        if (imgEl && url && url.startsWith('data:image/png')) {
+          imgEl.src = url;
+          imgEl.classList.remove('hidden');
+        }
         return url;
       };
 
@@ -5794,6 +6146,32 @@
       for (let i = 0; i < obstacles.length; i++) {
         const o = obstacles[i];
         if (ignoreNonBullet !== false && o.blocksBullets === false) continue;
+        let tmin = 0, tmax = 1;
+        let ok = true;
+        const axes = [[p1.x, dx, o.minX, o.maxX], [p1.y, dy, o.minY, o.maxY], [p1.z, dz, o.minZ, o.maxZ]];
+        for (let a = 0; a < 3 && ok; a++) {
+          const [p, d, mn, mx] = axes[a];
+          if (Math.abs(d) < 1e-7) {
+            if (p < mn || p > mx) ok = false;
+          } else {
+            let t1 = (mn - p) / d, t2 = (mx - p) / d;
+            if (t1 > t2) { const tmp = t1; t1 = t2; t2 = tmp; }
+            if (t1 > tmin) tmin = t1;
+            if (t2 < tmax) tmax = t2;
+            if (tmin > tmax) ok = false;
+          }
+        }
+        if (ok && tmin < bestT) { bestT = tmin; bestObs = o; }
+      }
+      return bestObs ? { t: bestT, obs: bestObs } : null;
+    }
+    // v9.3 #11 檢查射線是否被「真正的牆壁/掩體」擋住（排除砲塔與營養午餐鍋子自身的碰撞盒，避免子彈先撞到鍋子/砲塔 AABB 就被吃掉而不扣血！）
+    function segmentHitWallExcludingTargets(p1, p2) {
+      let bestT = 2, bestObs = null;
+      const dx = p2.x - p1.x, dy = p2.y - p1.y, dz = p2.z - p1.z;
+      for (let i = 0; i < obstacles.length; i++) {
+        const o = obstacles[i];
+        if (o.blocksBullets === false || o.isTurret || o.isStove) continue;
         let tmin = 0, tmax = 1;
         let ok = true;
         const axes = [[p1.x, dx, o.minX, o.maxX], [p1.y, dy, o.minY, o.maxY], [p1.z, dz, o.minZ, o.maxZ]];
@@ -6919,7 +7297,36 @@
         g.userData.bulb = bulb;
       }
 
-      else if (cfg.type === 'ration') {
+      else if (cfg.type === 'ration' && (cfg.isBento || (typeof currentMapId !== 'undefined' && currentMapId === 'school'))) {
+        // v9.3 陽光國小「營養午餐便當盒飯」(木盒不鏽鋼分格便當：白米飯撒黑芝麻＋黃金炸排骨＋翠綠花椰菜＋滷蛋半顆＋竹筷，取代綠色野戰包！)
+        g.name = 'school_bento_pickup';
+        const bentoCase = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.48 });
+        const innerTray = new THREE.MeshStandardMaterial({ color: 0xfef3c7, roughness: 0.4 });
+        const riceMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.65 });
+        const porkMat = new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.52 });
+        const vegMat = new THREE.MeshStandardMaterial({ color: 0x16a34a, roughness: 0.6 });
+        g.add(box(0.66, 0.15, 0.48, bentoCase, 0, 0.18, 0));
+        g.add(box(0.60, 0.06, 0.42, innerTray, 0, 0.24, 0));
+        // 左格香Q白米飯 + 酸梅/芝麻點綴
+        g.add(box(0.26, 0.07, 0.36, riceMat, -0.14, 0.27, 0));
+        g.add(new THREE.Mesh(new THREE.SphereGeometry(0.032, 8, 8), red)).position.set(-0.14, 0.31, 0);
+        // 右上黃金炸排骨 + 右下花椰菜與半顆滷蛋
+        const cutlet = box(0.27, 0.065, 0.18, porkMat, 0.14, 0.28, -0.09); cutlet.rotation.y = 0.08; g.add(cutlet);
+        [-0.05, 0.05].forEach(vx => {
+          const broc = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 8), vegMat);
+          broc.position.set(0.08 + vx, 0.29, 0.11); g.add(broc);
+        });
+        const eggWhite = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.052, 0.04, 12), new THREE.MeshStandardMaterial({ color: 0xfef9c3 }));
+        eggWhite.position.set(0.22, 0.28, 0.11); g.add(eggWhite);
+        const yolk = new THREE.Mesh(new THREE.SphereGeometry(0.028, 8, 8), new THREE.MeshBasicMaterial({ color: 0xf59e0b }));
+        yolk.position.set(0.22, 0.30, 0.11); g.add(yolk);
+        // 一雙木筷斜擺在便當盒邊緣
+        const chopMat = new THREE.MeshStandardMaterial({ color: 0xfde68a, roughness: 0.5 });
+        [-0.022, 0.022].forEach(cz => {
+          const st = box(0.56, 0.018, 0.018, chopMat, 0.02, 0.33, 0.19 + cz);
+          st.rotation.y = -0.06; g.add(st);
+        });
+      } else if (cfg.type === 'ration') {
         // 軍用餐盒 MRE：橄欖綠真空包裝袋 + 撕口 + 黃色 MRE 標籤 + 餐具
         const pouch = new THREE.MeshStandardMaterial({ color: 0x4d5b2a, roughness: 0.75 });
         const bag = box(0.62, 0.42, 0.16, pouch, 0, 0.28, 0); bag.rotation.x = -0.35; g.add(bag);
@@ -8984,6 +9391,7 @@
       const chibiAI = createChibiSoldierMesh(isAllyAI, name, spec.style, spec, { teamIndex: aiTeam, paintHex: hex6(paint), weaponKey: chosenWeaponKey });
       chibiAI.mesh.position.set(gate.x + (Math.random() - 0.5) * 1.5, 0, gate.z);
       { const safe = computeSafeSpawnPoint(aiTeam, true); if (safe.rerouted) chibiAI.mesh.position.set(safe.x, 0, safe.z); }
+      enforceTurretClearance(chibiAI.mesh.position, 0.42, 1.75);
       const enemyBaseRef = { x: 0, z: aiTeam === 0 ? -30 : 30 };
       const ai = Object.assign(chibiAI, {
         id: 'AI' + (++aiIdCounter),
@@ -10036,14 +10444,15 @@
       scene.add(trail);
 
       const velocity = shootDir.clone().normalize().multiplyScalar(weapon.speed);
+      const bulletGravity = (weapon && weapon.type === 'sniper') ? PAINT_GRAVITY * 0.12 : PAINT_GRAVITY;
       projectiles.push({
         mesh: bulletMesh,
         trail: trail,
         pos: shooterPos.clone(),
         prevPos: shooterPos.clone(),
         vel: velocity,
-        gravity: PAINT_GRAVITY,
-        maxRange: weapon.maxRange,
+        gravity: bulletGravity,
+        maxRange: weapon.maxRange || weapon.range || 30,
         traveledDist: 0,
         damage: weapon.damage,
         isAlly: isAlly,
@@ -10363,6 +10772,41 @@
           Net.sendHitEvent(uid, Math.round(currentWeapon.damage * ratio), playerState.name, playerState.paintColor);
         }
       }
+      // C. v9.3 #11 散彈槍圓形範圍同樣可對敵方砲塔與營養午餐車／野戰鍋造成完整傷害！
+      for (const t of (window.baseTurrets || [])) {
+        if (t.destroyed || baseTurretSetting !== 'on' || t.team === shooterTeam) continue;
+        const tc = new THREE.Vector3(t.x, 1.05, t.z);
+        const along = tc.clone().sub(shootOrigin).dot(shootDir);
+        if (along <= 0 || along > maxR) continue;
+        if (segmentHitWallExcludingTargets(shootOrigin, tc)) continue;
+        const perp = shootOrigin.clone().addScaledVector(shootDir, along).distanceTo(tc);
+        const ratio = computeShotgunCircleDamageRatio(perp, Math.max(1.35, along * 0.28));
+        if (ratio > 0) {
+          hitAny = true;
+          const dmg = Math.round(currentWeapon.damage * ratio * getCombatDamageMultiplier());
+          triggerHitFeedback();
+          spawnPaintSplatter(tc, playerState.paintColor, shootDir.clone().negate(), { noDecal: true });
+          if (isAIAuthority()) damageTurret(t, dmg, playerState.name, shooterTeam);
+          else Net.sendHitEvent('TURRET' + t.team, dmg, playerState.name, playerState.paintColor, shooterTeam);
+        }
+      }
+      for (const s of (window.campStoves || [])) {
+        if (s.destroyed || s.team === shooterTeam) continue;
+        const sc = new THREE.Vector3(s.x, 0.95, s.z);
+        const along = sc.clone().sub(shootOrigin).dot(shootDir);
+        if (along <= 0 || along > maxR) continue;
+        if (segmentHitWallExcludingTargets(shootOrigin, sc)) continue;
+        const perp = shootOrigin.clone().addScaledVector(shootDir, along).distanceTo(sc);
+        const ratio = computeShotgunCircleDamageRatio(perp, Math.max(1.35, along * 0.28));
+        if (ratio > 0) {
+          hitAny = true;
+          const dmg = Math.round(currentWeapon.damage * ratio * getCombatDamageMultiplier());
+          triggerHitFeedback();
+          spawnPaintSplatter(sc, playerState.paintColor, shootDir.clone().negate(), { noDecal: true });
+          if (isAIAuthority()) damageStove(s, dmg, playerState.name, shooterTeam);
+          else Net.sendHitEvent('STOVE' + s.team, dmg, playerState.name, playerState.paintColor, shooterTeam);
+        }
+      }
       if (hitAny) wallBlockedStreak = 0;
     }
 
@@ -10418,17 +10862,26 @@
       camera.getWorldDirection(camDir);
       const camPos = new THREE.Vector3();
       camera.getWorldPosition(camPos);
-      const aimFar = camPos.clone().addScaledVector(camDir, 80);
+      const aimFar = camPos.clone().addScaledVector(camDir, 95);
       const aimHit = segmentHitObstacle(camPos, aimFar);
       let aimPoint = aimHit ? camPos.clone().lerp(aimFar, Math.max(0.02, aimHit.t - 0.002)) : aimFar;
       if (camDir.y < -0.01) {
         const tFloor = (playerFeetY - camPos.y) / camDir.y;
-        if (tFloor > 0.3 && tFloor < 80 && (!aimHit || (tFloor / 80) < aimHit.t)) {
+        if (tFloor > 0.3 && tFloor < 95 && (!aimHit || (tFloor / 95) < aimHit.t)) {
           aimPoint = camPos.clone().addScaledVector(camDir, tFloor);
         }
       }
       const shootOrigin = camPos.clone().addScaledVector(camDir, 0.25);
-      const shootDir = aimPoint.clone().sub(shootOrigin).normalize();
+      // v9.3 #11 準心直接瞄準遠處砲塔或營養午餐鍋子／野戰鍋時，自動微幅補償拋物線重力下墜（一般空曠準心與窗邊維持精準直線射向準心！）
+      let shootDir = aimPoint.clone().sub(shootOrigin).normalize();
+      if (aimHit && (aimHit.obs.isTurret || aimHit.obs.isStove) && currentWeapon.type !== 'sniper' && typeof ballisticDirection === 'function') {
+        const dx = aimPoint.x - shootOrigin.x, dz = aimPoint.z - shootOrigin.z, h = aimPoint.y - shootOrigin.y;
+        const d = Math.hypot(dx, dz), v2 = currentWeapon.speed * currentWeapon.speed;
+        const disc = v2 * v2 - PAINT_GRAVITY * (PAINT_GRAVITY * d * d + 2 * h * v2);
+        if (d > 4.0 && disc >= 0) {
+          shootDir = ballisticDirection(shootOrigin, aimPoint, currentWeapon.speed);
+        }
+      }
       const muzzleWorld = new THREE.Vector3();
       if (muzzleFlashMesh) muzzleFlashMesh.getWorldPosition(muzzleWorld); else muzzleWorld.copy(shootOrigin);
       const muzzleBlocked = segmentHitObstacle(shootOrigin, muzzleWorld) !== null;
@@ -10511,16 +10964,76 @@
       el.className = 'text-xs font-black ' + (respawnModeSetting === 'unlimited' ? 'text-emerald-300' : (playerState.lives <= 1 ? 'text-rose-400 animate-pulse' : 'text-rose-300'));
     }
 
+    // v9.3 #9 砲塔安全淨空演算法：保證玩家與 AI 永遠不會重生在砲塔內，也不會在擠壓／移動時卡進砲塔動彈不得！
+    const TURRET_SAFE_RADIUS = 1.56;
+    function isInsideTurretZone(x, z, extraPad) {
+      const pad = extraPad || 0;
+      const list = window.baseTurrets || [];
+      for (let i = 0; i < list.length; i++) {
+        const t = list[i];
+        if (!t) continue;
+        if (Math.hypot(x - t.x, z - t.z) < TURRET_SAFE_RADIUS + pad) return t;
+      }
+      return null;
+    }
+    function enforceTurretClearance(posObj, radius, height) {
+      if (!posObj) return false;
+      const r = radius || 0.42, h = height || 1.75;
+      let pushed = false;
+      const list = window.baseTurrets || [];
+      for (let i = 0; i < list.length; i++) {
+        const t = list[i];
+        if (!t) continue;
+        let dx = posObj.x - t.x, dz = posObj.z - t.z;
+        let dist = Math.hypot(dx, dz);
+        if (dist < TURRET_SAFE_RADIUS) {
+          pushed = true;
+          if (dist < 1e-4) {
+            dx = (t.x >= 0 ? -1 : 1);
+            dz = 0;
+            dist = 1;
+          }
+          const ux = dx / dist, uz = dz / dist;
+          const targetR = TURRET_SAFE_RADIUS + 0.08;
+          // 優先往徑向外推；若碰到牆壁則搜尋圓周 8 個無碰撞角度安全脫困！
+          const candAngles = [0, 0.45, -0.45, 0.95, -0.95, 1.57, -1.57, Math.PI];
+          let placed = false;
+          for (let k = 0; k < candAngles.length; k++) {
+            const ca = Math.cos(candAngles[k]), sa = Math.sin(candAngles[k]);
+            const rx = ux * ca - uz * sa, rz = ux * sa + uz * ca;
+            const nx = Math.max(-33.5, Math.min(33.5, t.x + rx * targetR));
+            const nz = Math.max(-33.5, Math.min(33.5, t.z + rz * targetR));
+            if (!checkCollision(nx, nz, 0, r, h) && !isInsideTurretZone(nx, nz, -0.02)) {
+              posObj.x = nx; posObj.z = nz;
+              placed = true;
+              break;
+            }
+          }
+          if (!placed) {
+            posObj.x = t.x + ux * targetR;
+            posObj.z = t.z + uz * targetR;
+          }
+        }
+      }
+      return pushed;
+    }
+    window.isInsideTurretZone = isInsideTurretZone;
+    window.enforceTurretClearance = enforceTurretClearance;
+
     // v8.2 重生點移到兩側矮牆正後方 (二樓看台射不到)：藍營 (-14.8, 25.6)、紅營 (14.8, -25.6)
     const TEAM_SPAWN = [{ x: -7.5, z: 26.4, yaw: 0 }, { x: 7.5, z: -26.4, yaw: Math.PI }];   // v8.4 回到左側弧形沙包正後方
     function teamSpawnPoint(team) {
       const s = TEAM_SPAWN[team] || TEAM_SPAWN[0];
-      return { x: s.x + (Math.random() - 0.5) * 5, z: s.z, yaw: s.yaw };
+      const pt = { x: s.x + (Math.random() - 0.5) * 5, z: s.z, yaw: s.yaw };
+      enforceTurretClearance(pt, 0.42, 1.75);
+      return pt;
     }
     // 敵人蹲在基地旁 16m 內守屍時：重生點改為「最近敵人的正後方 3.5m」(背對基地那側)，雙方皆適用
     function computeSafeSpawnPoint(team, forAI) {
       const base = TEAM_SPAWN[team] || TEAM_SPAWN[0];
-      const sp = { x: base.x + (Math.random() - 0.5) * 6, z: base.z, yaw: base.yaw, rerouted: false };
+      const sp = { x: base.x + (Math.random() - 0.5) * 5.2, z: base.z, yaw: base.yaw, rerouted: false };
+      enforceTurretClearance(sp, 0.42, 1.75);
+      if (checkCollision(sp.x, sp.z, 0, 0.42, 1.75)) { sp.x = base.x; sp.z = base.z; enforceTurretClearance(sp, 0.42, 1.75); }
       const enemies = [];
       aiEnemies.forEach(a => { if (a.state !== 'DEAD' && a.team !== team) enemies.push({ x: a.mesh.position.x, z: a.mesh.position.z }); });
       for (const uid in remotePlayers) { const rp = remotePlayers[uid]; if (rp.team !== team && rp.alive !== false) enemies.push({ x: rp.mesh.position.x, z: rp.mesh.position.z }); }
@@ -10535,6 +11048,7 @@
       const sg = (team === 0) ? 1 : -1;
       const safeCands = [[-11, 33.3 * sg], [-14.5, 32.5 * sg], [6, 33.3 * sg], [-6, 33.5 * sg], [10.5, 33.3 * sg], [16, 32.5 * sg], [19.5, 33 * sg], [-19.5, 33 * sg], [-7.5, 25.8 * sg], [0, 25.8 * sg], [7.5, 25.8 * sg], [0, 33.5 * sg]];
       const isSafe = (x, z) => {
+        if (isInsideTurretZone(x, z, 0.25)) return false;
         if (checkCollision(x, z, 0, 0.42, 1.75)) return false;
         if (shotsNear(x, z, 8) > 0) return false;
         for (const e of enemies) {
@@ -10561,14 +11075,16 @@
       for (const [lat, extra] of cands) {
         const px = Math.max(-33, Math.min(33, nearest.x + ux * (3.5 + extra) + (-uz) * lat * 1.6));
         const pz = Math.max(-33, Math.min(33, nearest.z + uz * (3.5 + extra) + (ux) * lat * 1.6));
-        if (!checkCollision(px, pz, 0, 0.42, 1.75)) {
+        if (!isInsideTurretZone(px, pz, 0.25) && !checkCollision(px, pz, 0, 0.42, 1.75)) {
           return { x: px, z: pz, yaw: Math.atan2(-(nearest.x - px), -(nearest.z - pz)), rerouted: true, behindOf: nearest };
         }
       }
+      enforceTurretClearance(sp, 0.42, 1.75);
       return sp;
     }
     function spawnAtOwnBase() {
       const sp = computeSafeSpawnPoint(playerState.team, false);
+      enforceTurretClearance(sp, 0.42, 1.75);
       if (sp.rerouted) addKillFeed(sp.safe ? '🛡️ 基地有敵人火網，已改在後方圍牆後的安全點重生！' : '🛡️ 偵測到敵人蹲守基地，已改在敵人後方重生！', '#34d399');
       playerGroup.position.set(sp.x, STAND_HEIGHT, sp.z);
       playerFeetY = 0; playerVelY = 0; playerGrounded = true;
@@ -11036,13 +11552,36 @@
 
     /* ---- 遊戲中切換 AI 對手 (#29，房主或單機) ---- */
     function toggleAIEnemies(force) {
-      if (!Net.isHost && Net.roomCode !== 'SOLO' && Net.roomCode !== 'AUTOTEST' && Net.roomCode !== 'DEMO') { addKillFeed('只有房主可以切換 AI 對手', '#f59e0b'); return; }
-      aiEnabled = (force !== undefined) ? force : !aiEnabled;
-      if (!aiEnabled) { aiEnemies.forEach(a => scene.remove(a.mesh)); aiEnemies.length = 0; }
-      aiSpawnIntervalTimer = 10;
-      if (aiEnabled && isGameRunning && isAIAuthority()) replenishBothTeamsBalanced(aiCountCfg.cap, false);
+      if (!Net.isHost && Net.roomCode && !['SOLO', 'AUTOTEST', 'DEMO'].includes(Net.roomCode)) { addKillFeed('只有房主可以切換 AI 對手', '#f59e0b'); return; }
+      aiEnabled = (force !== undefined) ? !!force : !aiEnabled;
+      if (!aiEnabled) {
+        aiEnemies.forEach(a => { if (a && a.mesh) scene.remove(a.mesh); });
+        aiEnemies.length = 0;
+      } else {
+        // v9.3 #7 修正按 B 顯示開啟卻因 aiCountCfg.mode==='none' 或波次上限而沒生出 AI 的 Bug！
+        if (aiCountCfg.mode === 'none') {
+          setAICountCfg({ mode: 'auto', cap: Math.max(2, aiCountCfg.cap || TEAM_MAX_SIZE) });
+        } else if (aiCountCfg.mode === 'fixed' && (aiCountCfg.fixed[0] || 0) + (aiCountCfg.fixed[1] || 0) <= 0) {
+          setAICountCfg({ mode: 'auto', cap: Math.max(2, aiCountCfg.cap || TEAM_MAX_SIZE) });
+        }
+        aiWaveSpawnedByTeam[0] = 0;
+        aiWaveSpawnedByTeam[1] = 0;
+        if (playerState.isBroadcaster) window.forceBothTeamsAI = true;
+        aiSpawnIntervalTimer = 10;
+        if (isGameRunning && isAIAuthority()) {
+          replenishBothTeamsBalanced(Math.max(2, aiCountCfg.cap || TEAM_MAX_SIZE), false);
+          if (aiEnemies.filter(a => a.state !== 'DEAD').length === 0) {
+            const enemyT = playerState.isBroadcaster ? 0 : (1 - (playerState.team || 0));
+            spawnAIEnemyFromBase(0, enemyT);
+            spawnAIEnemyFromBase(1, playerState.isBroadcaster ? 1 : enemyT);
+          }
+        }
+      }
+      const hudBtnAi = document.getElementById('btn-toggle-ai');
+      if (hudBtnAi) hudBtnAi.classList.toggle('sysbtn-active', !!aiEnabled);
       document.getElementById('hud-mode-text').innerText = aiEnabled ? (gameModeSetting === 'pvp' ? 'PvP + AI' : '打 AI 模式') : '純 PvP 對決';
-      addKillFeed(aiEnabled ? '🤖 AI 電腦對手已加入戰場 (B 鍵可關閉)' : '🤖 AI 電腦對手已撤離', '#a78bfa');
+      const aliveCount = aiEnemies.filter(a => a.state !== 'DEAD').length;
+      addKillFeed(aiEnabled ? `🤖 AI 電腦對手已投入戰場（在場 ${aliveCount} 名，按 B 鍵可關閉）` : '🤖 AI 電腦對手已撤離', '#a78bfa');
       Net.sendAIToggle(aiEnabled);
     }
 
@@ -11232,6 +11771,9 @@
       aiEnemies.forEach(a => scene.remove(a.mesh)); aiEnemies.length = 0;
       document.getElementById('game-over-modal').classList.add('hidden');
       document.getElementById('lobby-modal').classList.remove('hidden');
+      if (typeof renderAllLobbyMapPreviews === 'function') {
+        try { renderAllLobbyMapPreviews(); } catch (e) {}
+      }
       if (typeof MusicEngine !== 'undefined') MusicEngine.playTrack('lobby');
       if (document.exitPointerLock) document.exitPointerLock();
       if (msg) showErrorToast(msg);
@@ -11243,10 +11785,13 @@
     function showTeamSelect(info, onPick) {
       const modal = document.getElementById('team-select-modal');
       const hostTeam = info.hostTeam ?? 0;
-      const players = [{ name: info.hostName + ' (房主)', team: hostTeam }].concat(Object.values(info.roster || {}).map(r => ({ name: r.name, team: r.team })));
+      const hostIsSpec = !!info.hostBroadcast;
+      const players = (hostIsSpec ? [] : [{ name: info.hostName + ' (房主)', team: hostTeam }])
+        .concat(Object.values(info.roster || {}).filter(r => r && !r.broadcast).map(r => ({ name: r.name, team: r.team })));
       const counts = [players.filter(p => p.team === 0).length, players.filter(p => p.team === 1).length];
-      const onlyTwo = !info.aiEnabled && players.length === 1;   // 純 PvP 且目前只有房主 → 只能選另一隊
-      const defaultTeam = info.aiEnabled ? hostTeam : (onlyTwo ? 1 - hostTeam : (counts[0] <= counts[1] ? 0 : 1));
+      const singleTeam = players.length === 1 ? players[0].team : hostTeam;
+      const onlyTwo = !info.aiEnabled && players.length === 1;   // 純 PvP 且目前場上只有 1 名戰士 → 引導選另一隊對戰
+      const defaultTeam = (info.aiEnabled && !hostIsSpec) ? hostTeam : (onlyTwo ? 1 - singleTeam : (counts[0] <= counts[1] ? 0 : 1));
       document.getElementById('team-select-info').innerText = info.aiEnabled
         ? '🤖 房間已開啟 AI：選「與房主同隊」可全隊合作打 AI 並一起判定勝利；選「不同隊」則藍紅兩邊都會有 AI 隊員助戰！'
         : (onlyTwo ? '⚔️ 目前只有房主一人，兩人對戰只能選另一隊。' : '⚖️ 純 PvP：請選擇要加入的隊伍（建議人少的一隊）。');
@@ -11254,7 +11799,7 @@
         const list = document.getElementById(`team-list-${t}`);
         list.innerHTML = players.filter(p => p.team === t).map(p => `<div>• ${p.name}</div>`).join('') || '<div class="text-slate-500">（無人）</div>';
         const btn = document.getElementById(`btn-pick-team-${t}`);
-        const disabled = onlyTwo && t === hostTeam;
+        const disabled = onlyTwo && t === singleTeam;
         btn.disabled = disabled;
         btn.className = disabled
           ? 'w-full py-2 rounded-xl text-xs font-black bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
@@ -11643,7 +12188,8 @@
        16a. v7.7 基地雙頭哨戒砲 / 戰地火盆 / 營地設施 / 床上回血 / 車輛階梯碰撞
        ========================================================================= */
     let baseTurretSetting = 'on';
-    const TURRET_RANGE = 19.0, TURRET_HP = 500, TURRET_AMMO = 250, TURRET_FOV = Math.PI / 6, TURRET_SCAN_HALF = TURRET_FOV / 2, TURRET_FIRE_MS = 200, TURRET_SCAN_SPEED = 0.72, TURRET_SEARCH_SPEED = 1.7;
+    // v9.3 #10 砲塔改以基地防禦為主：射程由 19.0m 縮減為 9.6m（嚴格守在基地範圍內，絕不射到基地外面！）
+    const TURRET_RANGE = 9.6, TURRET_HP = 500, TURRET_AMMO = 250, TURRET_FOV = Math.PI / 6, TURRET_SCAN_HALF = TURRET_FOV / 2, TURRET_FIRE_MS = 200, TURRET_SCAN_SPEED = 0.72, TURRET_SEARCH_SPEED = 1.7;
     window.baseTurrets = [];
     function buildBaseTurrets() {
       const darkSteel = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.85, roughness: 0.34 });
@@ -11652,30 +12198,23 @@
       const oliveBoxMat = new THREE.MeshStandardMaterial({ color: 0x3f4f26, metalness: 0.35, roughness: 0.72 });
       const brassBeltMat = new THREE.MeshStandardMaterial({ color: 0xeab308, metalness: 0.9, roughness: 0.25 });
       const hazardMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.3, roughness: 0.55 });
+      const parkStoneMat = MAT.concrete();
+      const parkCastGreen = new THREE.MeshStandardMaterial({ color: 0x1e3a2f, metalness: 0.65, roughness: 0.38 });
       [0, 1].forEach(team => {
         const sign = team === 0 ? 1 : -1;
         const x = 8 * sign, z = 31 * sign;
         const teamCol = team === 0 ? 0x2563eb : 0xef4444;
         const paint = new THREE.MeshStandardMaterial({ color: teamCol, metalness: 0.55, roughness: 0.42 });
         const g = new THREE.Group();
-        g.name = 'base_turret_' + team;
+        g.name = 'park_style_defense_turret';
 
-        // 1. 精緻三腳裝甲駐鋤底座 + 液壓旋轉基座
-        g.add(cyl(0.56, 0.72, 0.26, darkSteel, 0, 0.13, 0));
-        g.add(cyl(0.58, 0.58, 0.05, hazardMat, 0, 0.27, 0));
-        for (let k = 0; k < 3; k++) {
-          const ang = k * (Math.PI * 2 / 3) + Math.PI / 6;
-          const legG = new THREE.Group();
-          legG.rotation.y = ang;
-          const strut = box(0.68, 0.14, 0.18, gunMetal, 0.58, 0.18, 0);
-          strut.rotation.z = -0.24;
-          legG.add(strut);
-          legG.add(cyl(0.16, 0.19, 0.07, darkSteel, 0.90, 0.035, 0));   // 駐鋤抓地圓墊
-          legG.add(cyl(0.035, 0.035, 0.14, chromeMat, 0.90, 0.10, 0));  // 液壓調平螺桿
-          g.add(legG);
-        }
-        g.add(cyl(0.34, 0.42, 0.58, gunMetal, 0, 0.56, 0));
-        g.add(cyl(0.38, 0.38, 0.08, darkSteel, 0, 0.88, 0));            // 旋轉齒圈
+        // 1. v9.3 #9 公園常見八角石墩＋古典鑄鐵圓柱底座造型（移除下方多餘三腳架細桿，乾淨俐落且一眼看出是防禦砲塔！）
+        const octBase = new THREE.Mesh(new THREE.CylinderGeometry(0.66, 0.78, 0.30, 8), parkStoneMat);
+        octBase.position.y = 0.15; g.add(octBase);
+        const trimRing = new THREE.Mesh(new THREE.CylinderGeometry(0.54, 0.60, 0.12, 12), hazardMat);
+        trimRing.position.y = 0.36; g.add(trimRing);
+        g.add(cyl(0.28, 0.34, 0.50, parkCastGreen, 0, 0.66, 0));
+        g.add(cyl(0.38, 0.38, 0.08, darkSteel, 0, 0.92, 0));            // 旋轉齒圈
         // 雙側U型雲台支架耳
         [-0.30, 0.30].forEach(oz => {
           g.add(box(0.28, 0.46, 0.08, darkSteel, 0, 1.14, oz));
@@ -11753,7 +12292,20 @@
         g.traverse(o => { if (o.isMesh && o !== beam && o !== fan && o !== spotPool && o !== beaconHalo) o.castShadow = true; });
         scene.add(g);
         addBox(x - 0.85, x + 0.85, 0, 1.05, z - 0.85, z + 0.85, { walkTop: false, isTurret: true });
-        window.baseTurrets.push({ team, x, z, hp: TURRET_HP, maxHp: TURRET_HP, ammo: TURRET_AMMO, maxAmmo: TURRET_AMMO, barrels: 1, wbar, scanAngle: team === 0 ? Math.PI : 0, mode: 'scan', group: g, head, fanPivot, fan, beam, spotPool, sensor, beaconBulb, beaconHalo, beaconFlashing: false, strobeTick: 0, hpBar, hpBg, label: lbl, destroyed: false, lastShot: 0, target: null, targetLostTimer: 0, smoke: null,
+
+        // v9.3 #10 在砲塔正前方 3.2m 放置防禦掩體矮牆障礙物 (阻隔基地外視線並提供掩護，高度 1.16m 不妨礙 8m 內近迫防禦 T84！)
+        const bz = z - sign * 3.2;
+        const barG = new THREE.Group();
+        barG.name = 'turret_front_barrier';
+        const wallMesh = new THREE.Mesh(new THREE.BoxGeometry(2.3, 1.08, 0.58), parkStoneMat);
+        wallMesh.position.set(x, 0.54, bz); barG.add(wallMesh);
+        const stripeMesh = new THREE.Mesh(new THREE.BoxGeometry(2.36, 0.10, 0.62), hazardMat);
+        stripeMesh.position.set(x, 1.11, bz); barG.add(stripeMesh);
+        scene.add(barG);
+        addBox(x - 1.18, x + 1.18, 0, 1.16, bz - 0.30, bz + 0.30, { walkTop: true, isTurretFrontBarrier: true });
+        addFlat(x - 1.18, x + 1.18, bz - 0.30, bz + 0.30, 1.16, 'stone');
+
+        window.baseTurrets.push({ team, x, z, frontBarrierZ: bz, hp: TURRET_HP, maxHp: TURRET_HP, ammo: TURRET_AMMO, maxAmmo: TURRET_AMMO, barrels: 1, wbar, scanAngle: team === 0 ? Math.PI : 0, mode: 'scan', group: g, head, fanPivot, fan, beam, spotPool, sensor, beaconBulb, beaconHalo, beaconFlashing: false, strobeTick: 0, hpBar, hpBg, label: lbl, destroyed: false, lastShot: 0, target: null, targetLostTimer: 0, smoke: null,
           search: { center: 0, amp: 0, sweeps: 0, maxSweeps: 3, dir: 1, phase: 0 } });
       });
     }
@@ -11943,14 +12495,14 @@
       if (data.setting) baseTurretSetting = data.setting;
       data.list.forEach(s => { const t = window.baseTurrets.find(x => x.team === s.team); if (!t) return; t.hp = s.hp; t.ammo = s.ammo; t.scanAngle = s.sa; if (s.m) t.mode = s.m; if (s.d && !t.destroyed) destroyTurret(t, ''); });
     }
-    // 子彈命中哨戒砲判定 (圓柱 r=0.9, h=2.0)
+    // v9.3 #11 子彈命中哨戒砲判定：涵蓋完整底座＋旋轉機頭高度 (r=1.12, h=2.45)，且先確認中間無真牆阻擋，遠近狙擊/步槍一打到必扣血！
     function projectileHitsTurret(proj) {
       for (const t of window.baseTurrets) {
         if (t.destroyed || baseTurretSetting !== 'on') continue;
         const st = (proj.shooterTeam !== undefined) ? proj.shooterTeam : (proj.isAlly ? playerState.team : 1 - playerState.team);
         if (st === t.team) continue;
-        const hpt = segmentHitsCapsule(proj.prevPos, proj.pos, { x: t.x, y: 0, z: t.z }, 2.0, 0.9);
-        if (hpt) {
+        const hpt = segmentHitsCapsule(proj.prevPos, proj.pos, { x: t.x, y: 0, z: t.z }, 2.45, 1.12);
+        if (hpt && segmentHitWallExcludingTargets(proj.prevPos, hpt) === null) {
           spawnPaintSplatter(hpt.clone(), proj.color, null);
           if (isAIAuthority()) damageTurret(t, proj.damage, proj.shooterName || playerState.name, st);
           else if (proj.shooterId === Net.myId) Net.sendHitEvent('TURRET' + t.team, proj.damage, playerState.name, proj.color, playerState.team);
@@ -12328,8 +12880,9 @@
         if (s.destroyed) continue;
         const st = (proj.shooterTeam !== undefined) ? proj.shooterTeam : (proj.isAlly ? playerState.team : 1 - playerState.team);
         if (st === s.team) continue;
-        const hpt = segmentHitsCapsule(proj.prevPos, proj.pos, { x: s.x, y: 0, z: s.z }, 1.4, 0.7);
-        if (hpt) {
+        // v9.3 #11 完整包覆營養午餐不鏽鋼餐車 (寬 1.64m × 高 1.85m) 與野戰吊鍋，漆彈噴上或遠距狙擊 100% 觸發損血！
+        const hpt = segmentHitsCapsule(proj.prevPos, proj.pos, { x: s.x, y: 0, z: s.z }, 1.92, 1.08);
+        if (hpt && segmentHitWallExcludingTargets(proj.prevPos, hpt) === null) {
           spawnPaintSplatter(hpt.clone(), proj.color, null);
           if (isAIAuthority()) damageStove(s, proj.damage, proj.shooterName || playerState.name, st);
           else if (proj.shooterId === Net.myId) Net.sendHitEvent('STOVE' + s.team, proj.damage, playerState.name, proj.color, playerState.team);
@@ -12639,8 +13192,16 @@
       const px = playerGroup.position.x, pz = playerGroup.position.z;
       const tent = isInsideTent(px, pz);
       const tip = document.getElementById('tent-tip');
-      if (tip) tip.classList.toggle('hidden', !tent);
-      const bed = (tent && (isCrouched || isProne) && playerFeetY < 0.5) ? tent : null;
+      if (tip) {
+        tip.classList.toggle('hidden', !tent);
+        if (tent) {
+          tip.innerText = tent.isNurseDesk
+            ? '👩‍⚕️ 保健阿姨診療桌旁：溫柔擦藥回血中 (+6 HP/s)'
+            : '⛺ 醫療帳篷內：蹲下 [C] 或趴下 [Z] 緩慢回血 (+6 HP/s)';
+        }
+      }
+      // 陽光國小「保健阿姨診療桌」無帳篷頂蓋，站立、蹲下或趴在診療桌區皆可回血；軍事帳篷維持蹲/趴回血規則！
+      const bed = tent && playerFeetY < 0.65 && (tent.isNurseDesk || isCrouched || isProne) ? tent : null;
       if (!bed || playerState.hp >= playerState.maxHp) { playerState.bedHealAcc = 0; return 0; }
       playerState.bedHealAcc = (playerState.bedHealAcc || 0) + bed.healPerSec * delta;
       const whole = Math.floor(playerState.bedHealAcc);
@@ -14488,7 +15049,7 @@
         else if (it.type === 'ammo_ak') { addAmmo('ak', 30); msg = `📦 +30 發 7.62mm（AK-47 專用彈共 ${ammoPool.ak} 發）`; }
         else if (it.type === 'supply') { addAmmo('rifle', 60); addAmmo('pistol', 45); addAmmo('ak', 30); msg = `🎁 基地補給：+60 發 5.56、+45 發 9mm、+30 發 7.62mm`; }
         else if (it.type === 'medkit') { if (playerState.hp >= playerState.maxHp) continue; playerState.hp = Math.min(playerState.maxHp, playerState.hp + 40); updateHealthUI(); msg = '❤️ 急救箱 +40 HP'; }
-        else if (it.type === 'ration') { if (playerState.hp >= playerState.maxHp) continue; playerState.hp = Math.min(playerState.maxHp, playerState.hp + 35); updateHealthUI(); msg = '🥫 吃了軍用餐盒 +35 HP (餐盒 120 秒後才會再補給)'; }
+        else if (it.type === 'ration') { if (playerState.hp >= playerState.maxHp) continue; playerState.hp = Math.min(playerState.maxHp, playerState.hp + 35); updateHealthUI(); msg = (it.isBento || currentMapId === 'school') ? '🍱 吃了營養午餐【便當盒飯】+35 HP！' : '🥫 吃了軍用餐盒 +35 HP (餐盒 120 秒後才會再補給)'; }
         else if (it.type === 'banana') { if (playerState.hp >= playerState.maxHp) continue; playerState.hp = Math.min(playerState.maxHp, playerState.hp + 20); updateHealthUI(); msg = '🍌 吃了香蕉 +20 HP'; }
         else if (it.type === 'ham') { if (playerState.hp >= playerState.maxHp) continue; playerState.hp = Math.min(playerState.maxHp, playerState.hp + 30); updateHealthUI(); msg = '🍖 吃了火腿 +30 HP'; }
         else if (it.type === 'armor') { if (playerState.armor >= playerState.maxArmor) continue; const v = it.armorValue || 50; playerState.armor = Math.min(playerState.maxArmor, playerState.armor + v); updateHealthUI(); msg = `🛡️ ${it.label}`; }
@@ -14788,6 +15349,7 @@
     }
     window.releaseAllInputs = releaseAllInputs;
     let pointerLockBlocked = false;
+    let wasPointerLocked = false;
     let lockHintDismissedUntil = 0;
     const _origReleaseAllInputs = releaseAllInputs;
     releaseAllInputs = function(reason) {
@@ -14797,7 +15359,7 @@
     window.releaseAllInputs = releaseAllInputs;
     function ensureGameKeyboardFocus() {
       try {
-        if (document.activeElement && ['BUTTON', 'SELECT', 'SUMMARY'].includes(document.activeElement.tagName)) {
+        if (document.activeElement && ['BUTTON', 'SELECT', 'SUMMARY', 'INPUT'].includes(document.activeElement.tagName)) {
           document.activeElement.blur();
         }
         window.focus();
@@ -14809,7 +15371,7 @@
       } catch (e) {}
     }
     function tryAcquirePointerLockSafe() {
-      if (window.__noPointerLock || pointerLockBlocked || !document.body.requestPointerLock) {
+      if (window.__noPointerLock || !document.body.requestPointerLock) {
         pointerLockBlocked = true;
         return;
       }
@@ -14821,26 +15383,26 @@
       } catch (err) {
         pointerLockBlocked = true;
       }
-      setTimeout(() => {
-        if (document.pointerLockElement !== document.body) {
-          // 若瀏覽器或 iframe 沙盒阻擋 PointerLock，自動啟用免鎖定滑鼠拖曳轉向 + 左鍵直接開火
-          pointerLockBlocked = true;
-        }
-        updateLockHint();
-      }, 120);
+      updateLockHint();
     }
     function updateLockHint() {
       const el = document.getElementById('click-to-lock');
       if (!el) return;
       const desktop = window.matchMedia('(pointer: fine)').matches && !(typeof DeviceProfile !== 'undefined' && DeviceProfile.hasTouch && !DeviceProfile.isDesktop);
       const modalOpen = ['lobby-modal', 'waiting-room-modal', 'game-over-modal', 'team-select-modal', 'prep-panel'].some(id => { const m = document.getElementById(id); return m && !m.classList.contains('hidden'); });
-      const show = isGameRunning && desktop && !isPointerLocked && !pointerLockBlocked && (performance.now() > lockHintDismissedUntil) && !modalOpen && !playerState.isBroadcaster;
+      const show = isGameRunning && desktop && !isPointerLocked && (!pointerLockBlocked || wasPointerLocked) && (performance.now() > lockHintDismissedUntil) && !modalOpen && !playerState.isBroadcaster;
       el.classList.toggle('hidden', !show);
     }
     document.addEventListener('pointerlockchange', () => {
+      const prevLocked = isPointerLocked;
       isPointerLocked = (document.pointerLockElement === document.body);
-      if (isPointerLocked) pointerLockBlocked = false;
-      else releaseAllInputs('pointerlock_lost');
+      if (isPointerLocked) {
+        pointerLockBlocked = false;
+        wasPointerLocked = false;
+      } else {
+        if (prevLocked) wasPointerLocked = true;
+        releaseAllInputs('pointerlock_lost');
+      }
       updateLockHint();
     });
     document.addEventListener('pointerlockerror', () => { pointerLockBlocked = true; updateLockHint(); });
@@ -14848,6 +15410,7 @@
     window.addEventListener('pagehide', () => releaseAllInputs('pagehide'));
     document.addEventListener('visibilitychange', () => { if (document.hidden) releaseAllInputs('hidden'); else updateLockHint(); });
     window.addEventListener('touchcancel', () => releaseAllInputs('touchcancel'));
+    window.__setWasPointerLockedForTest = (v) => { wasPointerLocked = !!v; };
 
     window.addEventListener('mousemove', (e) => {
       if (!isGameRunning) return;
@@ -14880,6 +15443,21 @@
         return;
       }
       ensureGameKeyboardFocus();
+      // v9.3 B6：按 ESC 解除滑鼠鎖定後，回來點螢幕第一下「一鍵抓回滑鼠鎖定」且不誤觸連點射擊！
+      if (e.button === 0 && !isPointerLocked && wasPointerLocked && !window.__noPointerLock && document.body.requestPointerLock) {
+        wasPointerLocked = false;
+        pointerLockBlocked = false;
+        isFiring = false;
+        window.__pendingTapShot = false;
+        try {
+          const plp = document.body.requestPointerLock();
+          if (plp && typeof plp.catch === 'function') plp.catch(() => { pointerLockBlocked = true; updateLockHint(); });
+        } catch (err) {
+          pointerLockBlocked = true;
+        }
+        updateLockHint();
+        return;
+      }
       lockHintDismissedUntil = performance.now() + 8000;
       updateLockHint();
       isMouseDragging = true;
@@ -14893,6 +15471,11 @@
         }
         isFiring = true;
         window.__pendingTapShot = true;
+        // v9.3 A6：單機離線網頁版 (file://) 即使瀏覽器拒絕或非同步處理 PointerLock，滑鼠左鍵當下直接立即發射子彈（不漏槍、不需改按 Enter）！
+        if (!prepActive && !playerState.isBroadcaster && !playerState.isSpectating && !isRoundEnded && !isInvulnerable() && (typeof weaponSwitchLock === 'undefined' || weaponSwitchLock <= 0)) {
+          shootWeapon();
+          window.__pendingTapShot = false;
+        }
       } else if (e.button === 2) {
         e.preventDefault();
         toggleADS();
@@ -15138,7 +15721,7 @@
     document.getElementById('btn-reroll-characters').addEventListener('click', generateChibiRoster);
     if (teamColorSelect) {
       teamColorSelect.addEventListener('change', () => {
-        currentTeamColorKey = teamColorSelect.value || 'blue_red';
+        currentTeamColorKey = TEAM_COLORS[teamColorSelect.value] ? teamColorSelect.value : 'blue_red';
         generateChibiRoster();
       });
     }
@@ -15147,6 +15730,11 @@
     function enterWorld() {
       lobbyModal.classList.add('hidden');
       document.getElementById('waiting-room-modal').classList.add('hidden');
+      // v9.3 B3：自我修復機制 — 防止快取異常或地圖切換中斷導致進入空操場無任何佈景！
+      if (!TEAM_COLORS[currentTeamColorKey]) currentTeamColorKey = 'blue_red';
+      if (!Array.isArray(obstacles) || obstacles.length < 25) {
+        try { rebuildWorldMap(currentMapId || 'military'); } catch (e) {}
+      }
       resetPlayerForNewMatch();
       resetLoadout();   // 起始只有手槍；確保不是開鏡狀態 (#10 #11)
       playerState.lives = maxLives; playerState.out = false; updateRuleTag();
@@ -15198,11 +15786,13 @@
       }
     }
 
-    // v9.0 #14 動漫風主題音樂引擎 (使用 Google Lyria 3 生成之高音質大廳主題曲與戰鬥曲 MP3)
+    // v9.3 #7 & #8 三軌場景主題音樂引擎：磅礴交響樂軍歌大廳曲 (lobby_bgm.mp3) ＋ 軍事基地戰鬥曲 (battle_bgm.mp3) ＋ 陽光國小運動會專屬曲 (school_bgm.mp3)
     window.BGM_SOURCES = window.BGM_SOURCES || {
       lobby: 'lobby_bgm.mp3',
-      battle: 'battle_bgm.mp3'
+      battle: 'battle_bgm.mp3',
+      school: 'school_bgm.mp3'
     };
+    if (!window.BGM_SOURCES.school) window.BGM_SOURCES.school = 'school_bgm.mp3';
     const MusicEngine = {
       enabled: true,
       volume: 0.55,
@@ -15218,14 +15808,17 @@
           if (!isNaN(savedVol)) this.volume = Math.max(0, Math.min(1, savedVol));
         } catch (e) {}
 
-        const slider = document.getElementById('bgm-volume-slider');
-        if (slider) {
-          slider.value = String(Math.round(this.volume * 100));
-          slider.addEventListener('input', () => {
-            this.setVolume(parseInt(slider.value || '55', 10) / 100);
-          });
-        }
-        ['btn-lobby-bgm', 'btn-bgm-toggle'].forEach(id => {
+        ['bgm-volume-slider', 'bgm-top-volume-slider'].forEach(sid => {
+          const slider = document.getElementById(sid);
+          if (slider && !slider._bgmVolBound) {
+            slider._bgmVolBound = true;
+            slider.value = String(Math.round(this.volume * 100));
+            slider.addEventListener('input', () => {
+              this.setVolume(parseInt(slider.value || '55', 10) / 100);
+            });
+          }
+        });
+        ['btn-lobby-top-bgm', 'btn-lobby-bgm', 'btn-bgm-toggle'].forEach(id => {
           const b = document.getElementById(id);
           if (b && !b._bgmBound) {
             b._bgmBound = true;
@@ -15255,15 +15848,16 @@
       },
 
       playTrack: function(kind) {
-        this.currentTrack = kind;
+        const resolved = (kind === 'battle' && typeof currentMapId !== 'undefined' && currentMapId === 'school') ? 'school' : kind;
+        this.currentTrack = resolved;
         Object.entries(this.audios).forEach(([k, a]) => {
-          if (k !== kind && a) { try { a.pause(); } catch (e) {} }
+          if (k !== resolved && a) { try { a.pause(); } catch (e) {} }
         });
         if (!this.enabled || window.__manualLoop) {
           this.updateUI();
           return;
         }
-        const a = this.getAudio(kind);
+        const a = this.getAudio(resolved);
         a.volume = this.volume;
         const p = a.play();
         if (p && typeof p.catch === 'function') p.catch(() => {});
@@ -15271,7 +15865,8 @@
       },
 
       syncSceneTrack: function() {
-        const want = (typeof isGameRunning !== 'undefined' && isGameRunning && !isRoundEnded) ? 'battle' : 'lobby';
+        const inMatch = (typeof isGameRunning !== 'undefined' && isGameRunning && !isRoundEnded);
+        const want = inMatch ? ((typeof currentMapId !== 'undefined' && currentMapId === 'school') ? 'school' : 'battle') : 'lobby';
         this.playTrack(want);
       },
 
@@ -15302,9 +15897,21 @@
       },
 
       updateUI: function() {
+        const topBtn = document.getElementById('btn-lobby-top-bgm');
         const lobbyBtn = document.getElementById('btn-lobby-bgm');
         const hudBtn = document.getElementById('btn-bgm-toggle');
         const hudLbl = document.getElementById('hud-bgm-label');
+        const volStr = String(Math.round(this.volume * 100));
+        ['bgm-volume-slider', 'bgm-top-volume-slider'].forEach(sid => {
+          const sl = document.getElementById(sid);
+          if (sl && sl.value !== volStr) sl.value = volStr;
+        });
+        if (topBtn) {
+          topBtn.innerText = this.enabled ? '🎺 交響軍歌：開啟 [N]' : '🔇 交響軍歌：已靜音 [N]';
+          topBtn.className = this.enabled
+            ? 'px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs sm:text-sm font-black shadow active:scale-95 transition whitespace-nowrap'
+            : 'px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 text-xs sm:text-sm font-bold active:scale-95 transition whitespace-nowrap';
+        }
         if (lobbyBtn) {
           lobbyBtn.innerText = this.enabled ? '🎵 遊戲音樂：開啟' : '🔇 遊戲音樂：關閉';
           lobbyBtn.className = this.enabled
@@ -15366,7 +15973,7 @@
           const hostUid = 'QFORCE3D_' + Net.roomCode + '_HOST';
           if (Net.roster[hostUid]) Net.roster[hostUid].name = clean;
           Net.sendAll({ type: 'name_change', sender: Net.myId, oldName, newName: clean });
-          Net.sendAll({ type: 'roster', roster: Net.roster, hostName: clean, hostTeam: playerState.team, hostPaint: playerState.paintColor, hostStyle: playerState.style, hostSpec: playerState.spec, sender: Net.myId });
+          Net.sendAll({ type: 'roster', roster: Net.roster, hostName: clean, hostTeam: playerState.team, hostBroadcast: !!playerState.isBroadcaster, hostPaint: playerState.paintColor, hostStyle: playerState.style, hostSpec: playerState.spec, sender: Net.myId });
           RoomRegistry.registerMyRoom(Net.roomCode, clean, gameModeSetting, Object.keys(Net.roster).length + 1, Net.roomStatus);
         } else {
           if (Net.roster[Net.myId]) Net.roster[Net.myId].name = clean;
@@ -15381,7 +15988,36 @@
       return true;
     }
 
-    // 渲染房間等待室視窗 (顯示目前連線人數、隊伍、觀察者狀態、Ping 與戰場無線電)
+    // v9.3 #5 等待室直覺點選「左邊藍隊框 / 右邊紅隊框」立即加入該隊並顯示在該隊框內！
+    function switchMyTeamInWaitingRoom(targetTeam) {
+      const nextTeam = (targetTeam === 0 || targetTeam === 1) ? targetTeam : (1 - (playerState.team || 0));
+      const wasSpec = !!(lobbySpectatorSelected || playerState.isBroadcaster);
+      if (wasSpec) {
+        setLobbySpectatorMode(false);
+      }
+      playerState.team = nextTeam;
+      scoreEntry(playerState.name, playerState.team, playerState.spec);
+      refreshAllCharacterTeamVisuals();
+      if (Net.isHost) {
+        const hostUid = 'QFORCE3D_' + Net.roomCode + '_HOST';
+        if (Net.roster[hostUid]) {
+          Net.roster[hostUid].team = playerState.team;
+          Net.roster[hostUid].broadcast = false;
+        }
+        Net.sendAll({ type: 'roster', roster: Net.roster, hostName: playerState.name, hostTeam: playerState.team, hostBroadcast: false, hostPaint: playerState.paintColor, hostStyle: playerState.style, hostSpec: playerState.spec, sender: Net.myId });
+      } else {
+        if (Net.roster[Net.myId]) {
+          Net.roster[Net.myId].team = playerState.team;
+          Net.roster[Net.myId].broadcast = false;
+        }
+        if (wasSpec) Net.sendAll({ type: 'spectate_switch', sender: Net.myId, broadcast: false });
+        Net.sendAll({ type: 'team_switch', sender: Net.myId, team: playerState.team });
+      }
+      renderWaitingRoomUI();
+    }
+    window.switchMyTeamInWaitingRoom = switchMyTeamInWaitingRoom;
+
+    // 渲染房間等待室視窗 (v9.3 左邊藍隊框 / 右邊紅隊框雙欄點選入隊 + 支援觀察者關主開房！)
     function renderWaitingRoomUI() {
       const modal = document.getElementById('waiting-room-modal');
       if (!modal) return;
@@ -15389,7 +16025,7 @@
       const waitInp = document.getElementById('wait-my-name-input');
       if (waitInp && document.activeElement !== waitInp) waitInp.value = playerState.name || '';
       const waitSpecBtn = document.getElementById('btn-wait-spectate');
-      if (waitSpecBtn) waitSpecBtn.classList.toggle('hidden', !!Net.isHost);
+      if (waitSpecBtn) waitSpecBtn.classList.remove('hidden');
       const micPol = document.getElementById('wait-mic-policy-tag');
       if (micPol) micPol.innerText = `關主預設：${roomDefaultMic === 'off' ? '關麥' : '開麥'}`;
 
@@ -15406,7 +16042,7 @@
       const list = [];
       const hostUid = 'QFORCE3D_' + Net.roomCode + '_HOST';
       if (Net.isHost) {
-        list.push({ uid: Net.myId, name: playerState.name, team: playerState.team, paint: playerState.paintColor, broadcast: false, isHost: true, ping: 0 });
+        list.push({ uid: Net.myId, name: playerState.name, team: playerState.team, paint: playerState.paintColor, broadcast: !!playerState.isBroadcaster, isHost: true, ping: 0 });
       } else if (Net.roster[hostUid]) {
         const hr = Net.roster[hostUid];
         list.push({ uid: hostUid, name: hr.name, team: hr.team, paint: hr.paint, broadcast: !!hr.broadcast, isHost: true, ping: Net.pingMs || 12 });
@@ -15430,7 +16066,7 @@
           } else {
             const teamName = hasRed && !hasBlue ? '紅隊' : '藍隊';
             aiHintEl.className = 'text-[11px] font-bold px-3 py-1.5 rounded-xl mb-2 bg-emerald-500/15 border border-emerald-400/40 text-emerald-300';
-            aiHintEl.innerText = `🤝 目前玩家選擇【同隊 (${teamName}) 一起打 AI】：全體玩家共享戰果並【一起判定勝利】！（可點上方換隊）`;
+            aiHintEl.innerText = `🤝 目前玩家選擇【同隊 (${teamName}) 一起打 AI】：全體玩家共享戰果！（直接點選下方左藍／右紅隊伍框即可換隊）`;
           }
         } else {
           aiHintEl.classList.add('hidden');
@@ -15438,17 +16074,52 @@
       }
       const box = document.getElementById('wait-player-list');
       if (box) {
-        box.innerHTML = list.map(p => `
-          <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-950/90 border border-slate-800">
-            <div class="flex items-center gap-2">
-              <span class="w-3 h-3 rounded-full" style="background:${hex6(p.paint || 0x38bdf8)}"></span>
-              <span class="text-xs font-black text-white">${p.isHost ? '👑 ' : ''}${p.name}${p.uid === Net.myId ? ' (你)' : ''}</span>
-              ${p.broadcast
-                ? '<span class="text-[10px] font-black px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300">📺 觀察者導播</span>'
-                : `<span class="text-[10px] font-bold px-2 py-0.5 rounded ${p.team === 0 ? 'bg-sky-500/20 text-sky-300' : 'bg-rose-500/20 text-rose-300'}">${p.team === 0 ? '🟦 藍隊' : '🟥 紅隊'}</span>`}
+        const blueFighters = list.filter(p => !p.broadcast && p.team === 0);
+        const redFighters  = list.filter(p => !p.broadcast && p.team === 1);
+        const spectators   = list.filter(p => p.broadcast);
+        const myIsBlue = !playerState.isBroadcaster && playerState.team === 0;
+        const myIsRed  = !playerState.isBroadcaster && playerState.team === 1;
+        const renderMemberRow = (p) => `
+          <div class="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-slate-950/90 border border-slate-800/90">
+            <div class="flex items-center gap-1.5 min-w-0">
+              <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${hex6(p.paint || 0x38bdf8)}"></span>
+              <span class="text-xs font-black text-white truncate">${p.isHost ? '👑 ' : ''}${p.name}${p.uid === Net.myId ? ' (你)' : ''}</span>
             </div>
-            <span class="text-[11px] font-mono text-emerald-300">${p.isHost ? '🏠 關主主機 (0ms)' : `📶 ${p.ping} ms`}</span>
-          </div>`).join('');
+            <span class="text-[10px] font-mono text-emerald-300 shrink-0">${p.isHost ? '🏠 關主' : `${p.ping}ms`}</span>
+          </div>`;
+
+        box.innerHTML = `
+          <div class="grid grid-cols-2 gap-2.5 text-left">
+            <div id="wait-blue-team-box" onclick="window.switchMyTeamInWaitingRoom(0)"
+              class="cursor-pointer rounded-xl p-2.5 transition ${myIsBlue ? 'bg-sky-950/80 border-2 border-sky-400 shadow-lg' : 'bg-slate-950/75 border border-sky-500/40 hover:border-sky-400'}">
+              <div class="flex items-center justify-between gap-1 mb-2 pb-1.5 border-b border-sky-500/30">
+                <span class="text-xs sm:text-sm font-black text-sky-300">🟦 藍隊陣營 (${blueFighters.length} 人)</span>
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-black ${myIsBlue ? 'bg-sky-400 text-slate-950' : 'bg-sky-500/20 text-sky-200 border border-sky-400/50'}">${myIsBlue ? '✓ 你在藍隊' : '👉 點選加入藍隊'}</span>
+              </div>
+              <div class="space-y-1.5 min-h-[42px]">
+                ${blueFighters.length ? blueFighters.map(renderMemberRow).join('') : '<div class="text-[11px] text-sky-200/60 py-2 text-center font-semibold">點擊此框加入藍隊</div>'}
+              </div>
+            </div>
+
+            <div id="wait-red-team-box" onclick="window.switchMyTeamInWaitingRoom(1)"
+              class="cursor-pointer rounded-xl p-2.5 transition ${myIsRed ? 'bg-rose-950/80 border-2 border-rose-400 shadow-lg' : 'bg-slate-950/75 border border-rose-500/40 hover:border-rose-400'}">
+              <div class="flex items-center justify-between gap-1 mb-2 pb-1.5 border-b border-rose-500/30">
+                <span class="text-xs sm:text-sm font-black text-rose-300">🟥 紅隊陣營 (${redFighters.length} 人)</span>
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-black ${myIsRed ? 'bg-rose-400 text-slate-950' : 'bg-rose-500/20 text-rose-200 border border-rose-400/50'}">${myIsRed ? '✓ 你在紅隊' : '👉 點選加入紅隊'}</span>
+              </div>
+              <div class="space-y-1.5 min-h-[42px]">
+                ${redFighters.length ? redFighters.map(renderMemberRow).join('') : '<div class="text-[11px] text-rose-200/60 py-2 text-center font-semibold">點擊此框加入紅隊</div>'}
+              </div>
+            </div>
+          </div>
+          ${spectators.length ? `
+          <div id="wait-spectator-box" class="rounded-xl px-3 py-2 bg-cyan-950/45 border border-cyan-400/50 flex flex-wrap items-center justify-between gap-2 text-left">
+            <span class="text-[11px] font-black text-cyan-300">📺 觀察者／電競導播席 (${spectators.length} 人・不佔隊伍名額)：</span>
+            <div class="flex flex-wrap items-center gap-2">
+              ${spectators.map(p => `<span class="px-2 py-0.5 rounded-lg bg-slate-950/90 border border-cyan-400/40 text-[11px] font-black text-cyan-100">${p.isHost ? '👑 主播關主 ' : '📺 '}${p.name}${p.uid === Net.myId ? ' (你)' : ''}</span>`).join('')}
+            </div>
+          </div>` : ''}
+        `;
       }
       updatePingUI();
       if (typeof FieldAudio !== 'undefined') FieldAudio.updateUI();
@@ -15485,7 +16156,7 @@
       activeSpeakers: {},
 
       initUI: function() {
-        ['btn-field-audio', 'btn-lobby-mic', 'btn-wait-mic'].forEach(id => {
+        ['btn-field-audio', 'btn-lobby-top-mic', 'btn-lobby-mic', 'btn-wait-mic'].forEach(id => {
           const btn = document.getElementById(id);
           if (btn && !btn._boundFieldAudio) {
             btn._boundFieldAudio = true;
@@ -15626,8 +16297,8 @@
 
       renderMeters: function() {
         const txW = `${Math.round(this.txLevel)}%`, rxW = `${Math.round(this.rxLevel)}%`;
-        ['lobby-tx-bar', 'wait-tx-bar', 'hud-tx-bar'].forEach(id => { const el = document.getElementById(id); if (el) el.style.width = txW; });
-        ['lobby-rx-bar', 'wait-rx-bar', 'hud-rx-bar'].forEach(id => { const el = document.getElementById(id); if (el) el.style.width = rxW; });
+        ['lobby-top-tx-bar', 'lobby-tx-bar', 'wait-tx-bar', 'hud-tx-bar'].forEach(id => { const el = document.getElementById(id); if (el) el.style.width = txW; });
+        ['lobby-top-rx-bar', 'lobby-rx-bar', 'wait-rx-bar', 'hud-rx-bar'].forEach(id => { const el = document.getElementById(id); if (el) el.style.width = rxW; });
         ['lobby-tx-val', 'wait-tx-val'].forEach(id => { const el = document.getElementById(id); if (el) el.innerText = txW; });
         ['lobby-rx-val', 'wait-rx-val'].forEach(id => { const el = document.getElementById(id); if (el) el.innerText = rxW; });
       },
@@ -15782,10 +16453,15 @@
 
       updateUI: function() {
         const btn = document.getElementById('btn-field-audio');
+        const topMicBtn = document.getElementById('btn-lobby-top-mic');
         const hudLbl = document.getElementById('hud-radio-label');
         const statusEl = document.getElementById('hud-field-audio-status');
         const lobbyBtn = document.getElementById('btn-lobby-mic');
         const waitBtn = document.getElementById('btn-wait-mic');
+        if (topMicBtn) {
+          topMicBtn.innerText = this.micEnabled ? '🎙️ 麥克風：開麥中 [M]' : '🔇 麥克風：已關麥 [M]';
+          topMicBtn.className = (this.micEnabled ? 'mic-state-on ' : 'mic-state-off ') + 'px-3 py-1.5 rounded-xl text-xs sm:text-sm font-black shadow active:scale-95 transition whitespace-nowrap';
+        }
         const lobbySpk = document.getElementById('lobby-radio-speakers');
         const waitSpk = document.getElementById('wait-radio-speakers');
         const speakers = Object.values(this.activeSpeakers).filter(s => s && s.micOn).map(s => s.name);
@@ -15835,6 +16511,15 @@
       if (!Net.isHost) return;
       if (prepTimeSelectEl) prepDurationSetting = parseInt(prepTimeSelectEl.value) || 15;
       document.getElementById('waiting-room-modal').classList.add('hidden');
+      // v9.3 #8 若關主選擇「觀察者模式」當導播開局，而場上真人玩家不足雙邊對戰，自動補齊 AI 讓雙方開戰！
+      if (playerState.isBroadcaster) {
+        const humanTeams = new Set(Object.values(Net.roster || {}).filter(r => r && !r.broadcast).map(r => r.team));
+        if (humanTeams.size < 2) {
+          aiEnabled = true;
+          window.forceBothTeamsAI = true;
+          if (aiCountCfg.mode === 'none') setAICountCfg({ mode: 'auto', cap: Math.max(2, aiCountCfg.cap || TEAM_MAX_SIZE) });
+        }
+      }
       const initRoomStatus = window.__manualLoop ? 'starting' : 'tactic_select';
       Net.roomStatus = initRoomStatus;
       RoomRegistry.registerMyRoom(Net.roomCode, playerState.name, gameModeSetting, Object.keys(Net.roster).length + 1, initRoomStatus, prepDurationSetting);
@@ -15858,6 +16543,7 @@
         aiEnabled: aiEnabled,
         hostName: playerState.name,
         hostTeam: playerState.team,
+        hostBroadcast: !!playerState.isBroadcaster,
         roster: Net.roster
       });
       enterWorld();
@@ -15874,7 +16560,7 @@
         syncPlayerNameHUD();
       });
     }
-    // v9.0 #8 大廳外部「參戰特種兵 / 觀察者導播」切換按鈕 + 等待室觀察者切換
+    // v9.3 #8 大廳外部「參戰特種兵 / 觀察者導播」切換按鈕 + 等待室觀察者切換（支援關主本人切換為觀察者導播！）
     const rolePlayBtn = document.getElementById('role-play-btn');
     const roleSpectateBtn = document.getElementById('role-spectate-btn');
     if (rolePlayBtn) rolePlayBtn.addEventListener('click', () => setLobbySpectatorMode(false));
@@ -15882,10 +16568,15 @@
     const btnWaitSpectate = document.getElementById('btn-wait-spectate');
     if (btnWaitSpectate) {
       btnWaitSpectate.addEventListener('click', () => {
-        if (Net.isHost) { showErrorToast('👑 關主需主持房間運算，請由加入的隊員切換觀察者模式'); return; }
         setLobbySpectatorMode(!lobbySpectatorSelected);
-        if (Net.roster[Net.myId]) Net.roster[Net.myId].broadcast = lobbySpectatorSelected;
-        Net.sendAll({ type: 'spectate_switch', sender: Net.myId, broadcast: lobbySpectatorSelected });
+        if (Net.isHost) {
+          const hostUid = 'QFORCE3D_' + Net.roomCode + '_HOST';
+          if (Net.roster[hostUid]) Net.roster[hostUid].broadcast = lobbySpectatorSelected;
+          Net.sendAll({ type: 'roster', roster: Net.roster, hostName: playerState.name, hostTeam: playerState.team, hostBroadcast: !!playerState.isBroadcaster, hostPaint: playerState.paintColor, hostStyle: playerState.style, hostSpec: playerState.spec, sender: Net.myId });
+        } else {
+          if (Net.roster[Net.myId]) Net.roster[Net.myId].broadcast = lobbySpectatorSelected;
+          Net.sendAll({ type: 'spectate_switch', sender: Net.myId, broadcast: lobbySpectatorSelected });
+        }
         renderWaitingRoomUI();
       });
     }
@@ -15901,21 +16592,7 @@
 
     const btnWaitSwitchTeam = document.getElementById('btn-wait-switch-team');
     if (btnWaitSwitchTeam) {
-      btnWaitSwitchTeam.addEventListener('click', () => {
-        playerState.team = 1 - playerState.team;
-        scoreEntry(playerState.name, playerState.team, playerState.spec);
-        refreshAllCharacterTeamVisuals();
-        if (Net.isHost) {
-          const hostUid = 'QFORCE3D_' + Net.roomCode + '_HOST';
-          if (Net.roster[hostUid]) Net.roster[hostUid].team = playerState.team;
-          Net.sendAll({ type: 'roster', roster: Net.roster, hostName: playerState.name, hostTeam: playerState.team, hostPaint: playerState.paintColor, hostStyle: playerState.style, hostSpec: playerState.spec, sender: Net.myId });
-          renderWaitingRoomUI();
-        } else {
-          if (Net.roster[Net.myId]) Net.roster[Net.myId].team = playerState.team;
-          Net.sendAll({ type: 'team_switch', sender: Net.myId, team: playerState.team });
-          renderWaitingRoomUI();
-        }
-      });
+      btnWaitSwitchTeam.addEventListener('click', () => switchMyTeamInWaitingRoom());
     }
     document.getElementById('btn-wait-start').addEventListener('click', () => hostStartMatchNow(false));
     document.getElementById('btn-wait-start-open').addEventListener('click', () => hostStartMatchNow(true));
@@ -15930,15 +16607,14 @@
       returnToLobby('已離開等待室');
     });
 
-    // 建立房間 (HOST)：若目前選在「單人靶場訓練」分頁，直接啟動單人遊戲；否則建立多人房間進等待室
+    // 建立房間 (HOST)：v9.3 #8 支援選「觀察者／電競導播模式」時直接開房間當主播關主，讓其他玩家加入藍紅隊對戰！
     btnHost.addEventListener('click', () => {
       if (gameModeSetting === 'solo') { startSoloGame(); return; }
       AudioEngine.init();
-      if (lobbySpectatorSelected) { showErrorToast('📺 關主不能使用觀察者模式：請切回「🎮 下場參戰特種兵」開房，或點「搜尋並加入房間 / 單人遊戲」以觀察者觀看！'); return; }
-      playerState.isBroadcaster = false;
+      playerState.isBroadcaster = !!lobbySpectatorSelected;
       const code = roomInput.value.trim() || '8888';
       playerState.name = playerNameInput.value.trim() || '特警隊長';
-      currentTeamColorKey = teamColorSelect.value;
+      currentTeamColorKey = (teamColorSelect && TEAM_COLORS[teamColorSelect.value]) ? teamColorSelect.value : 'blue_red';
       const micDefEl = document.getElementById('room-mic-default-select');
       roomDefaultMic = micDefEl ? (micDefEl.value || 'on') : 'on';
       if (!FieldAudio.userExplicitlyToggled) FieldAudio.applyRoomDefaultMic(roomDefaultMic);
@@ -15949,9 +16625,11 @@
       if (combatSelect) { combatModeSetting = combatSelect.value || 'high_damage'; syncCombatModeUI(); }
 
       modalStatusText.classList.remove('hidden');
-      modalStatusText.innerText = "正在建立房間並啟動狀態廣播...";
+      modalStatusText.innerText = playerState.isBroadcaster
+        ? "📺 正在以【觀察者主播關主】身分建立房間，開放藍紅隊加入..."
+        : "正在建立房間並啟動狀態廣播...";
 
-      const hostBaseTeam = (TEAM_COLORS[currentTeamColorKey] && TEAM_COLORS[currentTeamColorKey].hostDefaultTeam === 1) ? 1 : 0;
+      const hostBaseTeam = getTeamColorCfg().hostDefaultTeam === 1 ? 1 : 0;
       playerState.team = (playerState.teamPref === 'other') ? (1 - hostBaseTeam) : hostBaseTeam;
       syncPlayerNameHUD();
       playerState.paintColor = (playerState.paintPref !== null && playerState.paintPref !== undefined) ? playerState.paintPref : PAINT_PALETTE[Math.floor(Math.random() * PAINT_PALETTE.length)];
@@ -15968,7 +16646,7 @@
       playerState.isBroadcaster = !!lobbySpectatorSelected;
       const code = targetCode || roomInput.value.trim() || '8888';
       playerState.name = playerNameInput.value.trim() || '特警隊長';
-      currentTeamColorKey = teamColorSelect.value;
+      currentTeamColorKey = (teamColorSelect && TEAM_COLORS[teamColorSelect.value]) ? teamColorSelect.value : 'blue_red';
 
       modalStatusText.classList.remove('hidden');
       modalStatusText.innerText = `正在搜尋房號 [${code}] 是否存在...`;
@@ -15996,7 +16674,7 @@
       Net.closeRoom();
       Net.roomCode = 'SOLO';
       Net.isHost = false;
-      currentTeamColorKey = teamColorSelect ? (teamColorSelect.value || 'blue_red') : 'blue_red';
+      currentTeamColorKey = (teamColorSelect && TEAM_COLORS[teamColorSelect.value]) ? teamColorSelect.value : 'blue_red';
       const micDefEl = document.getElementById('room-mic-default-select');
       roomDefaultMic = micDefEl ? (micDefEl.value || 'on') : 'on';
       if (!FieldAudio.userExplicitlyToggled) FieldAudio.applyRoomDefaultMic(roomDefaultMic);
@@ -16113,11 +16791,11 @@
       if (data.respawnMode) respawnModeSetting = data.respawnMode;
       if (data.maxLives) maxLives = data.maxLives;
       playerState.lives = maxLives; playerState.out = false; updateRuleTag();
+      if (data.teamColorKey && TEAM_COLORS[data.teamColorKey]) currentTeamColorKey = data.teamColorKey;
       if (data.mapId) selectBattleMap(data.mapId, true);
-      currentTeamColorKey = data.teamColorKey || currentTeamColorKey;
       Net.roster = data.roster || {};
-      // 房主本人也放進名冊，供隊伍判斷
-      Net.roster['QFORCE3D_' + Net.roomCode + '_HOST'] = { name: data.hostName, team: data.hostTeam, paint: data.hostPaint, style: data.hostStyle, spec: data.hostSpec };
+      // 房主本人也放進名冊（含觀察者主播關主狀態）
+      Net.roster['QFORCE3D_' + Net.roomCode + '_HOST'] = { name: data.hostName, team: data.hostTeam, broadcast: !!data.hostBroadcast, paint: data.hostPaint, style: data.hostStyle, spec: data.hostSpec };
       scoreEntry(playerState.name, playerState.team);
       spawnAtOwnBase();
       const tag = document.getElementById('hud-team-tag');
@@ -16155,14 +16833,14 @@
         const hostKey = 'QFORCE3D_' + Net.roomCode + '_HOST';
         Net.roster = Object.assign({}, data.roster);
         if (data.hostName) {
-          Net.roster[hostKey] = { name: data.hostName, team: (data.hostTeam === 0 || data.hostTeam === 1) ? data.hostTeam : 0 };
+          Net.roster[hostKey] = { name: data.hostName, team: (data.hostTeam === 0 || data.hostTeam === 1) ? data.hostTeam : 0, broadcast: !!data.hostBroadcast };
         }
         if (Net.roster[Net.myId] && (Net.roster[Net.myId].team === 0 || Net.roster[Net.myId].team === 1)) {
           playerState.team = Net.roster[Net.myId].team;
         }
       }
+      if (data && data.teamColorKey && TEAM_COLORS[data.teamColorKey]) currentTeamColorKey = data.teamColorKey;
       if (data && data.mapId) selectBattleMap(data.mapId, true);
-      if (data && data.teamColorKey) currentTeamColorKey = data.teamColorKey;
       if (data && data.defaultMic) {
         roomDefaultMic = data.defaultMic;
         if (!FieldAudio.userExplicitlyToggled) FieldAudio.applyRoomDefaultMic(data.defaultMic);
@@ -16197,7 +16875,7 @@
         }
       }
     };
-    Net.onRoundSync = (data) => { if (data && data.mapId) selectBattleMap(data.mapId, true);  if (data.combatMode) { combatModeSetting = data.combatMode; syncCombatModeUI(); } if (data.defaultMic) { roomDefaultMic = data.defaultMic; if (!FieldAudio.userExplicitlyToggled) FieldAudio.applyRoomDefaultMic(data.defaultMic); } if (data.respawnMode) respawnModeSetting = data.respawnMode; if (data.maxLives) maxLives = data.maxLives; playerState.lives = maxLives; updateRuleTag(); if (data.roundMode) roundModeSetting = data.roundMode; if (typeof data.roundRemaining === 'number') roundRemainingTime = data.roundRemaining; if (data.teamColorKey) currentTeamColorKey = data.teamColorKey; if (data.gameMode) gameModeSetting = data.gameMode; };
+    Net.onRoundSync = (data) => { if (data && data.mapId) selectBattleMap(data.mapId, true);  if (data.combatMode) { combatModeSetting = data.combatMode; syncCombatModeUI(); } if (data.defaultMic) { roomDefaultMic = data.defaultMic; if (!FieldAudio.userExplicitlyToggled) FieldAudio.applyRoomDefaultMic(data.defaultMic); } if (data.respawnMode) respawnModeSetting = data.respawnMode; if (data.maxLives) maxLives = data.maxLives; playerState.lives = maxLives; updateRuleTag(); if (data.roundMode) roundModeSetting = data.roundMode; if (typeof data.roundRemaining === 'number') roundRemainingTime = data.roundRemaining; if (data.teamColorKey && TEAM_COLORS[data.teamColorKey]) currentTeamColorKey = data.teamColorKey; if (data.gameMode) gameModeSetting = data.gameMode; };
     Net.onRoomInfo = (info) => {
       clearTimeout(window.__roomInfoTimeout);
       if (info && info.defaultMic) {
@@ -16424,6 +17102,7 @@
       const nx = p.x + dirX * step, nz = p.z + dirZ * step;
       if (!checkCollision(nx, p.z, p.y, radius, height)) p.x = nx;
       if (!checkCollision(p.x, nz, p.y, radius, height)) p.z = nz;
+      enforceTurretClearance(p, radius, height);
       const g = getGroundHeight(p.x, p.z, p.y);
       p.y += (g - p.y) * 0.4;
     }
@@ -16639,6 +17318,9 @@
           playerFeetY = groundY; playerVelY = 0; playerGrounded = true;
         } else if (playerFeetY - groundY > 0.08) playerGrounded = false;
         playerFloorY = playerFeetY;
+        if (!playerState.isSpectating && !playerState.isBroadcaster) {
+          enforceTurretClearance(playerGroup.position, 0.42, PLAYER_HEIGHT);
+        }
 
         const eyeTarget = isCovered ? (isPeeking ? PEEK_HEIGHT : CROUCH_HEIGHT) : (isProne ? PRONE_HEIGHT : (isCrouched ? CROUCH_HEIGHT : STAND_HEIGHT));
         eyeOffsetCurrent += (eyeTarget - eyeOffsetCurrent) * Math.min(1, delta * 14);
@@ -16703,13 +17385,17 @@
         proj.traveledDist += proj.pos.distanceTo(proj.prevPos);
         let done = false;
 
-        const hit = segmentHitObstacle(proj.prevPos, proj.pos);
+        // v9.3 #11 先判定敵方砲塔與營養午餐鍋子／野戰鍋命中（內部已驗證中間無真牆阻擋），徹底解決原本先被 AABB 吞掉子彈只留漆印卻不扣血的 Bug！
+        if (!done && !proj.visualOnly && projectileHitsTurret(proj)) done = true;
+        if (!done && !proj.visualOnly && projectileHitsStove(proj)) done = true;
+        if (!done && !proj.visualOnly && typeof projectileHitsSchoolSwing === 'function' && projectileHitsSchoolSwing(proj)) done = true;
+        const hit = !done ? segmentHitObstacle(proj.prevPos, proj.pos) : null;
         if (hit) {
           const hp = _v1.copy(proj.prevPos).lerp(proj.pos, Math.max(0, hit.t - 0.01));
           const n = estimateHitNormal(hit.obs, hp);
           spawnPaintSplatter(hp.clone(), proj.color, n);
           // 子彈被牆擋住：觸發隨機 5 種「啊，子彈都被牆擋住了嗎」提示 (#2)
-          if (proj.traveledDist < 4.5) {
+          if (proj.traveledDist < 4.5 && !hit.obs.isTurret && !hit.obs.isStove) {
             spawnWallBlockBurst(hp.clone(), n, proj.color);
             if (proj.isAlly && proj.shooterId === Net.myId && !proj.visualOnly) {
               notifyWallBlockedShot();
@@ -16717,9 +17403,6 @@
           }
           done = true;
         }
-        if (!done && !proj.visualOnly && projectileHitsTurret(proj)) done = true;
-        if (!done && !proj.visualOnly && projectileHitsStove(proj)) done = true;
-        if (!done && !proj.visualOnly && typeof projectileHitsSchoolSwing === 'function' && projectileHitsSchoolSwing(proj)) done = true;
         if (!done) {
           // 只取「子彈下方」最高的表面，並精確內插落地交點讓漆彈直接打在地板與道具正下方 (#5)
           const gy = getGroundHeight(proj.pos.x, proj.pos.z, Math.max(proj.prevPos.y, proj.pos.y) - 0.5);
@@ -16736,7 +17419,7 @@
         if (done && proj.isAlly && !proj.visualOnly && isAIAuthority()) {
           for (const ai of aiEnemies) { if (ai.state === 'DEAD' || ai.state === 'FLEE') continue; const dNear = ai.mesh.position.distanceTo(proj.pos); if (dNear < 4.0 && proj.shooterTeam !== ai.team) aiAddSuppression(ai, 1); if (dNear < 2.5) { aiOnHit(ai, playerGroup.position, true); } }
         }
-        if (!done && (proj.traveledDist >= proj.maxRange * 1.6 || proj.life > 4)) {
+        if (!done && (proj.traveledDist >= Math.max(proj.maxRange * 3.0, 120) || proj.life > 5.5)) {
           scene.remove(proj.mesh); scene.remove(proj.trail); projectiles.splice(i, 1); continue;
         }
 
@@ -16976,7 +17659,7 @@
     /* =========================================================================
        18. 自動化物理/戰鬥驗證模式：開啟 game.html?autotest=1 於 Console 輸出 [AUTOTEST] 結果
        ========================================================================= */
-    const BUILD_STAMP = 'v9.2 · 建置 2026-11-03 10:30 (台北)';
+    const BUILD_STAMP = 'v9.3 · 建置 2026-11-04 08:50 (台北)';
     console.log('現代突擊 3D ' + BUILD_STAMP);
     window.__manualLoop = new URLSearchParams(location.search).has('autotest');
     if (new URLSearchParams(location.search).has('demo')) {
@@ -19498,6 +20181,147 @@
               enterSouthDoorOk && enterPlaygroundDoorOk && climbSchoolStairsOk && enterSchool2FOk && schoolCtf4Ok &&
               elephantSlideOk && pushedSwingOk && swingBulletPhysicsOk && schoolDownedOk && schoolResetUprightOk && zeroBlockedSchoolPickups && switchedBackMilitaryOk,
             `thumbs3D=${thumbs3DOk}(${milUrl.length}/${schUrl.length}) bldg2F=${enlarged2FOk}(plaza=${compactPlazaWidth.toFixed(1)}m) bb=${blackboardCount}/desks=${deskCount} stage=${commandStageOk} gateGH=${gateGuardhouseOk} flow=${enterSouthDoorOk}/${enterPlaygroundDoorOk}/${climbSchoolStairsOk}/${enterSchool2FOk} ctf4=${schoolCtf4Ok} slide=${elephantSlideOk}(y=${maxElephantY.toFixed(2)}) swing=${pushedSwingOk}/${swingBulletPhysicsOk} camp=${schoolResetUprightOk} clrPickups=${schoolClr.blockedPickups.length} backMil=${switchedBackMilitaryOk}`
+          );
+        }
+
+        // ---- T98: v9.3 陽光國小 11 項精修 + 大廳/等待室/連線/滑鼠操控 8 項全面驗證 (共 19 項) ----
+        {
+          // Part A #1..#5: 切到陽光國小驗證無破損二樓牆與完整屋頂、斜坡扶手、零地板共面閃爍、4 間差異化黑板、便當盒飯、保健阿姨診療桌、司令台天下為公+禮義廉恥無遮擋
+          selectBattleMap('school', true);
+          let slopedRailCnt = 0, intact2FWallCnt = 0, fullRoof2FCnt = 0, nurseDeskCnt = 0, nurseSignCnt = 0, tentBackCnt = 0, bentoCnt = 0, parkTurretCnt = 0, frontBarrierCnt = 0;
+          let stageHeaderCnt = 0, stageTianxiaCnt = 0, stageMottoCnt = 0;
+          scene.traverse(o => {
+            if (o.name === 'school_sloped_handrail') slopedRailCnt++;
+            if (o.name === 'school_2f_intact_wall') intact2FWallCnt++;
+            if (o.name === 'classroom_2f_full_roof') fullRoof2FCnt++;
+            if (o.name === 'nurse_doctor_desk') nurseDeskCnt++;
+            if (o.name === 'nurse_auntie_sign') nurseSignCnt++;
+            if (o.name === 'tent_back') tentBackCnt++;
+            if (o.name === 'school_bento_pickup') bentoCnt++;
+            if (o.name === 'park_style_defense_turret') parkTurretCnt++;
+            if (o.name === 'turret_front_barrier') frontBarrierCnt++;
+            if (o.name === 'stage_header_sign') stageHeaderCnt++;
+            if (o.name === 'stage_tianxia_plaque') stageTianxiaCnt++;
+            if (o.name === 'stage_motto_plaque') stageMottoCnt++;
+          });
+          const a1StairsWallsRoofOk = slopedRailCnt === 2 && intact2FWallCnt >= 6 && fullRoof2FCnt === 2;
+          const bbKinds = new Set((window.__schoolBlackboardSpecs || []).map(s => s.kind));
+          const a2FourDistinctBBsOk = bbKinds.has('math5') && bbKinds.has('math6') && bbKinds.has('art2f') && bbKinds.has('music2f') && bbKinds.size === 4;
+          const schoolRations = pickupItems.filter(p => p.type === 'ration');
+          const a3BentoOk = bentoCnt >= 2 && schoolRations.length >= 2 && schoolRations.every(p => p.label.includes('便當盒飯'));
+          const nurse0 = window.campTents.find(t => t.team === 0);
+          teleport(nurse0.x, nurse0.z, 0, 0); isCrouched = false; isProne = false; playerState.hp = 70; playerState.bedHealAcc = 0;
+          const standNurseHeal = updateCampHealing(1.0);
+          const a4NurseDeskOk = nurseDeskCnt === 2 && nurseSignCnt === 2 && tentBackCnt === 0 && standNurseHeal === 6;
+          const southStageFlag = ctfFlags[2];
+          const a5CommandStageOk = stageHeaderCnt === 1 && stageTianxiaCnt === 1 && stageMottoCnt === 1 && Math.abs(southStageFlag.x) > 4.5;
+
+          // Part A #9, #10, #11: 防卡砲塔演算法 + 公園造型砲塔 + 基地防禦射程與前方障礙物 + 遠距狙擊打鍋子/砲塔必損血
+          const tEnemy = window.baseTurrets.find(t => t.team !== playerState.team);
+          const sEnemy = window.campStoves.find(s => s.team !== playerState.team);
+          resetCampAndTurretsForNewMatch();
+          playerGroup.position.set(tEnemy.x, STAND_HEIGHT, tEnemy.z);
+          frame(2);
+          const pushedDist = Math.hypot(playerGroup.position.x - tEnemy.x, playerGroup.position.z - tEnemy.z);
+          const a9TurretAntiStuckOk = parkTurretCnt === 2 && pushedDist >= TURRET_SAFE_RADIUS - 0.02 && !checkCollision(playerGroup.position.x, playerGroup.position.z, 0, 0.42, PLAYER_HEIGHT);
+          const a10DefenseTurretOk = TURRET_RANGE <= 10.5 && frontBarrierCnt === 2 && obstacles.filter(o => o.isTurretFrontBarrier).length === 2;
+
+          // 模擬從 >42m 遠處中央操場無牆視線發射 AWP 狙擊漆彈打中營養午餐鍋子與砲塔（驗證不被自身 AABB 吃掉子彈、真實下墜亦必扣血！）
+          const stoveHpBefore = sEnemy.hp, turretHpBefore = tEnemy.hp;
+          const sniperWpn = WEAPONS.awp;
+          const stoveOrigin = new THREE.Vector3(2.0, 1.25, sEnemy.z < 0 ? 11.0 : -11.0);
+          const stoveDir = new THREE.Vector3(sEnemy.x, 1.25, sEnemy.z).sub(stoveOrigin).normalize();
+          firePaintballBullet(stoveOrigin, stoveDir, sniperWpn, true, Net.myId, playerState.name, playerState.paintColor, false);
+          const turretOrigin = new THREE.Vector3(1.5, 1.45, tEnemy.z < 0 ? 10.0 : -10.0);
+          const turretDir = new THREE.Vector3(tEnemy.x, 1.55, tEnemy.z).sub(turretOrigin).normalize();
+          firePaintballBullet(turretOrigin, turretDir, sniperWpn, true, Net.myId, playerState.name, playerState.paintColor, false);
+          frame(50);
+          const a11LongRangeDamageOk = sEnemy.hp < stoveHpBefore && tEnemy.hp < turretHpBefore;
+
+          // Part A #6 & Part B #6: 單機滑鼠左鍵直接射擊 + ESC 解鎖後點一下抓回滑鼠不連發
+          resetLoadout(); prepActive = false; playerState.invulnUntil = 0; weaponSwitchLock = 0; lastShotTime = 0;
+          const prevForceFine = window.__forceFinePointer;
+          window.__forceFinePointer = false;
+          window.__setWasPointerLockedForTest(true);
+          isPointerLocked = false;
+          const ammoBeforeEscClick = inventory[0].ammoInClip;
+          window.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true }));
+          window.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+          const b6EscSingleClickRelockOk = (inventory[0].ammoInClip === ammoBeforeEscClick) && (isFiring === false);
+          lastShotTime = 0;
+          window.dispatchEvent(new MouseEvent('mousedown', { button: 0, bubbles: true }));
+          window.dispatchEvent(new MouseEvent('mouseup', { button: 0, bubbles: true }));
+          const a6StandaloneMouseShootOk = inventory[0].ammoInClip === ammoBeforeEscClick - 1;
+          window.__forceFinePointer = prevForceFine;
+
+          // Part A #7 & #8: 陽光國小專屬 BGM + 大廳最上方交響軍歌與麥克風快捷霸
+          isGameRunning = true; isRoundEnded = false;
+          MusicEngine.syncSceneTrack();
+          const schoolTrackOk = MusicEngine.currentTrack === 'school' && window.BGM_SOURCES.school === 'school_bgm.mp3';
+          selectBattleMap('military', true);
+          MusicEngine.syncSceneTrack();
+          const milTrackOk = MusicEngine.currentTrack === 'battle';
+          const a7a8MusicAndTopBarOk = schoolTrackOk && milTrackOk && !!document.getElementById('lobby-top-audio-bar') && !!document.getElementById('btn-lobby-top-bgm') && !!document.getElementById('btn-lobby-top-mic');
+
+          // Part B #7: 按 B 鍵切換 AI 對手即使原本 mode==='none' 也必定生出 AI！
+          aiEnabled = false; setAICountCfg({ mode: 'none', cap: 3 });
+          aiEnemies.forEach(a => { if (a && a.mesh) scene.remove(a.mesh); }); aiEnemies.length = 0;
+          Net.roomCode = 'AUTOTEST'; Net.isHost = true; isGameRunning = true;
+          toggleAIEnemies();
+          const b7AiSpawnedOk = aiEnabled === true && aiEnemies.filter(a => a.state !== 'DEAD').length >= 2;
+
+          // Part B #3: 異常髒值隊色不當機，進入世界依舊完整建立佈景
+          currentTeamColorKey = 'corrupted_invalid_theme';
+          selectBattleMap('school', true);
+          const b3ResilientMapOk = obstacles.length > 40 && getTeamColorCfg() === TEAM_COLORS.blue_red;
+          currentTeamColorKey = 'blue_red';
+          selectBattleMap('military', true);
+
+          // Part B #1, #2, #4, #5, #8: 大廳持久 3D 預覽圖、上方獨立連線房間數看板、觀察者開房當關主、等待室左藍右紅雙欄點選入隊、跳出秒重開房
+          lobbyModal.classList.remove('hidden');
+          renderAllLobbyMapPreviews();
+          const imgMil = document.getElementById('map-thumb-img-military');
+          const imgSch = document.getElementById('map-thumb-img-school');
+          const b1PersistentThumbsOk = !!(imgMil && imgSch && imgMil.src.startsWith('data:image/png') && imgSch.src.startsWith('data:image/png') && !imgMil.classList.contains('hidden') && !imgSch.classList.contains('hidden'));
+          const topBarRect = document.getElementById('lobby-top-audio-bar').getBoundingClientRect();
+          const roomsCardRect = document.getElementById('lobby-active-rooms-card').getBoundingClientRect();
+          const settingsCardRect = document.getElementById('lobby-room-settings-card').getBoundingClientRect();
+          const b4StandaloneRoomsAboveOk = topBarRect.top <= roomsCardRect.top && roomsCardRect.top < settingsCardRect.top && document.getElementById('active-rooms-count-badge').innerText.includes('目前開放房間');
+
+          // 測試觀察者開房 + 等待室左藍右紅框點選切換 + 跳出秒重開
+          const prevGameMode = gameModeSetting;
+          gameModeSetting = 'ctf';
+          setLobbySpectatorMode(true);
+          Net.closeRoom();
+          const b2SyncCloseOk = Net.roomCode === '' && Net.isHost === false;
+          Net.isHost = true; Net.roomCode = '8899'; Net.roomStatus = 'waiting';
+          playerState.isBroadcaster = true;
+          openWaitingRoom();
+          const specBoxExists = !!document.getElementById('wait-spectator-box');
+          const blueBox = document.getElementById('wait-blue-team-box');
+          const redBox = document.getElementById('wait-red-team-box');
+          const blueRedSideBySide = !!(blueBox && redBox && blueBox.getBoundingClientRect().left < redBox.getBoundingClientRect().left);
+          window.switchMyTeamInWaitingRoom(1);
+          const joinedRedOk = playerState.team === 1 && playerState.isBroadcaster === false && document.getElementById('wait-red-team-box').innerText.includes('(你)');
+          window.switchMyTeamInWaitingRoom(0);
+          const joinedBlueOk = playerState.team === 0 && document.getElementById('wait-blue-team-box').innerText.includes('(你)');
+          const b5b8WaitTeamsAndSpecHostOk = specBoxExists && blueRedSideBySide && joinedRedOk && joinedBlueOk;
+
+          // 還原測試環境狀態
+          document.getElementById('waiting-room-modal').classList.add('hidden');
+          lobbyModal.classList.add('hidden');
+          setLobbySpectatorMode(false);
+          Net.roomCode = 'AUTOTEST'; Net.isHost = true; isGameRunning = true;
+          gameModeSetting = prevGameMode;
+          initEnemies(); teleport(0, 20, 0, 0);
+
+          log(
+            'T98 v9.3 陽光國小11項精修(無破損二樓牆/斜坡扶手/零閃爍地板/4間差異化數學美術音樂黑板/便當盒飯/保健阿姨桌/司令台天下為公/公園防禦砲塔防卡與遠距狙擊必損血) + 大廳連線操控8項(單機滑鼠射擊/ESC一鍵鎖定/交響軍歌置頂霸/獨立房間看板/左藍右紅入隊框/觀察者開房/B鍵生AI/秒重開房)',
+            a1StairsWallsRoofOk && a2FourDistinctBBsOk && a3BentoOk && a4NurseDeskOk && a5CommandStageOk &&
+              a9TurretAntiStuckOk && a10DefenseTurretOk && a11LongRangeDamageOk &&
+              b6EscSingleClickRelockOk && a6StandaloneMouseShootOk && a7a8MusicAndTopBarOk &&
+              b7AiSpawnedOk && b3ResilientMapOk && b1PersistentThumbsOk && b4StandaloneRoomsAboveOk && b2SyncCloseOk && b5b8WaitTeamsAndSpecHostOk,
+            `A1=${a1StairsWallsRoofOk} A2=${a2FourDistinctBBsOk} A3=${a3BentoOk} A4=${a4NurseDeskOk} A5=${a5CommandStageOk} A6=${a6StandaloneMouseShootOk} A7A8=${a7a8MusicAndTopBarOk} A9=${a9TurretAntiStuckOk}(d=${pushedDist.toFixed(2)}) A10=${a10DefenseTurretOk} A11=${a11LongRangeDamageOk}(st=${sEnemy.hp},tr=${tEnemy.hp}) B1=${b1PersistentThumbsOk} B2=${b2SyncCloseOk} B3=${b3ResilientMapOk} B4=${b4StandaloneRoomsAboveOk} B5B8=${b5b8WaitTeamsAndSpecHostOk} B6=${b6EscSingleClickRelockOk} B7=${b7AiSpawnedOk}`
           );
         }
 
