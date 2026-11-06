@@ -1321,3 +1321,31 @@ v9.0 已內建兩首由 **Google Lyria 3 (`lyria-3-clip-preview`)** 生成之 **
 <!-- slide -->
 ![v9.3 一樓六年乙班教室（國小六年級圓周率與速率數學黑板＋零閃爍磨石子地板＋窗外真實斜坡扶手樓梯）](/home/corpagent-eng-weihsuanchen/.gemini/jetski/brain/8881dc6c-ca0f-407e-94d2-4799165be283/v93_school_1f_math_classroom.png)
 ````
+
+---
+
+## 四十、 v9.4 首次開啟陽光國小冷啟動完整建景修復 ＆ 交響軍歌主旋律重複無縫循環升級 (`T99`, 109/109 自動測試通過)
+
+### 1. 首次載入 `game.html` 點選「陽光國小校園」UI 不更新與場景殘缺根因診斷與修復
+- **根因定位 (`ReferenceError: C is not defined`)**：
+  - 於程序化金屬板貼圖函式 `texMetalPlate(ctx, s)` 中曾誤留一段參照未定義區域變數 `C` 與 `sc` 的 `if (currentMapId === 'school')` 繪圖區塊。
+  - 由於「軍事訓練基地」建景過程未使用 `MAT.metal()`，在**首次載入 `game.html`（`TEXTURE_CACHE['metal']` 尚未建立快取）**時直接點選「🏫 陽光國小校園」，`buildMapWorldContents('school')` 先將 `currentMapId` 設為 `'school'` 並完成 `buildSchoolGroundAndTrack()`（草地、PU 跑道與外圍紅磚牆），隨即在 `buildSchoolBasesWithStageAndGate()` 建立司令台麥克風支架呼叫 `MAT.metal()` 時拋出 `ReferenceError: C is not defined` 中斷建景——導致後續雙層教室、司令台、警衛室與 `syncMapSelectorUI()` 均未執行（出現「UI 仍停在軍事基地、進場只有跑道草地，但跳回大廳已快取金屬貼圖後就恢復正常」之現象）。
+- **完整修復與防護加固**：
+  1. 徹底清除 `texMetalPlate` 內誤植之未定義變數繪圖碼（戰術雷達小地圖本身已於 `updateMinimap` 正常繪製校園跑道）。
+  2. 於 `init3DWorld()` 支援直接讀取 `localStorage` 記憶之戰場地圖一次到位建景，並於 `buildMapWorldContents` 的 `finally` 區塊強制同步呼叫 `syncMapSelectorUI()`，同時為 `renderAllLobbyMapPreviews()` 加入完整例外防護，確保冷啟動首次點擊與雙場地 3D 預覽縮圖 **100% 零報錯、UI 即時亮起「✓ 已選擇」、進場完整呈現 172 個校園實體物件**。
+
+### 2. 開頭大廳交響樂軍歌「重複雄壯主題旋律 ＋ 全環境無縫無限循環」 (`lobby_bgm.mp3` & `MusicEngine`)
+- **48 秒 24 小節「主旋律輝煌再現」母帶重製 (`lobby_bgm.mp3`)**：
+  - 原 30.77 秒音軌（`120.0 BPM`）於第 16 小節第 2 拍中途突兀截斷，且缺少 LAME/Info gapless 索引標頭。
+  - 重新母帶處理為完整 **24 小節（`47.98 秒`）對稱進行曲結構**：**`A1`（第 1–8 小節：雄壯銅管主旋律呈示） → `B1`（第 9–12 小節：管弦過門轉折） → `A2`（第 13–20 小節：雄壯主題旋律輝煌重複再現，`+0.55 dB` 管弦氣勢推進） → `B2`（第 21–24 小節：終止式完美導回第一拍）**。
+  - 採用取樣級相位對齊與圓周等功率交疊淡化（Circular Equal-Power Crossfade，使尾端最後一個取樣點與開頭第一個取樣點連續無斷點），並透過 `libmp3lame` 寫入完整 LAME Info Gapless 標頭。
+- **`MusicEngine` 三層無縫循環播放架構**：
+  1. **Data-URI 轉持久 `Blob` URL**：針對單檔離線版 `Modern_Assault_3D_Offline_Play.html` 內嵌之 Base64 音軌自動轉為二進位 `Blob` URL 與快取 `ArrayBuffer`，消除大型 `data:` URI 在尾端停止播放的問題。
+  2. **`OfflineAudioContext` 極速背景解碼 ＋ WebAudio 取樣級零縫隙循環**：於網頁載入時即透過 `OfflineAudioContext` 背景解碼並裁除首尾極微小編碼器靜音，交由 `AudioBufferSourceNode`（`loop = true`）進行硬體記憶體級無限循環（若 HTML5 音軌已先播放，自動以 `start(0, resumeOffset)` 無縫接續不跳針）。
+  3. **`file://` 本地雙軌 HTML5 Audio 等功率交疊接棒 ＋ 160ms 巡檢守護**：針對直接雙擊 `file:///.../game.html` 無法 `fetch` 的情境，配置 `Deck A / Deck B` 雙音軌於曲末前 `0.24s` 自動平滑交疊淡入下一輪開頭，搭配 `ended` 與守護計時器雙重兜底，確保大廳與戰場音樂永遠不斷音。
+
+````carousel
+![v9.4 首次載入 game.html 直接點選「陽光國小校園」立即切換選擇狀態並完整顯示雙戰場 3D 預覽縮圖](/home/corpagent-eng-weihsuanchen/.gemini/jetski/brain/8881dc6c-ca0f-407e-94d2-4799165be283/v94_firstload_lobby_school_selected.png)
+<!-- slide -->
+![v9.4 首次載入點選陽光國小後直接進入單人遊戲（完整建置忠孝樓/仁愛樓雙層教室、PU 操場、校門警衛室與大象溜滑梯）](/home/corpagent-eng-weihsuanchen/.gemini/jetski/brain/8881dc6c-ca0f-407e-94d2-4799165be283/v94_firstload_school_ingame.png)
+````

@@ -8,7 +8,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="現代突擊3D">
-  <title>Q版特種部隊：現代突擊 3D v9.3 - 陽光國小＆軍事基地雙戰場</title>
+  <title>Q版特種部隊：現代突擊 3D v9.4 - 陽光國小＆軍事基地雙戰場</title>
   <!-- Tailwind CSS (支援 Jetski 官方與外部 CDN) -->
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -715,7 +715,7 @@
           <span id="hud-fps" class="px-1.5 py-0.5 rounded text-[11px] font-mono text-slate-400 bg-slate-900/80 border border-slate-800">
             60 FPS
           </span>
-          <span id="hud-build" class="px-1.5 py-0.5 rounded text-[10px] font-mono text-amber-300/90 bg-slate-900/80 border border-slate-800">v9.3</span>
+          <span id="hud-build" class="px-1.5 py-0.5 rounded text-[10px] font-mono text-amber-300/90 bg-slate-900/80 border border-slate-800">v9.4</span>
         </div>
         <div id="hud-left-stats-row" class="text-xs text-slate-300 font-semibold bg-slate-900/80 border border-slate-800 px-2.5 py-1 rounded-lg backdrop-blur-sm flex items-center gap-2 whitespace-nowrap">
           <span>擊倒: <b id="kills-count" class="text-amber-400">0</b></span>
@@ -1095,10 +1095,10 @@
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> ANIME TACTICAL ARENA · P2P 零延遲連線指揮中心
           </div>
           <h1 class="text-xl sm:text-2xl font-black tracking-wider bg-gradient-to-r from-white via-cyan-200 to-amber-300 bg-clip-text text-transparent">
-            Q版特種部隊：現代突擊 3D v9.3
+            Q版特種部隊：現代突擊 3D v9.4
           </h1>
         </div>
-        <div id="build-stamp" class="text-[11px] font-mono font-bold text-amber-300 bg-slate-950 border border-amber-400/45 rounded-lg px-2.5 py-1 shrink-0">🏷️ 版本 v9.3 · 建置 2026-11-04 08:50 (台北)</div>
+        <div id="build-stamp" class="text-[11px] font-mono font-bold text-amber-300 bg-slate-950 border border-amber-400/45 rounded-lg px-2.5 py-1 shrink-0">🏷️ 版本 v9.4 · 建置 2026-11-06 17:35 (台北)</div>
       </div>
 
       <!-- [置頂核心區 1] 模式選擇 + 房號/呼號/觀察者身分 -->
@@ -3587,8 +3587,18 @@
 
       buildClouds();
       createFirstPersonWeapon();
+      if (!new URLSearchParams(location.search).has('autotest')) {
+        try {
+          const savedInitMap = localStorage.getItem('QFORCE3D_MAP');
+          if (savedInitMap === 'school' || savedInitMap === 'military') currentMapId = savedInitMap;
+        } catch (e) {}
+      }
       buildMapWorldContents(currentMapId);
-      setTimeout(() => { if (typeof renderAllLobbyMapPreviews === 'function') renderAllLobbyMapPreviews(); }, 30);
+      syncMapSelectorUI();
+      setTimeout(() => {
+        syncMapSelectorUI();
+        if (typeof renderAllLobbyMapPreviews === 'function') renderAllLobbyMapPreviews();
+      }, 30);
 
       window.addEventListener('resize', onWindowResize);
     }
@@ -5593,6 +5603,7 @@
         });
       } finally {
         scene.add = origAdd;
+        try { syncMapSelectorUI(); } catch (e) {}
       }
       rebuildHouseRoutesForMap(currentMapId);
       syncMapSelectorUI();
@@ -5662,12 +5673,14 @@
       const renderThumb = (mapId, canvasId) => {
         const cv = document.getElementById(canvasId);
         if (!cv || typeof THREE === 'undefined') return '';
-        if (!previewRenderer) {
-          previewRenderer = new THREE.WebGLRenderer({ alpha: false, antialias: true, preserveDrawingBuffer: true });
-        }
         const W = 360, H = 180;
-        previewRenderer.setSize(W, H);
-        previewRenderer.setPixelRatio(1);
+        try {
+          if (!previewRenderer) {
+            previewRenderer = new THREE.WebGLRenderer({ alpha: false, antialias: true, preserveDrawingBuffer: true });
+          }
+          previewRenderer.setSize(W, H);
+          previewRenderer.setPixelRatio(1);
+        } catch (e) {}
         const sc = new THREE.Scene();
         const cam = new THREE.PerspectiveCamera(38, W / H, 0.5, 220);
         sc.add(new THREE.HemisphereLight(0xffffff, 0x334155, 0.85));
@@ -5761,19 +5774,21 @@
           cam.lookAt(0, 1.4, -2);
         }
 
-        // v9.3 修正公仔透明渲染器 (setClearColor alpha=0) 導致回大廳重繪縮圖變透明空白 Bug，並同步寫入持久 <img> 永不消失！
-        previewRenderer.setClearColor(mapId === 'school' ? 0x38bdf8 : 0x3b82f6, 1);
-        previewRenderer.render(sc, cam);
+        // v9.4 防護升級：WebGL 預覽渲染與 2D 畫布完整 try/catch 保護，冷啟動與多裝置 100% 穩定繪出雙場地縮圖！
         const ctx2d = cv.getContext('2d');
         let drewValid = false;
         if (ctx2d) {
           ctx2d.fillStyle = mapId === 'school' ? '#38bdf8' : '#3b82f6';
           ctx2d.fillRect(0, 0, cv.width, cv.height);
           try {
-            ctx2d.drawImage(previewRenderer.domElement, 0, 0, cv.width, cv.height);
-            const px = ctx2d.getImageData(Math.floor(cv.width / 2), Math.floor(cv.height * 0.68), 1, 1).data;
-            drewValid = (px[3] > 200) && !(px[0] === 0 && px[1] === 0 && px[2] === 0);
-          } catch (e) {}
+            if (previewRenderer) {
+              previewRenderer.setClearColor(mapId === 'school' ? 0x38bdf8 : 0x3b82f6, 1);
+              previewRenderer.render(sc, cam);
+              ctx2d.drawImage(previewRenderer.domElement, 0, 0, cv.width, cv.height);
+              const px = ctx2d.getImageData(Math.floor(cv.width / 2), Math.floor(cv.height * 0.68), 1, 1).data;
+              drewValid = (px[3] > 200) && !(px[0] === 0 && px[1] === 0 && px[2] === 0);
+            }
+          } catch (e) { drewValid = false; }
           if (!drewValid) {
             // 2D 高精細向量備援縮圖（即使行動裝置 WebGL Context Lost 也 100% 清晰顯示！）
             const g = ctx2d.createLinearGradient(0, 0, 0, cv.height);
@@ -5793,8 +5808,12 @@
             }
           }
         }
-        previewRenderer.setClearColor(0x000000, 0);
-        previewRenderer.setSize(240, 240);
+        if (previewRenderer) {
+          try {
+            previewRenderer.setClearColor(0x000000, 0);
+            previewRenderer.setSize(240, 240);
+          } catch (e) {}
+        }
         const url = cv.toDataURL('image/png');
         window.__mapPreviewDataUrls[mapId] = url;
         const imgEl = document.getElementById(mapId === 'school' ? 'map-thumb-img-school' : 'map-thumb-img-military');
@@ -5809,29 +5828,27 @@
       renderThumb('school', 'map-thumb-school');
     }
 
-    (function bindMapSelectorEvents() {
-      setTimeout(() => {
-        ['military', 'school'].forEach(id => {
-          const card = document.getElementById('map-card-' + id);
-          if (!card) return;
-          card.addEventListener('click', () => {
-            selectBattleMap(id, false);
-          });
-          card.addEventListener('keydown', (ev) => {
-            if (ev.key === 'Enter' || ev.key === ' ') {
-              ev.preventDefault();
-              selectBattleMap(id, false);
-            }
-          });
+    function bindMapSelectorEventsNow() {
+      ['military', 'school'].forEach(id => {
+        const card = document.getElementById('map-card-' + id);
+        if (!card || card._mapCardBound) return;
+        card._mapCardBound = true;
+        card.addEventListener('click', () => {
+          selectBattleMap(id, false);
+          syncMapSelectorUI();
         });
-        if (!window.__manualLoop) {
-          try {
-            const savedMap = localStorage.getItem('QFORCE3D_MAP');
-            if (savedMap === 'school') selectBattleMap('school', true);
-          } catch (e) {}
-        }
-      }, 0);
-    })();
+        card.addEventListener('keydown', (ev) => {
+          if (ev.key === 'Enter' || ev.key === ' ') {
+            ev.preventDefault();
+            selectBattleMap(id, false);
+            syncMapSelectorUI();
+          }
+        });
+      });
+      syncMapSelectorUI();
+    }
+    bindMapSelectorEventsNow();
+    setTimeout(bindMapSelectorEventsNow, 0);
 
     function buildPlazaGround() {
       const groundGeo = new THREE.PlaneGeometry(80, 80);
@@ -6019,18 +6036,6 @@
     function texMetalPlate(ctx, s) {
       ctx.fillStyle = '#475569';
       ctx.fillRect(0, 0, s, s);
-      if (currentMapId === 'school') {
-        ctx.save();
-        ctx.strokeStyle = 'rgba(239, 68, 68, 0.55)';
-        ctx.lineWidth = 6;
-        ctx.beginPath();
-        ctx.ellipse(C, C, 6.2 * sc, 14.5 * sc, 0, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.fillStyle = '#fef08a'; ctx.font = 'bold 9px sans-serif';
-        ctx.fillText('司令台', C - 14, C + 34 * sc);
-        ctx.fillText('校門警衛室', C + 12, C - 32 * sc);
-        ctx.restore();
-      }
       ctx.fillStyle = '#334155';
       for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) {
         ctx.beginPath(); ctx.arc(x * s / 4 + s / 8, y * s / 4 + s / 8, s / 40, 0, Math.PI * 2); ctx.fill();
@@ -15798,7 +15803,19 @@
       volume: 0.55,
       currentTrack: null,
       audios: {},
+      audiosB: {},
+      activeDeck: {},
+      crossfading: {},
+      blobUrls: {},
+      rawBytesCache: {},
+      audioBuffers: {},
+      loadingBuffers: {},
+      waCtx: null,
+      waGain: null,
+      waSource: null,
+      waTrack: null,
       unlocked: false,
+      _watchdogId: null,
 
       init: function() {
         try {
@@ -15826,41 +15843,347 @@
           }
         });
         const unlock = () => {
+          const firstUnlock = !this.unlocked;
           this.unlocked = true;
-          this.syncSceneTrack();
+          this.ensureWebAudio();
+          if (this.waCtx && this.waCtx.state === 'suspended') {
+            try { this.waCtx.resume(); } catch (e) {}
+          }
+          if (firstUnlock || !this.isCurrentlyPlaying()) {
+            this.syncSceneTrack();
+          }
         };
         window.addEventListener('pointerdown', unlock, { passive: true });
         window.addEventListener('keydown', unlock, { passive: true });
+        window.addEventListener('touchstart', unlock, { passive: true });
+
+        const isAutoTest = !!(window.__manualLoop || (typeof location !== 'undefined' && new URLSearchParams(location.search).has('autotest')));
+        if (!this._watchdogId && !isAutoTest) {
+          this._watchdogId = setInterval(() => this.tickLoopWatchdog(), 160);
+        }
         this.updateUI();
-        if (!window.__manualLoop) this.playTrack('lobby');
+        if (!isAutoTest) this.playTrack('lobby');
+      },
+
+      // 將 data:audio/mpeg;base64,... 轉為持久 Blob URL 並快取二進位 ArrayBuffer，杜絕離線大檔 Data-URI 循環卡死！
+      resolvePlayableUrl: function(kind, customSrc) {
+        const rawSrc = customSrc || (window.BGM_SOURCES && window.BGM_SOURCES[kind]) || (kind + '_bgm.mp3');
+        if (typeof rawSrc === 'string' && rawSrc.startsWith('data:audio/')) {
+          if (!customSrc && this.blobUrls[kind]) return this.blobUrls[kind];
+          try {
+            const commaIdx = rawSrc.indexOf(',');
+            const meta = rawSrc.slice(5, commaIdx);
+            const mime = meta.split(';')[0] || 'audio/mpeg';
+            const binStr = atob(rawSrc.slice(commaIdx + 1));
+            const len = binStr.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) bytes[i] = binStr.charCodeAt(i);
+            if (!customSrc) this.rawBytesCache[kind] = bytes.buffer;
+            const blobUrl = URL.createObjectURL(new Blob([bytes], { type: mime }));
+            if (!customSrc) this.blobUrls[kind] = blobUrl;
+            return blobUrl;
+          } catch (e) {
+            return rawSrc;
+          }
+        }
+        return rawSrc;
+      },
+
+      ensureWebAudio: function() {
+        if (this.waCtx) return this.waCtx;
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return null;
+        try {
+          this.waCtx = (typeof AudioEngine !== 'undefined' && AudioEngine.ctx) ? AudioEngine.ctx : new Ctx();
+          this.waGain = this.waCtx.createGain();
+          this.waGain.gain.value = this.enabled ? this.volume : 0;
+          this.waGain.connect(this.waCtx.destination);
+        } catch (e) {
+          this.waCtx = null;
+        }
+        return this.waCtx;
+      },
+
+      // 裁除 MP3 編碼器首尾極微小靜音延遲並進行微交疊平滑處理，達成 1/44100 秒精準零縫隙無限循環！
+      prepareLoopBuffer: function(buf, kind, bufFactoryCtx) {
+        const factory = bufFactoryCtx || this.waCtx;
+        if (!buf || !factory) return buf;
+        const nCh = buf.numberOfChannels;
+        const sr = buf.sampleRate;
+        const len = buf.length;
+        if (len < sr * 2) return buf;
+        const ch0 = buf.getChannelData(0);
+        const ch1 = nCh > 1 ? buf.getChannelData(1) : ch0;
+        const thresh = 0.0012;
+        let start = 0;
+        let end = len - 1;
+        const maxTrim = Math.min(Math.floor(sr * 0.25), Math.floor(len * 0.05));
+        while (start < maxTrim && Math.abs(ch0[start]) < thresh && Math.abs(ch1[start]) < thresh) start++;
+        while (end > len - 1 - maxTrim && Math.abs(ch0[end]) < thresh && Math.abs(ch1[end]) < thresh) end--;
+        const xfade = (kind === 'lobby') ? Math.floor(sr * 0.015) : Math.floor(sr * 0.08);
+        const outLen = (end - start + 1) - xfade;
+        if (outLen <= sr) return buf;
+        const outBuf = factory.createBuffer(nCh, outLen, sr);
+        for (let c = 0; c < nCh; c++) {
+          const src = buf.getChannelData(c);
+          const dst = outBuf.getChannelData(c);
+          for (let i = 0; i < xfade; i++) {
+            const theta = 0.5 * Math.PI * (i / xfade);
+            dst[i] = Math.cos(theta) * src[start + outLen + i] + Math.sin(theta) * src[start + i];
+          }
+          for (let i = xfade; i < outLen; i++) {
+            dst[i] = src[start + i];
+          }
+        }
+        return outBuf;
+      },
+
+      canFetchTrackForWebAudio: function(kind) {
+        const rawSrc = (window.BGM_SOURCES && window.BGM_SOURCES[kind]) || (kind + '_bgm.mp3');
+        if (this.rawBytesCache[kind]) return true;
+        if (typeof rawSrc === 'string' && rawSrc.startsWith('data:audio/')) return true;
+        if (typeof location !== 'undefined' && location.protocol === 'file:') return false;
+        return !!(window.OfflineAudioContext || window.webkitOfflineAudioContext || window.AudioContext || window.webkitAudioContext);
+      },
+
+      tryLoadWebAudioBuffer: function(kind) {
+        if (this.audioBuffers[kind] || this.loadingBuffers[kind]) return;
+        if (!this.canFetchTrackForWebAudio(kind)) return;
+        const OffCtx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+        const ctx = OffCtx ? new OffCtx(2, 44100, 44100) : this.ensureWebAudio();
+        if (!ctx) return;
+        const rawSrc = (window.BGM_SOURCES && window.BGM_SOURCES[kind]) || (kind + '_bgm.mp3');
+        if (!this.rawBytesCache[kind] && typeof rawSrc === 'string' && rawSrc.startsWith('data:audio/')) {
+          this.resolvePlayableUrl(kind);
+        }
+        this.loadingBuffers[kind] = true;
+        this._webAudioFailed = this._webAudioFailed || {};
+        const getAb = this.rawBytesCache[kind]
+          ? Promise.resolve(this.rawBytesCache[kind].slice(0))
+          : fetch(rawSrc, { cache: 'no-store' }).then(r => { if (!r.ok) throw new Error('fetch failed'); return r.arrayBuffer(); });
+        getAb
+          .then(ab => ctx.decodeAudioData(ab))
+          .then(decoded => {
+            this.audioBuffers[kind] = this.prepareLoopBuffer(decoded, kind, ctx);
+            this.loadingBuffers[kind] = false;
+            const liveCtx = this.ensureWebAudio();
+            if (this.enabled && this.currentTrack === kind && !window.__manualLoop && liveCtx) {
+              if (liveCtx.state === 'suspended' && this.unlocked) {
+                try { liveCtx.resume(); } catch (e) {}
+              }
+              this.startWebAudioLoop(kind);
+            }
+          })
+          .catch(() => {
+            this.loadingBuffers[kind] = false;
+            this._webAudioFailed[kind] = true;
+            if (this.enabled && this.currentTrack === kind && !window.__manualLoop) {
+              this.startHtmlFallback(kind);
+            }
+          });
+      },
+
+      stopWebAudioLoop: function() {
+        if (this.waSource) {
+          try { this.waSource.onended = null; this.waSource.stop(0); this.waSource.disconnect(); } catch (e) {}
+          this.waSource = null;
+        }
+        this.waTrack = null;
+      },
+
+      startWebAudioLoop: function(kind) {
+        const ctx = this.ensureWebAudio();
+        const buf = this.audioBuffers[kind];
+        if (!ctx || !buf || ctx.state !== 'running') return false;
+        if (this.waSource && this.waTrack === kind) {
+          if (this.waGain) this.waGain.gain.value = this.enabled ? this.volume : 0;
+          return true;
+        }
+        // 若 HTML5 備援音軌已先播放數百毫秒，無縫銜接其目前播放秒數，避免重頭跳針！
+        let resumeOffset = 0;
+        const curHtml = (this.activeDeck[kind] === 'B') ? this.audiosB[kind] : this.audios[kind];
+        if (curHtml && !curHtml.paused && curHtml.currentTime > 0.04 && buf.duration > 1) {
+          resumeOffset = curHtml.currentTime % buf.duration;
+        }
+        this.stopWebAudioLoop();
+        this.pauseAllHtmlAudio();
+        const srcNode = ctx.createBufferSource();
+        srcNode.buffer = buf;
+        srcNode.loop = true;
+        srcNode.loopStart = 0;
+        srcNode.loopEnd = buf.duration;
+        if (this.waGain) this.waGain.gain.value = this.enabled ? this.volume : 0;
+        srcNode.connect(this.waGain);
+        srcNode.start(0, resumeOffset);
+        this.waSource = srcNode;
+        this.waTrack = kind;
+        return true;
+      },
+
+      createHtmlDeck: function(kind, deckTag) {
+        const a = new Audio();
+        a.preload = 'auto';
+        a.loop = true;
+        a.src = this.resolvePlayableUrl(kind);
+        a.volume = this.enabled ? this.volume : 0;
+        a._bgmKind = kind;
+        a._deckTag = deckTag;
+        // 雙保險循環事件：萬一瀏覽器在檔案尾端觸發 ended 或停在尾端，立即無縫歸零重播！
+        a.addEventListener('ended', () => {
+          if (this.enabled && this.currentTrack === kind && !this.waSource && !window.__manualLoop) {
+            try {
+              a.currentTime = 0;
+              const p = a.play();
+              if (p && typeof p.catch === 'function') p.catch(() => {});
+            } catch (e) {}
+          }
+        });
+        a.addEventListener('timeupdate', () => {
+          if (this.enabled && this.currentTrack === kind && !this.waSource && !window.__manualLoop) {
+            if (a.duration > 2 && a.currentTime >= a.duration - 0.24 && !this.crossfading[kind]) {
+              this.triggerHtmlSeamlessWrap(kind);
+            }
+          }
+        });
+        return a;
       },
 
       getAudio: function(kind) {
         if (!this.audios[kind]) {
-          const a = new Audio();
-          a.preload = 'auto';
-          a.loop = true;
-          a.src = (window.BGM_SOURCES && window.BGM_SOURCES[kind]) || (kind + '_bgm.mp3');
-          a.volume = this.enabled ? this.volume : 0;
-          this.audios[kind] = a;
+          this.audios[kind] = this.createHtmlDeck(kind, 'A');
+          this.activeDeck[kind] = 'A';
         }
         return this.audios[kind];
+      },
+
+      getSecondaryAudio: function(kind) {
+        if (!this.audiosB[kind]) {
+          this.audiosB[kind] = this.createHtmlDeck(kind, 'B');
+        }
+        return this.audiosB[kind];
+      },
+
+      // 針對 file:// 本地開啟 game.html 的雙軌交疊無縫循環：尾端前 0.24s 平滑交棒給副軌，完全消除斷點！
+      triggerHtmlSeamlessWrap: function(kind) {
+        if (this.crossfading[kind] || this.waSource) return;
+        const curTag = this.activeDeck[kind] || 'A';
+        const cur = (curTag === 'A') ? this.getAudio(kind) : this.getSecondaryAudio(kind);
+        const nxtTag = (curTag === 'A') ? 'B' : 'A';
+        const nxt = (nxtTag === 'A') ? this.getAudio(kind) : this.getSecondaryAudio(kind);
+        if (!cur || !nxt) return;
+        this.crossfading[kind] = true;
+        try {
+          nxt.currentTime = 0;
+          nxt.volume = 0;
+          const p = nxt.play();
+          if (p && typeof p.catch === 'function') {
+            p.then(() => {
+              let step = 0;
+              const totalSteps = 8;
+              const fadeTimer = setInterval(() => {
+                step++;
+                const t = step / totalSteps;
+                const targetVol = this.enabled ? this.volume : 0;
+                if (this.currentTrack !== kind || !this.enabled || this.waSource) {
+                  clearInterval(fadeTimer);
+                  this.crossfading[kind] = false;
+                  return;
+                }
+                nxt.volume = Math.min(1, targetVol * Math.sin(0.5 * Math.PI * t));
+                cur.volume = Math.max(0, targetVol * Math.cos(0.5 * Math.PI * t));
+                if (step >= totalSteps) {
+                  clearInterval(fadeTimer);
+                  try { cur.pause(); cur.currentTime = 0; } catch (e) {}
+                  nxt.volume = targetVol;
+                  this.activeDeck[kind] = nxtTag;
+                  this.crossfading[kind] = false;
+                }
+              }, 28);
+            }).catch(() => {
+              this.crossfading[kind] = false;
+              try { cur.currentTime = 0; cur.play(); } catch (e) {}
+            });
+          } else {
+            this.crossfading[kind] = false;
+          }
+        } catch (e) {
+          this.crossfading[kind] = false;
+        }
+      },
+
+      tickLoopWatchdog: function() {
+        if (!this.enabled || !this.currentTrack || window.__manualLoop) return;
+        const kind = this.currentTrack;
+        if (this.waCtx && this.audioBuffers[kind] && this.waCtx.state === 'running') {
+          if (!this.waSource || this.waTrack !== kind) {
+            this.startWebAudioLoop(kind);
+          }
+          return;
+        }
+        const curTag = this.activeDeck[kind] || 'A';
+        const a = (curTag === 'A') ? this.audios[kind] : this.audiosB[kind];
+        if (!a) return;
+        if (a.duration > 2 && a.currentTime >= a.duration - 0.24 && !this.crossfading[kind]) {
+          this.triggerHtmlSeamlessWrap(kind);
+        } else if ((a.ended || (a.duration > 1 && a.currentTime >= a.duration - 0.05)) && !this.crossfading[kind]) {
+          try { a.currentTime = 0; const p = a.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+        } else if (this.unlocked && a.paused && !this.crossfading[kind] && !document.hidden) {
+          try { const p = a.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+        }
+      },
+
+      isCurrentlyPlaying: function() {
+        if (this.waSource && this.waCtx && this.waCtx.state === 'running') return true;
+        const kind = this.currentTrack;
+        if (!kind) return false;
+        const a = (this.activeDeck[kind] === 'B') ? this.audiosB[kind] : this.audios[kind];
+        return !!(a && !a.paused && !a.ended);
+      },
+
+      pauseAllHtmlAudio: function(exceptKind) {
+        [this.audios, this.audiosB].forEach(bank => {
+          Object.entries(bank).forEach(([k, a]) => {
+            if (k !== exceptKind && a) { try { a.pause(); } catch (e) {} }
+          });
+        });
+      },
+
+      startHtmlFallback: function(resolved) {
+        const curTag = this.activeDeck[resolved] || 'A';
+        const a = (curTag === 'B') ? this.getSecondaryAudio(resolved) : this.getAudio(resolved);
+        a.loop = true;
+        a.volume = this.volume;
+        const p = a.play();
+        if (p && typeof p.catch === 'function') p.catch(() => {});
       },
 
       playTrack: function(kind) {
         const resolved = (kind === 'battle' && typeof currentMapId !== 'undefined' && currentMapId === 'school') ? 'school' : kind;
         this.currentTrack = resolved;
-        Object.entries(this.audios).forEach(([k, a]) => {
-          if (k !== resolved && a) { try { a.pause(); } catch (e) {} }
-        });
+        if (this.waTrack && this.waTrack !== resolved) {
+          this.stopWebAudioLoop();
+        }
+        this.pauseAllHtmlAudio(resolved);
         if (!this.enabled || window.__manualLoop) {
+          this.stopWebAudioLoop();
+          this.pauseAllHtmlAudio();
           this.updateUI();
           return;
         }
-        const a = this.getAudio(resolved);
-        a.volume = this.volume;
-        const p = a.play();
-        if (p && typeof p.catch === 'function') p.catch(() => {});
+        const useWa = this.canFetchTrackForWebAudio(resolved) && !(this._webAudioFailed && this._webAudioFailed[resolved]);
+        if (useWa) {
+          this.tryLoadWebAudioBuffer(resolved);
+          const liveCtx = this.ensureWebAudio();
+          if (this.audioBuffers[resolved] && liveCtx) {
+            if (liveCtx.state === 'suspended' && this.unlocked) {
+              try { liveCtx.resume(); } catch (e) {}
+            }
+            this.startWebAudioLoop(resolved);
+          }
+          this.updateUI();
+          return;
+        }
+        this.startHtmlFallback(resolved);
         this.updateUI();
       },
 
@@ -15873,8 +16196,12 @@
       setVolume: function(v) {
         this.volume = Math.max(0, Math.min(1, v));
         try { localStorage.setItem('QFORCE3D_BGM_VOL', String(this.volume)); } catch (e) {}
-        if (this.currentTrack && this.audios[this.currentTrack]) {
-          this.audios[this.currentTrack].volume = this.enabled ? this.volume : 0;
+        if (this.waGain) {
+          this.waGain.gain.value = this.enabled ? this.volume : 0;
+        }
+        if (this.currentTrack) {
+          if (this.audios[this.currentTrack]) this.audios[this.currentTrack].volume = this.enabled ? this.volume : 0;
+          if (this.audiosB[this.currentTrack]) this.audiosB[this.currentTrack].volume = this.enabled ? this.volume : 0;
         }
         if (this.volume > 0 && !this.enabled) this.setEnabled(true);
         this.updateUI();
@@ -15884,7 +16211,8 @@
         this.enabled = !!on;
         try { localStorage.setItem('QFORCE3D_BGM_ON', this.enabled ? '1' : '0'); } catch (e) {}
         if (!this.enabled) {
-          Object.values(this.audios).forEach(a => { try { a.pause(); } catch (e) {} });
+          this.stopWebAudioLoop();
+          this.pauseAllHtmlAudio();
         } else {
           this.syncSceneTrack();
         }
@@ -17659,7 +17987,7 @@
     /* =========================================================================
        18. 自動化物理/戰鬥驗證模式：開啟 game.html?autotest=1 於 Console 輸出 [AUTOTEST] 結果
        ========================================================================= */
-    const BUILD_STAMP = 'v9.3 · 建置 2026-11-04 08:50 (台北)';
+    const BUILD_STAMP = 'v9.4 · 建置 2026-11-06 17:35 (台北)';
     console.log('現代突擊 3D ' + BUILD_STAMP);
     window.__manualLoop = new URLSearchParams(location.search).has('autotest');
     if (new URLSearchParams(location.search).has('demo')) {
@@ -20322,6 +20650,81 @@
               b6EscSingleClickRelockOk && a6StandaloneMouseShootOk && a7a8MusicAndTopBarOk &&
               b7AiSpawnedOk && b3ResilientMapOk && b1PersistentThumbsOk && b4StandaloneRoomsAboveOk && b2SyncCloseOk && b5b8WaitTeamsAndSpecHostOk,
             `A1=${a1StairsWallsRoofOk} A2=${a2FourDistinctBBsOk} A3=${a3BentoOk} A4=${a4NurseDeskOk} A5=${a5CommandStageOk} A6=${a6StandaloneMouseShootOk} A7A8=${a7a8MusicAndTopBarOk} A9=${a9TurretAntiStuckOk}(d=${pushedDist.toFixed(2)}) A10=${a10DefenseTurretOk} A11=${a11LongRangeDamageOk}(st=${sEnemy.hp},tr=${tEnemy.hp}) B1=${b1PersistentThumbsOk} B2=${b2SyncCloseOk} B3=${b3ResilientMapOk} B4=${b4StandaloneRoomsAboveOk} B5B8=${b5b8WaitTeamsAndSpecHostOk} B6=${b6EscSingleClickRelockOk} B7=${b7AiSpawnedOk}`
+          );
+        }
+
+        // ---- T99: v9.4 首次開啟 game.html 冷啟動點選陽光國小場地零報錯完整建景 & 3層無縫循環交響軍歌引擎驗證 ----
+        {
+          // 1. 模擬第一次載入網頁、TEXTURE_CACHE 尚未快取 metal 等材質時，直接點選「陽光國小校園」卡片
+          delete TEXTURE_CACHE['metal'];
+          selectBattleMap('military', true);
+          delete TEXTURE_CACHE['metal'];
+          let coldClickErr = null;
+          try {
+            const schoolCard = document.getElementById('map-card-school');
+            schoolCard.click();
+          } catch (e) {
+            coldClickErr = e;
+          }
+          const uiSchoolActive = document.getElementById('map-card-school').classList.contains('map-active') &&
+            !document.getElementById('map-card-military').classList.contains('map-active') &&
+            !document.getElementById('map-check-school').classList.contains('hidden') &&
+            document.getElementById('selected-map-badge').innerText.includes('陽光國小') &&
+            document.getElementById('lobby-room-settings-card').innerText.includes('陽光國小');
+          let hasStage = false, hasGate = false, bbCnt = 0, nurseCnt = 0, turretCnt = 0;
+          scene.traverse(o => {
+            if (o.name === 'school_command_stage') hasStage = true;
+            if (o.name === 'school_gate_and_guardhouse') hasGate = true;
+            if (o.name === 'classroom_blackboard_slate') bbCnt++;
+            if (o.name === 'school_nurse_station') nurseCnt++;
+            if (o.name === 'park_style_defense_turret') turretCnt++;
+          });
+          const coldSchoolFullSceneOk = !coldClickErr && currentMapId === 'school' && uiSchoolActive &&
+            obstacles.length > 80 && hasStage && hasGate && bbCnt === 4 && nurseCnt === 2 && turretCnt === 2;
+
+          // 2. 模擬 currentMapId === 'school' 且未快取 metal 時初次繪製大廳雙場地 3D 預覽縮圖，驗證零報錯且雙縮圖皆完整顯示
+          delete TEXTURE_CACHE['metal'];
+          let coldThumbErr = null;
+          try {
+            renderAllLobbyMapPreviews();
+          } catch (e) {
+            coldThumbErr = e;
+          }
+          const mImg = document.getElementById('map-thumb-img-military');
+          const sImg = document.getElementById('map-thumb-img-school');
+          const coldThumbsOk = !coldThumbErr && mImg && sImg &&
+            mImg.src.startsWith('data:image/png') && sImg.src.startsWith('data:image/png') &&
+            !mImg.classList.contains('hidden') && !sImg.classList.contains('hidden');
+
+          // 3. 驗證 MusicEngine 三層無縫循環架構 (Data-URI 轉 Blob URL、雙軌無縫接棒 Deck A/B、WebAudio Loop Buffer 裁切平滑器)
+          const fakeDataUri = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA';
+          const blobResolved = MusicEngine.resolvePlayableUrl('test_dummy', fakeDataUri);
+          const blobUrlOk = typeof blobResolved === 'string' && blobResolved.startsWith('blob:');
+          if (blobUrlOk) { try { URL.revokeObjectURL(blobResolved); } catch (e) {} }
+          const lobbyDeckA = MusicEngine.getAudio('lobby');
+          const lobbyDeckB = MusicEngine.getSecondaryAudio('lobby');
+          const ctxOk = !!MusicEngine.ensureWebAudio();
+          let loopBufOk = true;
+          if (ctxOk && MusicEngine.waCtx) {
+            const rawTestBuf = MusicEngine.waCtx.createBuffer(2, MusicEngine.waCtx.sampleRate * 3, MusicEngine.waCtx.sampleRate);
+            const chL = rawTestBuf.getChannelData(0), chR = rawTestBuf.getChannelData(1);
+            for (let i = 500; i < chL.length - 500; i++) {
+              const v = 0.25 * Math.sin(2 * Math.PI * 220 * i / rawTestBuf.sampleRate);
+              chL[i] = v; chR[i] = v;
+            }
+            const trimmed = MusicEngine.prepareLoopBuffer(rawTestBuf, 'lobby');
+            loopBufOk = trimmed.length < rawTestBuf.length && Math.abs(trimmed.getChannelData(0)[0]) > 0.001;
+          }
+          const seamlessMusicOk = blobUrlOk && lobbyDeckA.loop === true && lobbyDeckB.loop === true &&
+            typeof MusicEngine.triggerHtmlSeamlessWrap === 'function' &&
+            typeof MusicEngine.tickLoopWatchdog === 'function' && loopBufOk;
+
+          // 還原預設地圖供後續環境一致
+          selectBattleMap('military', true);
+          log(
+            'T99 v9.4 首次開啟冷啟動點選陽光國小零報錯完整建景＆縮圖 + 交響軍歌主旋律重複與三層無縫循環引擎驗證',
+            coldSchoolFullSceneOk && coldThumbsOk && seamlessMusicOk,
+            `coldScene=${coldSchoolFullSceneOk}(obs=${obstacles.length},bb=${bbCnt},nurse=${nurseCnt},tur=${turretCnt}) coldThumbs=${coldThumbsOk} musicLoop=${seamlessMusicOk}`
           );
         }
 
