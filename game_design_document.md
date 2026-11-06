@@ -1349,3 +1349,154 @@ v9.0 已內建兩首由 **Google Lyria 3 (`lyria-3-clip-preview`)** 生成之 **
 <!-- slide -->
 ![v9.4 首次載入點選陽光國小後直接進入單人遊戲（完整建置忠孝樓/仁愛樓雙層教室、PU 操場、校門警衛室與大象溜滑梯）](/home/corpagent-eng-weihsuanchen/.gemini/jetski/brain/8881dc6c-ca0f-407e-94d2-4799165be283/v94_firstload_school_ingame.png)
 ````
+
+---
+
+## 四十一、 v9.5 陽光國小二樓頂樓女兒牆升旗台 ＆ 死亡運鏡／槍模隱藏／開局倒數資訊欄／按 B 雙邊 AI 滿編升級 (`T100`, 110/110 自動測試通過)
+
+### 1. 陽光國小二樓改為「開放式頂樓女兒牆升旗廣場 ＋ 南側頂樓專科藝廊遮雨亭」（消除旗幟穿模天花板）
+- **建築動線與戰鬥節奏評估（為何「二樓直接改為頂樓女兒牆升旗台」優於「再加樓梯上三樓」）**：
+  - 若於 `13.6m × 14.4m` 校舍額外增設二樓至三樓（`y = 6.7m`）長梯，玩家與 AI 爬上頂樓搶旗需耗時雙倍時間（逾 7 秒），且自三樓（`6.7m`）跳下操場會觸發嚴重墜落扣血（`> 2.3m` 落地傷害機制），亦破壞與軍事訓練基地（`y = 3.6m`）的對稱高度平衡。
+  - 採用 **「一樓完整數學教室（五年甲班／六年乙班）＋ 二樓（`y = 3.6m`）開放式頂樓女兒牆升旗廣場」** 設計：
+    1. **北中段開放式頂樓升旗廣場 (`z = -7.2 ~ +2.35m`)**：移除原覆蓋旗桿上方的整片天花板，改為 **100% 露天晴空萬里**；四周環繞台灣小學經典 **紅磚女兒牆（`0.86m`）＋ 米白磨石子壓頂石 ＋ 天藍色安全金屬護欄（總高 `1.22m`，`school_rooftop_parapet`）**，入口設置「🚩 頂樓升旗台」拱門牌樓。
+    2. **磨石子八角升旗台基座 (`school_rooftop_flag_pedestal`)**：二樓中立黑旗（`ctfFlags[0]` & `ctfFlags[1]`，旗桿高 `4.5m`，頂端 `y = 8.1m`）立於二樓露天頂樓廣場中央的雙層磨石子升旗台基座上，上方無任何屋頂或天花板遮擋，徹底根除旗桿與旗面穿出天花板的問題。
+    3. **南側半開放式頂樓專科藝廊遮雨亭 (`z = +2.35 ~ +7.25m`)**：於遠離旗桿超過 `3.5m` 的二樓南側保留紅瓦遮雨亭（`classroom_2f_full_roof`），陳列「🎨 美術專科教室」與「🎵 音樂專科教室」黑板及 4 組戶外寫生／音樂課桌椅，兼顧校園專科美學與零穿模露天升旗體驗。
+
+### 2. 死亡鏡頭追蹤殺人兇手時全程隱藏第一人稱槍枝 (`updateInvulnerability` & `updateDeathCam`)
+- **根因**：雖然 `startDeathCam` 將 `weaponMesh.visible` 設為 `false`，但每幀執行的 `updateInvulnerability(now)` 內 `if (weaponMesh && !isAimingADS) weaponMesh.visible = ...` 會在下一幀無條件把槍枝設回 `true`。
+- **修復**：於 `updateInvulnerability`、`updateDeathCam`、`toggleADS` 與 `buildWeaponMesh` 全面加入 `deathCamState.active || playerState.isSpectating || playerState.isBroadcaster` 判斷，確保陣亡倒地、環繞追蹤兇手與返回基地全過程 **100% 隱藏玩家手中的第一人稱槍模**，直到基地復活瞬間才重新亮出武器。
+
+### 3. 消除剛被打死時 1～2 秒畫面停住凍結感 (`startDeathCam` & `updateDeathCam`)
+- **根因**：原第一階段（`0 ~ 1.6s`）在 `0.38s` 完成下降後，後續 `1.22s` 鏡頭座標與已躺平的角色模型完全靜止不動，造成視覺上像畫面當機停頓 1～2 秒。
+- **修復**：將第一階段精煉為 `1.25s` 連續慢動作電影運鏡——中彈瞬間 3D Q 版角色由站立受創角度（`-0.18 rad`）連續動態後仰傾倒至地面、四肢揮動並帶有些微落地彈性回彈與向後滑行；同時鏡頭沿同一視軸射線平滑向後拉遠（`0.72x → 1.64x`，保持 `cameraYaw` 完全穩定不旋轉）並順暢銜接至第二階段環繞追蹤擊殺者鏡頭，全程零停頓。
+
+### 4. 開局戰術簡報倒數結束後，資訊欄才開始跑訊息 (`startPrepPhase` / `addKillFeed` / `Caster` / `updateAIBrains`)
+- **根因**：開局倒數期間（`prepActive === true`），AI 角色已於背景開始移動、偵測腳步聲並發送奪旗喊話，且 `Caster.periodic` 與 `Net.onMatchStart` 亦提前向 `#kill-feed` 與 `#caster-feed` 推播文字。
+- **修復**：於 `startPrepPhase` 開啟倒數時清空 `#kill-feed` 與 `#caster-feed`，並在 `prepActive === true` 期間讓 AI 於基地原地待命、攔截所有提前洗頻的 `addKillFeed` 與 `Caster.say`；待倒數歸零（`prepTimer <= 0`，`prepActive = false`）正式開戰瞬間，才由資訊欄開始推播「📣 戰術選擇結束・遊戲開始！」、「🎺 出發呼號」與 AI 戰術動向。
+
+### 5. 按下 `[B]` 開啟 AI 時，雙方陣營（包含我方隊友）皆依人數上限補滿 (`toggleAIEnemies`)
+- **根因**：原 `toggleAIEnemies` 開啟時將模式設為 `'auto'` 且僅在轉播模式下開啟 `forceBothTeamsAI`，導致單人或同隊玩家按 `[B]` 時 `getActiveAITeams()` 只回傳敵方陣營，我方隊友 AI 人數為 0。
+- **修復**：按下 `[B]` 開啟 AI 時，自動啟用 `window.forceBothTeamsAI = true` 與 `setAICountCfg({ mode: 'fill', cap: targetCap })`，並立即執行 `replenishBothTeamsBalanced(targetCap, false)`——以預設上限 4 人為例，若玩家在藍隊（1 名真人），按下 `[B]` 會立即補齊 **3 名藍隊 AI 隊友 ＋ 4 名紅隊 AI 對手（雙邊 4v4 滿編）**，並於資訊欄清楚顯示我方 AI 隊友與敵方 AI 人數。
+
+---
+
+## 四十二、 v9.5 大廳多向語音＆即時聊天室、5 大槍種擬真持槍姿勢、6 角色動物小手手換彈動作、第三人稱槍管出彈與方向感應互動道具升級 (`T101`, 111/111 自動測試通過)
+
+### 1. 開房間網友看到房間無法加入之根因診斷與秒進等待室修復 (`Net.handleHello` / `Net.onRoomInfo` / `Net.bindPeerEvents`)
+- **三大根因**：
+  1. **雙通道競態 (`hasResolvedRef.v` 提早鎖死 WebRTC DataChannel)**：當網友點選房間時，`ntfy` 信令會先收到房主廣播的 `room_pong` 並將 `hasResolvedRef.v` 設為 `true`；原 `bindPeerEvents` 內的 `connectOnce()` 在開頭檢查 `if (hasResolvedRef.v) return;`，導致 WebRTC PeerJS `open` 事件觸發時直接跳過建立 DataChannel，退化為高延遲純 `ntfy` 輪詢並引發 HTTP 429 限流。
+  2. **等待室選隊彈窗卡關**：房間處於等待室（`roomStatus === 'waiting'`）時，`Net.onRoomInfo` 原先仍攔截並彈出舊版選隊遮罩，而等待室本身已有直覺的「左邊藍隊框 ／ 右邊紅隊框」設計。
+  3. **重複 `hello` 引發信令風暴**：客戶端逾時重送 `hello` 時，房主重複配置隊伍並連續廣播大型 `roster` JSON，觸發公開中繼站速率限制。
+- **完整修復**：
+  - 分離 `dcOpened` 與 `hasResolvedRef.v`，確保即使 `ntfy` 先收到 `room_pong`，PeerJS WebRTC 直連通道仍 100% 完成建立。
+  - 當 `roomStatus === 'waiting'` 時，`Net.onRoomInfo` 直接自動發送 `Net.sendHello()` 秒進戰術備戰等待室。
+  - `Net.handleHello` 改為冪等（Idempotent）處理：同一玩家重複 `hello` 時直接重用原隊伍與漆色並單點回覆 `welcome`，將全房 `roster` 廣播延遲 260ms 節流發送。
+
+### 2. 大廳多向語音網狀連線 (`LobbyVoiceMesh`) ＋ 大廳＆等待室即時訊息聊天室 (`LobbyChat`)
+- **大廳多向 WebRTC 語音網狀連線 (`RoomRegistry` + `FieldAudio.callLobbyPeers`)**：
+  - 玩家只要載入並停留在遊戲大廳（尚未開房或進房前），`RoomRegistry` 每 9 秒於公共頻道廣播 `lobby_presence`（附帶自己的大廳專屬 PeerJS ID `QFORCE3D_LOBBY_PEER_<id>` 與開麥狀態），並同時在 `dirPeer` 與 `subPeer` 監聽 `call` 來電事件。
+  - 當偵測到其他也在看大廳的網友且任一方開啟麥克風時，`FieldAudio.callLobbyPeers()` 自動向所有大廳在線網友發起雙向 WebRTC `MediaConnection` 音訊串流，在大廳頂部顯示「🎙️ 大廳多向語音連線中（可開麥直接與正在看大廳的網友說話討論設定）」與在線網友徽章，實現真正的大廳多向語音討論！
+- **大廳＆等待室雙向同步即時聊天室 (`LobbyChat`)**：
+  - 於大廳線上房間列表卡片內（`#lobby-chat-panel`）與戰術備戰等待室內（`#wait-chat-panel`）雙向配置即時訊息聊天室，並提供一鍵戰術快捷語（「👋 有人要一起開房嗎？」、「🏫 陽光國小搶旗走起！」、「🤖 開合作打 AI 補滿！」、「🎙️ 我有開麥聽得到嗎？」），即使不方便開麥也能零延遲打字討論開房設定。
+
+### 3. 依手槍、步槍、衝鋒槍、散彈槍、狙擊槍區分擬真雙手持槍姿勢 (`getWeaponHoldProfile`)
+| 武器類別 | 握持配置代號 (`gripStyle`) | 第一人稱雙手動物肉球持槍位置 | 第三人稱雙臂協同持槍姿態 (`armL` / `armR`) |
+| :--- | :--- | :--- | :--- |
+| **戰術手槍 (`pistol`)** | `pistol_two_hand` | 右手握防滑握把、左手小肉球由前方與下方緊湊包覆護弓與握把 | 雙手同時向前合攏（`armL.rotY = +0.36`, `armR.rotY = -0.16`），於胸前緊湊雙手握持手槍 |
+| **防暴散彈槍 (`shotgun`)** | `shotgun_pump_forend` | 右手握胡桃木後握把、左手小肉球前伸托住胡桃木唧筒滑套 (`z = -0.40`) | 右手抵肩握把，左手大幅斜跨胸前（`armL.rotX = -1.05, rotY = +0.54`）托住前唧筒滑套 |
+| **AWP 狙擊槍 (`sniper`)** | `sniper_chassis_support` | 右手握拇指孔槍托、左手小肉球托住橄欖綠前複合底盤護木 (`z = -0.36`) | 右手長槍托抵肩（`armR.rotX = -0.98`），左手前伸（`armL.rotX = -1.08, rotY = +0.58`）穩定支撐重型長槍管 |
+| **P90 衝鋒槍 (`smg`)** | `bullpup_compact_grip` | 右手握中央人體工學握把、左手穿入前方犢牛式拇指環 (`z = -0.125`) | 緊湊犢牛式雙手內收持槍（`armL.rotX = -0.98, rotY = +0.44`） |
+| **M4A1 / AK-47 / MP5 (`rifle`/`ak`/`mp5`)** | `rifle_forend_clamp` | 右手握後握把、左手小肉球包覆前戰術導軌／胡桃木下護木 (`z = -0.27`) | 標準突擊步槍前護木支撐雙手持槍姿態（`armL.rotX = -1.02, rotY = +0.48`） |
+
+### 4. 六大角色專屬超萌動物小手手 (`buildAnimalPawMesh`) 與原換彈時間內完成的換彈動作 (`updateWeaponReloadAnimation`)
+- **六大動物物種專屬小手手與立體肉球**：
+  - 依玩家所選角色自動切換第一人稱與第三人稱小手手造型：**🐻 小熊棕毛粉紅肉球手**、**🐰 雪白兔兔嫩粉肉球手**、**🦊 赤狐橘紅毛小肉球手**、**🐕 柴犬赤柴毛 Q 彈肉球手**、**🐼 熊貓黑絨掌粉嫩肉球手**、**🐧 企鵝深藍鰭翅暖橘肉墊手**。
+  - 每隻小手手皆具備戰術短袖口、圓潤毛絨主手掌、3 根圓指頭＋內側拇指、**掌心中央大肉球 (`main_paw_pad`)** 與 **3 顆粉嫩指尖小肉球 (`toe_bean`)**。
+- **100% 在原本換彈時間 (`reloadTime`) 內完成的專屬換彈與上膛動作**：
+  1. **防暴散彈槍 (`shotgun`，每顆 `1.0s`)**：前 `76%` 時間左手小肉球依缺彈顆數由下方彈袋抓取紅殼黃銅底火 12G 散彈（`reloadShell`），一顆一顆往上塞進機匣底部裝填口並用小肉球拍入；最後 `24%` 時間左手握住胡桃木唧筒滑套（`pumpMesh`）用力往後拉動 `+0.135m` 再往前推上膛！
+  2. **AWP 狙擊槍 (`sniper`，`2.6s`)**：前 `56%` 時間左手小肉球向下抽出鋼製彈匣（`magMesh`）、換上新彈匣並用掌心肉球向上拍緊；後 `44%` 時間右手小肉球向上抬起鍍鉻槍機拉柄（`boltGroup.rotation.z = -0.68`）、往後拉開 `+0.115m` 拋殼再往前推下鎖定！
+  3. **手槍／突擊步槍／衝鋒槍 (`pistol` `1.2s` / `mp5` `1.5s` / `p90` `1.7s` / `m4a1` `1.8s` / `ak47` `2.1s`)**：前 `74%` 時間左手小肉球卸下舊彈匣（P90 為向上掀起頂置半透明琥珀彈匣）、插入滿彈新彈匣並以小肉球拍擊底板；後 `26%` 時間拉動手槍滑套（`slideGroup`）或步槍拉機柄（`boltMesh`）上膛並精準回到護木握持位置。
+
+### 5. 第三人稱子彈直接從 3D 槍管口 (`muzzleAnchor`) 射出 (`alignThirdPersonGunAndGetMuzzle` / `aiFire` / `Net.onShotEvent`)
+- 當 AI 或遠端玩家開火時，`alignThirdPersonGunAndGetMuzzle` 即時將角色朝向（`mesh.rotation.y`）與雙手臂仰角（`armR.rotation.x` / `armL.rotation.x`）對齊射擊方向向量 `shootDir`，並更新世界矩陣取得 3D 槍管最前端 `muzzleAnchor` 的精確世界座標 `gunMuzzleWorld`。
+- 在無掩體阻擋槍管時，子彈實體與拖尾直接於 `gunMuzzleWorld`（槍管孔正中心，誤差 `0.000m`）生成並解算至目標點的拋物線彈道，從第三人稱或觀察者視角觀看時，每一發漆彈皆 100% 從槍管口射出。
+
+### 6. 陽光國小盪鞦韆 2D 子彈撞擊方向物理擺動 (`applyDirectionalSwingImpulse` & `updateSchoolPhysics`)
+- 修正原本單一固定方向衝量與旋轉軸正負號問題，擴充為完整 **2D 雙軸阻尼單擺物理模型**：
+  - **前後擺動 (`theta` / `omega`)**：由子彈水平速度 `vz` 決定——朝 `+Z` 射擊時 `omega > 0`（`pivot.rotation.x = -theta < 0`，鞦韆座位朝 `+Z` 前方高高盪起）；朝 `-Z` 射擊時 `omega < 0`（鞦韆座位朝 `-Z` 後方高高盪起）。
+  - **左右側擺 (`phi` / `omegaPhi`)**：由子彈水平速度 `vx` 決定——從側面射擊時鞦韆同步朝受擊側擺動，並將碰撞盒擴展至整條鐵鍊與木座高度（`y = 0.28 ~ 2.55m`）。
+
+### 7. 戰場小巧思方向感應互動道具 (`buildReactiveBattleProps` & `updateReactiveProps`)
+- 在完全不影響幀率（僅使用輕量基礎幾何體與 AABB 線段檢測，雙地圖各配置 14 個互動道具）的前提下，新增三大類物理反應道具：
+  1. **方向感應傾倒與自動回彈道具 (`knockdown`)**：
+     - **陽光國小**：操場跑道橘白反光三角錐（6 座）、走廊「⚠️ 小心地滑」黃色立牌（2 座）、教室旁不鏽鋼打掃水桶（2 個）。
+     - **軍事訓練基地**：戰術橘白防撞桶（4 座）、雙面靶牌立架（4 座）、藍色／橄欖綠戰備補給鐵桶（4 座）。
+     - **物理巧思**：精確計算子彈水平飛行方向 `(vx, vz)`，使道具沿受擊方向順勢倒地（`tiltX` / `tiltZ` 達 `81°`）並彈跳晃動，靜置數秒後還會像不倒翁般自動彈回立正！
+  2. **順逆時針力矩高速旋轉道具 (`spinner`)**：
+     - **陽光國小**：一樓教室外走廊「🌍 教學地球儀」（2 座）、二樓頂樓女兒牆「🐓 校園公雞風向標」（2 座）。
+     - **軍事訓練基地**：中央廣場「🎯 雙面旋轉鐵靶」（2 座）。
+     - **物理巧思**：由子彈撞擊點相對轉軸的力臂外積 `(hitPos - center) × vel` 決定順時針或逆時針角速度 `spinVel`，打左翼與打右翼會朝相反方向高速旋轉！
+
+---
+
+## 四十三、 v9.6 AI 十種個性動態補命與找防彈鋼板策略、觀察者第三人稱跟拍穩定化、斜角俯瞰全景視角與純觀察者 AI 對戰修復 (`T102`, 112/112 自動測試通過)
+
+### 1. AI 依 10 種個性分配「下一動作尋找補命／防彈鋼板」機率與防龜縮策略 (`AI_PERSONA_ARCHETYPES` / `aiMaybeSeekSupply` / `aiCheckSupplyPickup` / `applyAIDamage`)
+- **設計動機**：
+  - 原先地面急救包（`medkit`）、便當／軍用餐盒（`ration`）、火腿／香蕉（`ham`/`banana`）、防彈鋼板（`armor`）與基地醫療帳篷／保健室（`updateCampHealing`）僅對真人玩家生效，AI 既不會主動尋找補給，也沒有 `ai.armor` 65% 防彈鋼板減傷機制。
+  - 若讓所有 AI 一受傷就無條件回頭補血，會導致全場 AI 過度龜縮、失去進攻與搶旗節奏；因此我們採用 **「10 種個性差異化下一動作機率分配 ＋ 14 秒防龜縮冷卻 ＋ 4.5 秒限時尋物 ＋ 32m 距離上限」** 的平衡策略。
+- **10 種個性「下一動作尋找補命 (`healSeekProb`) ／ 尋找防彈鋼板 (`armorSeekProb`)」機率配置表**：
+
+| 個性代號 | 個性名稱 | 下一動作找補命機率 (`healSeekProb`) | 下一動作找鋼板機率 (`armorSeekProb`) | 觸發補命血量門檻 | 戰術行為特徵 |
+| :--- | :--- | :---: | :---: | :---: | :--- |
+| `coward` | 膽小謹慎兵 | **78%** | **68%** | HP ≤ 82% | 稍微擦傷就會優先找保健室、急救箱或便當盒飯，並積極穿戴防彈鋼板 |
+| `tactician` | 戰術大師 | **62%** | **60%** | HP ≤ 68% | 交火轉移陣地時高機率順路撿取防彈鋼板與醫療包，維持高續戰力 |
+| `veteran` | 老練特種兵 | **55%** | **52%** | HP ≤ 68% | 攻守均衡，約五成機率在換位時尋找補給或防彈鋼板 |
+| `camper` | 埋伏狙擊手 | **48%** | **50%** | HP ≤ 68% | 駐守據點前後有一半機率先撿附近的防彈鋼板與醫療包 |
+| `wanderer` | 散步遊走兵 | **42%** | **45%** | HP ≤ 68% | 巡邏途中隨緣拾取沿途的便當、火腿與防彈鋼板 |
+| `jumper` | 跳跳兔特種兵 | **35%** | **32%** | HP ≤ 68% | 偏好跳躍突進，僅約三分之一機率分心找補血 |
+| `sprayer` | 火力壓制狂 | **28%** | **28%** | HP ≤ 68% | 專注潑水壓制，低機率撤退找補給 |
+| `hunter` | 追獵突擊手 | **22%** | **25%** | HP ≤ 68% | 優先追擊殘血敵人，僅在殘血且附近剛好有補給時順手撿取 |
+| `rusher` | 猛衝敢死隊 | **12%** | **15%** | HP ≤ 35% (重傷) | 一心衝鋒奪旗，幾乎不回頭補血（僅重傷時有 12% 機率撿旁邊急救包） |
+| `berserk` | 狂暴戰神 | **5%** | **8%** | HP ≤ 35% (重傷) | 死戰到底絕不龜縮，95% 機率無視傷勢繼續猛攻！ |
+
+- **四大防龜縮機制（Anti-Turtling Safeguards）**：
+  1. **僅在「下一動作轉換點」擲骰決策**：只在 AI 完成當前掩護（`HIDE` 結束）、剛脫離交戰、或受擊轉移陣地時擲骰一次（決策間隔至少 `3.5s`），若正在二樓或基地升旗（`CTF_CAPTURING`）則絕不中斷奪旗去補血。
+  2. **14 秒個人補命冷卻 (`lastSupplySeekAt`)**：同一隻 AI 觸發過一次尋找補給後，接下來 `14 秒` 內強制專注作戰，絕不連續來回龜縮補血。
+  3. **搜尋距離上限 (`≤ 32m`) 與 4.5 秒超時強制回歸進攻 (`SEEK_SUPPLY`)**：只挑選 `32m` 內的可用補給品或未被炸毀的基地醫療帳篷／保健阿姨桌；若 `4.5 秒` 內未撿到或途中遭遇敵人貼臉（`< 11m` 且有視線），立即切回 `ADVANCE` 迎敵。
+  4. **AI 65% 防彈鋼板減傷 (`applyAIDamage`)**：AI 拾取防彈鋼板後獲得 `+50 / +100 AP`，受擊時與玩家採用相同的 65% 鋼板吸收公式（$\text{Damage}_{\text{Armor}} = 0.65 \times D$），擊殺穿戴鋼板的 AI 時更考驗爆頭與火力集火。
+
+### 2. 觀察者模式第三人稱跟拍視角修復 (`BroadcastCam.placeThirdPerson` & `updateAIBrains`)
+- **三大根因診斷**：
+  1. **AI 警戒偏角每幀累加造成 450 RPM 瘋狂爆轉**：在 `updateAIBrains` 的 `ADVANCE` 狀態中，原本寫了 `if (ai.lookSectorOffset && !los) ai.mesh.rotation.y += ai.lookSectorOffset;`；當 AI 沒有看到敵人時，因為 `aiSmoothLookAt` 每幀只拉回一部分角度，卻又被直接 `+= ±0.96 rad`，導致 AI 身體與綁定 `c.yaw = ai.mesh.rotation.y` 的第三人稱跟拍鏡頭每幀高速旋轉！
+  2. **缺乏穿牆檢測與平滑插值**：原本 `placeThirdPerson` 直接將相機硬設在目標背後 `3.8m`，當目標背靠牆壁、教室隔間或二樓女兒牆時，鏡頭直接穿入牆體或屋頂外，且目標轉向時鏡頭瞬間劇烈甩動。
+  3. **目標切換跳動**：原本以陣列索引 `followIndex % list.length` 鎖定目標，當場上任何一隻 AI 陣亡重排陣列時，跟拍對象就會無預警跳到別隻角色身上。
+- **完整修復**：
+  - 將 `ai.lookSectorOffset` 改為設定在頭部局部旋轉 `ai.head.rotation.y`（身體 `ai.mesh.rotation.y` 穩定朝向行進方向），徹底根除 AI 與跟拍鏡頭原地打轉的 Bug。
+  - `BroadcastCam.placeThirdPerson(c, delta)` 新增 **最短角度差平滑插值（Angular Shortest-Path Damping）**、**球面位置阻尼追蹤** 與 **`segmentHitObstacle` 防穿牆射線退避**（遇到後方牆壁時自動將鏡頭往前拉近至牆前安全距離），並支援滑鼠移動微調環繞視角（`orbitYawOffset` / `orbitPitchOffset`）。
+  - 改以角色名稱 `followTargetName` 鎖定跟拍對象，其他 AI 陣亡時鏡頭絕不亂跳。
+
+### 3. 觀察者模式嚴格禁槍與禁射修復（「為什麼有時候觀察者會有槍可以射人」根因與根除）
+- **根因揭密**：
+  - 在 `gameLoop` 的「`C. 命中本機玩家`」判定中，原本只檢查 `if (!done && shooterTeam !== playerState.team)`，**漏掉了 `!playerState.isBroadcaster && !playerState.isSpectating`**！
+  - 當觀察者／導播鏡頭移動到場上（例如跟拍交火中的 AI 或停在半空）時，場上飛行的紅隊 AI 流彈會打中隱形的觀察者碰撞盒並扣減 `playerState.hp`；當觀察者被流彈打到 `hp <= 0` 時，竟觸發了 `handlePlayerDeath()` → 5 秒死亡鏡頭結束後執行 `updateDeathCam()` → 將 `playerState.isSpectating` 設回 `false` 並呼叫 `respawnPlayer()` → `resetLoadout()` 把 `weaponMesh.visible` 設為 `true`，導致觀察者莫名其妙「復活長出一把槍還能開火射人」！
+- **五重防線徹底根除**：
+  1. **`gameLoop` 子彈碰撞排除**：在「`B. 命中連線玩家`」跳過 `rp.broadcast`，在「`C. 命中本機玩家`」加上 `!playerState.isBroadcaster && !playerState.isSpectating`，流彈與 C4 爆炸（`resolveBombBlast`）永遠不會命中觀察者。
+  2. **`receiveDamage` 源頭攔截**：`if (!isGameRunning || playerState.isSpectating || playerState.isBroadcaster) return;`。
+  3. **`shootWeapon` / `reloadWeapon` / `toggleADS` / `equipSlot` 全面封鎖**：只要 `playerState.isBroadcaster || playerState.isSpectating` 為真，一律禁止開火、換彈、開鏡，且強制 `weaponMesh.visible = false`。
+  4. **`gameLoop` 每幀強制守護**：每幀若 `playerState.isBroadcaster` 為真，強制維持 `playerState.isSpectating = true; playerState.out = true; isFiring = false; weaponMesh.visible = false;`。
+  5. **`resetMatchRound` 跨局保持**：下一局重新開始時，若為觀察者則自動維持觀察者身分與無槍狀態。
+
+### 4. 觀察者模式新增「4 方位斜角俯瞰視角 (`3 斜角俯瞰`)」(`BroadcastCam.ANGLED_PRESETS`)
+- 除原有的 `2 垂直俯瞰`（`90°` 正上方俯視平面圖）外，於導播控制列與鍵盤快捷鍵 `[3]`（以及陣亡觀戰空白鍵循環）新增 **「`3 斜角俯瞰 (再按換角)`」**：
+  - 採用電競轉播最經典的 **45° 黃金斜角全景高度（`y = 26m`，俯角約 `-36°`）**，能同時看清一樓室內走廊、二樓頂樓女兒牆升旗台、掩體高度差與拋物線漆彈軌跡。
+  - 再按一次 `[3]` 鍵（或點選按鈕／空白鍵）即可在 **東南斜角、西南斜角、東北斜角、西北斜角** 四個對角全景機位間無縫切換。
+
+### 5. 修復「只有觀察者、沒有真人玩家時，AI 玩一下遊戲就結束了」之 Bug (`checkRoundVictoryCondition` / `isCoopSameTeamAgainstAI` / `getActiveAITeams`)
+- **兩大根因診斷**：
+  1. **第一隻 AI 陣亡即誤判「我方全員生命用盡」**：當玩家以「觀察者／電競導播」身分開房或進入單人模式（場上 0 名真人參戰玩家）時，`enterBroadcastMode()` 會將觀察者的 `playerState.out` 設為 `true`；結果場上第一隻 AI 被打死並呼叫 `killAI()` → `checkRoundVictoryCondition()` 時，`myTeamAlive = (!playerState.out) || ...` 立即為 `false`，當場觸發 `announceMatchEnd(false, "我方全員生命用盡，防線失守！")`，導致 AI 才剛交火幾秒鐘、第一隻 AI 一死遊戲就立刻結束！
+  2. **`isCoopSameTeamAgainstAI` 誤判為單邊 AI**：當藍紅兩隊真人數皆為 `0`（`counts[0] === 0 && counts[1] === 0`）時，原本 `counts[0] === 0 || counts[1] === 0` 為真，導致系統誤以為是單邊合作模式。
+- **完整修復**：
+  - 在 `isCoopSameTeamAgainstAI()` 中明確規定：當 `counts[0] === 0 && counts[1] === 0`（全場僅有觀察者、無真人下場）時回傳 `false`，並在 `getActiveAITeams()` 回傳 `[0, 1]`，讓藍隊與紅隊雙方皆自動派出滿編 AI 特遣隊展開精彩對決。
+  - 在 `checkRoundVictoryCondition()` 中過濾掉觀察者（`!r.broadcast`），並計算 `myTeamHasHumans`：當全場無真人參戰玩家（`!myTeamHasHumans && enemyHumans.length === 0`）時，**絕不觸發真人生命用盡結算**，讓藍紅雙邊 AI 持續激戰至回合時間歸零、四面旗幟全數佔領、或全滅模式下某隊 AI 波次耗盡為止！
+
